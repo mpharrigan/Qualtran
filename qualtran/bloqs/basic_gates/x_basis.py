@@ -13,13 +13,13 @@
 #  limitations under the License.
 
 from functools import cached_property
-from typing import Dict, Tuple, TYPE_CHECKING, Union
+from typing import Dict, Optional, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 import quimb.tensor as qtn
 from attrs import frozen
 
-from qualtran import Bloq, Register, Side, Signature, SoquetT
+from qualtran import Bloq, BloqBuilder, ControlRegister, Register, Side, Signature, Soquet, SoquetT
 from qualtran.cirq_interop.t_complexity_protocol import TComplexity
 
 if TYPE_CHECKING:
@@ -164,6 +164,26 @@ class XGate(Bloq):
                 data=_PAULIX, inds=(outgoing['q'], incoming['q']), tags=[self.short_name(), binst]
             )
         )
+
+    def controlled(self, creg: Optional['ControlRegister'] = None):
+        from qualtran.bloqs.basic_gates.cnot import CNOT
+
+        return CNOT(), 'ctrl'
+
+    def add_controlled(
+        self,
+        bb: 'BloqBuilder',
+        creg: 'ControlRegister',
+        ctrl_soq: 'Soquet',
+        soqs: Dict[str, 'SoquetT'],
+    ):
+        from qualtran.bloqs.basic_gates.cnot import CNOT
+
+        if creg.shape == () and creg.bitsize == 1:  # and creg is a positive control
+            ctrl, target = bb.add_t(CNOT(), ctrl=ctrl_soq, target=soqs['q'])
+            return ctrl, (target,)
+
+        return super().add_controlled(bb, creg, ctrl_soq, soqs)
 
     def short_name(self) -> str:
         return 'X'

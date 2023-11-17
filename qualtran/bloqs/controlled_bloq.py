@@ -17,7 +17,16 @@ from typing import List, Tuple
 
 from attrs import field, frozen
 
-from qualtran import Bloq, BloqBuilder, CompositeBloq, Register, Signature, Soquet, SoquetT
+from qualtran import (
+    Bloq,
+    BloqBuilder,
+    CompositeBloq,
+    ControlRegister,
+    Register,
+    Signature,
+    Soquet,
+    SoquetT,
+)
 from qualtran.drawing import Circle, WireSymbol
 
 
@@ -33,6 +42,7 @@ class ControlledBloq(Bloq):
     """A controlled version of `subbloq`."""
 
     subbloq: Bloq = field(validator=_no_nesting_ctrls_yet)
+    creg: ControlRegister = field(default=ControlRegister(name='ctrl', bitsize=1))
 
     def pretty_name(self) -> str:
         return f'C[{self.subbloq.pretty_name()}]'
@@ -45,25 +55,25 @@ class ControlledBloq(Bloq):
 
     @cached_property
     def signature(self) -> Signature:
-        return Signature((Register(name="control", bitsize=1),) + tuple(self.subbloq.signature))
+        return Signature((self.creg,) + tuple(self.subbloq.signature))
 
     def decompose_bloq(self) -> 'CompositeBloq':
-        if not isinstance(self.subbloq, CompositeBloq):
-            return ControlledBloq(self.subbloq.decompose_bloq()).decompose_bloq()
+        cbloq = self.subbloq.decompose_bloq()
 
         bb, initial_soqs = BloqBuilder.from_signature(self.signature)
-        ctrl = initial_soqs['control']
+        ctrl = initial_soqs[self.creg.name]
 
         soq_map: List[Tuple[SoquetT, SoquetT]] = []
-        for binst, in_soqs, old_out_soqs in self.subbloq.iter_bloqsoqs():
+        for binst, in_soqs, old_out_soqs in cbloq.iter_bloqsoqs():
             in_soqs = bb.map_soqs(in_soqs, soq_map)
-            ctrl, *new_out_soqs = bb.add_t(ControlledBloq(binst.bloq), control=ctrl, **in_soqs)
+            ctrl, new_out_soqs = binst.bloq.add_controlled(bb, self.creg, ctrl, in_soqs)
             soq_map.extend(zip(old_out_soqs, new_out_soqs))
 
-        fsoqs = bb.map_soqs(self.subbloq.final_soqs(), soq_map)
-        return bb.finalize(control=ctrl, **fsoqs)
+        fsoqs = bb.map_soqs(cbloq.final_soqs(), soq_map)
+        fsoqs[self.creg.name] = ctrl
+        return bb.finalize(**fsoqs)
 
     def wire_symbol(self, soq: 'Soquet') -> 'WireSymbol':
-        if soq.reg.name == 'ctrl':
+        if soq.reg.name == self.creg.name:
             return Circle(filled=True)
         return self.subbloq.wire_symbol(soq)

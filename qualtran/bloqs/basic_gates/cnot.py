@@ -23,7 +23,9 @@ from attrs import frozen
 from qualtran import (
     Bloq,
     bloq_example,
+    BloqBuilder,
     CompositeBloq,
+    ControlRegister,
     DecomposeTypeError,
     Signature,
     Soquet,
@@ -92,6 +94,23 @@ class CNOT(Bloq):
 
     def on_classical_vals(self, ctrl: int, target: int) -> Dict[str, 'ClassicalValT']:
         return {'ctrl': ctrl, 'target': (ctrl + target) % 2}
+
+    def add_controlled(
+        self,
+        bb: 'BloqBuilder',
+        creg: 'ControlRegister',
+        ctrl_soq: 'Soquet',
+        soqs: Dict[str, 'SoquetT'],
+    ):
+        from qualtran.bloqs.basic_gates.toffoli import Toffoli
+
+        if creg.shape == () and creg.bitsize == 1:  # and creg is a positive control
+            (ctrl1, ctrl2), target = bb.add_t(
+                Toffoli(), ctrl=[ctrl_soq, soqs['ctrl']], target=soqs['target']
+            )
+            return ctrl1, (ctrl2, target)
+
+        return super().add_controlled(bb, creg, ctrl_soq, soqs)
 
     def as_cirq_op(
         self, qubit_manager: 'cirq.QubitManager', ctrl: 'CirqQuregT', target: 'CirqQuregT'

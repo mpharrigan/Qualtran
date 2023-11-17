@@ -23,7 +23,17 @@ import quimb.tensor as qtn
 from attrs import frozen
 from sympy import Expr
 
-from qualtran import Bloq, BloqInstance, Register, Side, Signature, Soquet, SoquetT
+from qualtran import (
+    Bloq,
+    BloqBuilder,
+    BloqInstance,
+    ControlRegister,
+    Register,
+    Side,
+    Signature,
+    Soquet,
+    SoquetT,
+)
 from qualtran.cirq_interop.t_complexity_protocol import TComplexity
 from qualtran.drawing import directional_text_box, WireSymbol
 from qualtran.simulation.classical_sim import bits_to_ints, ints_to_bits
@@ -81,6 +91,17 @@ class Split(Bloq):
             )
         )
 
+    def add_controlled(
+        self,
+        bb: 'BloqBuilder',
+        creg: 'ControlRegister',
+        ctrl_soq: 'Soquet',
+        soqs: Dict[str, 'SoquetT'],
+    ):
+        # Ignore `ctrl_soq` and pass it through for bookkeeping operation.
+        new_out_soqs = bb.add_t(self, **soqs)
+        return ctrl_soq, new_out_soqs
+
     def wire_symbol(self, soq: 'Soquet') -> 'WireSymbol':
         if soq.reg.shape:
             text = f'[{", ".join(str(i) for i in soq.idx)}]'
@@ -131,6 +152,17 @@ class Join(Bloq):
 
     def on_classical_vals(self, join: 'NDArray[np.uint8]') -> Dict[str, int]:
         return {'join': bits_to_ints(join)[0]}
+
+    def add_controlled(
+        self,
+        bb: 'BloqBuilder',
+        creg: 'ControlRegister',
+        ctrl_soq: 'Soquet',
+        soqs: Dict[str, 'SoquetT'],
+    ):
+        # Ignore `ctrl_soq` and pass it through for bookkeeping operation.
+        new_out_soqs = bb.add_t(self, **soqs)
+        return ctrl_soq, new_out_soqs
 
     def wire_symbol(self, soq: 'Soquet') -> 'WireSymbol':
         if soq.reg.shape:

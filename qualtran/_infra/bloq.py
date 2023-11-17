@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     import sympy
     from numpy.typing import NDArray
 
-    from qualtran import BloqBuilder, CompositeBloq, Signature, Soquet, SoquetT
+    from qualtran import BloqBuilder, CompositeBloq, ControlRegister, Signature, Soquet, SoquetT
     from qualtran.cirq_interop import CirqQuregT
     from qualtran.cirq_interop.t_complexity_protocol import TComplexity
     from qualtran.drawing import WireSymbol
@@ -315,6 +315,27 @@ class Bloq(metaclass=abc.ABCMeta):
         """
         _, sigma = self.call_graph(generalizer=generalizer, max_depth=1)
         return sigma
+
+    def controlled(self, creg: Optional['ControlRegister'] = None):
+        from qualtran import ControlRegister
+        from qualtran.bloqs.controlled_bloq import ControlledBloq
+
+        if creg is None:
+            creg = ControlRegister("ctrl", 1)
+        return ControlledBloq(subbloq=self, creg=creg)
+
+    def add_controlled(
+        self,
+        bb: 'BloqBuilder',
+        creg: 'ControlRegister',
+        ctrl_soq: 'Soquet',
+        soqs: Dict[str, 'SoquetT'],
+    ):
+        from qualtran.bloqs.controlled_bloq import ControlledBloq
+
+        soqs[creg.name] = ctrl_soq
+        ctrl_soq, *new_out_soqs = bb.add_t(ControlledBloq(subbloq=self, creg=creg), **soqs)
+        return ctrl_soq, new_out_soqs
 
     def t_complexity(self) -> 'TComplexity':
         """The `TComplexity` for this bloq.

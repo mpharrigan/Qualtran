@@ -139,6 +139,16 @@ class SelectionRegister(Register):
             raise ValueError(f'iteration length must be in range [0, 2^{self.bitsize}]')
 
 
+@frozen
+class ControlRegister(Register):
+    name: str
+    bitsize: int
+    shape: Tuple[int, ...] = field(
+        default=tuple(), converter=lambda v: (v,) if isinstance(v, int) else tuple(v)
+    )
+    side: Side = Side.THRU
+
+
 def _dedupe(kv_iter: Iterable[Tuple[str, Register]]) -> Dict[str, Register]:
     """Construct a dictionary, but check that there are no duplicate keys."""
     # throw ValueError if duplicate keys are provided.
