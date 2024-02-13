@@ -24,7 +24,7 @@ from typing import Optional
 import attrs
 import sympy
 
-from qualtran import Bloq
+from qualtran import Adjoint, Bloq
 
 PHI = sympy.Symbol(r'\phi')
 CV = sympy.Symbol("cv")
@@ -32,9 +32,9 @@ CV = sympy.Symbol("cv")
 
 def ignore_split_join(b: Bloq) -> Optional[Bloq]:
     """A generalizer that ignores split and join operations."""
-    from qualtran.bloqs.util_bloqs import Join, Split
+    from qualtran.bloqs.util_bloqs import Join, Partition, Split
 
-    if isinstance(b, (Split, Join)):
+    if isinstance(b, (Split, Join, Partition)):
         return None
     return b
 
@@ -74,6 +74,9 @@ def ignore_cliffords(b: Bloq) -> Optional[Bloq]:
     """A generalizer that ignores known clifford bloqs."""
     from qualtran.bloqs.basic_gates import CNOT, Hadamard, TwoBitSwap, XGate, ZGate
     from qualtran.bloqs.util_bloqs import ArbitraryClifford
+
+    if isinstance(b, Adjoint):
+        b = b.subbloq
 
     if isinstance(b, (TwoBitSwap, Hadamard, XGate, ZGate, ArbitraryClifford, CNOT)):
         return None

@@ -317,7 +317,8 @@ class ChebyshevPolynomial(Bloq):
 def _black_box_prepare() -> BlackBoxPrepare:
     from qualtran.bloqs.hubbard_model import PrepareHubbard
 
-    prepare = PrepareHubbard(2, 2, 1, 4)
+    dim = 3
+    prepare = PrepareHubbard(dim, dim, 1, 4)
     black_box_prepare = BlackBoxPrepare(prepare=prepare)
     return black_box_prepare
 
