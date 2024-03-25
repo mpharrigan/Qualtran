@@ -384,11 +384,51 @@ class PrettyGraphDrawer(GraphDrawer):
             return ''
         return soq.pretty()
 
-    def get_default_text(self, reg: Register) -> str:
-        if reg.name == 'control':
-            return '\u2b24'
+    def cxn_edge(self, left_id: str, right_id: str, cxn: Connection) -> pydot.Edge:
+        return pydot.Edge(
+            left_id,
+            right_id,
+            label=self.cxn_label(cxn),
+            labelfloat=True,
+            fontsize=10,
+            arrowhead='dot',
+            arrowsize=0.25,
+        )
 
-        return reg.name
+class SkeletonGraphDrawer(GraphDrawer):
+    def __init__(self, bloq:Bloq, label:str='', dangle_label:str = '...'):
+        super().__init__(bloq=bloq)
+        self.label = label
+        self.dangle_label = dangle_label
+
+
+    def get_binst_table_attributes(self) -> str:
+        return 'BORDER="0" CELLBORDER="1" CELLSPACING="0"'
+
+    def get_binst_header_text(self, binst: BloqInstance):
+        from qualtran.bloqs.util_bloqs import Join, Split
+
+        if isinstance(binst.bloq, (Split, Join)):
+            return ''
+        return self.label
+        # return f'<font point-size="10">{html.escape(self.label)}</font>'
+
+    def get_dangle_node(self, soq: Soquet) -> pydot.Node:
+        """Overridable method to create a Node representing dangling Soquets."""
+        return pydot.Node(self.ids[soq], label=self.dangle_label, shape='plaintext')
+
+    def soq_label(self, soq: Soquet):
+        from qualtran.bloqs.util_bloqs import Join, Split
+
+        if isinstance(soq.binst, BloqInstance) and isinstance(soq.binst.bloq, (Split, Join)):
+            return ''
+
+        if soq.pretty():
+            return '\u00A0'
+        return ''
+
+    def cxn_label(self, cxn: Connection) -> str:
+        return ''
 
     def cxn_edge(self, left_id: str, right_id: str, cxn: Connection) -> pydot.Edge:
         return pydot.Edge(
@@ -400,6 +440,7 @@ class PrettyGraphDrawer(GraphDrawer):
             arrowhead='dot',
             arrowsize=0.25,
         )
+
 
 
 class TypedGraphDrawer(PrettyGraphDrawer):
