@@ -25,6 +25,7 @@ from .bloq_counts import (
     get_bloq_call_graph,
     print_counts_graph,
     build_cbloq_call_graph,
+    get_bloq_callee_counts,
 )
 
 from . import generalizers

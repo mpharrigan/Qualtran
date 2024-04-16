@@ -47,7 +47,7 @@ from qualtran._infra.gate_with_registers import (
 )
 from qualtran.bloqs.util_bloqs import Cast
 from qualtran.cirq_interop._interop_qubit_manager import InteropQubitManager
-from qualtran.cirq_interop.t_complexity_protocol import t_complexity, TComplexity
+from qualtran.cirq_interop.t_complexity_protocol import _from_directly_countable_cirq, TComplexity
 from qualtran.simulation.tensor._tensor_data_manipulation import (
     tensor_data_from_unitary_and_signature,
 )
@@ -116,7 +116,7 @@ class CirqGateAsBloqBase(GateWithRegisters, metaclass=abc.ABCMeta):
         )
 
     def _t_complexity_(self) -> 'TComplexity':
-        return t_complexity(self.cirq_gate)
+        return _from_directly_countable_cirq(self.cirq_gate)
 
     def as_cirq_op(
         self, qubit_manager: 'cirq.QubitManager', **in_quregs: 'CirqQuregT'

@@ -85,6 +85,16 @@ def _generalize_callees(
     return callee_counts
 
 
+def get_bloq_callee_counts(
+    bloq: 'Bloq', generalizer: 'GeneralizerT' = lambda b: b
+) -> List[BloqCountT]:
+    ssa = SympySymbolAllocator()  # FIXME
+    try:
+        return _generalize_callees(bloq.build_call_graph(ssa), generalizer)
+    except (DecomposeNotImplementedError, DecomposeTypeError):
+        return []
+
+
 def _build_call_graph(
     bloq: Bloq,
     generalizer: GeneralizerT,
@@ -116,12 +126,7 @@ def _build_call_graph(
         return
 
     # Prep for recursion: get the callees and modify them according to `generalizer`.
-    try:
-        callee_counts = _generalize_callees(bloq.build_call_graph(ssa), generalizer)
-    except (DecomposeNotImplementedError, DecomposeTypeError):
-        # Base case 3: Decomposition (or `bloq_counts`) is not implemented. This is left as a
-        #              leaf node.
-        return
+    callee_counts = get_bloq_callee_counts(bloq, generalizer)
 
     # Base case 3: Empty list of callees
     if not callee_counts:
