@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import logging
 from typing import List
 
 from numpy.typing import NDArray
@@ -19,7 +20,9 @@ from numpy.typing import NDArray
 from qualtran import Bloq, Signature, Soquet
 from qualtran._infra.composite_bloq import _get_flat_dangling_soqs
 
-from ._quimb import cbloq_to_quimb
+from ._quimb import _contract_with_instrumentation, cbloq_to_quimb
+
+logger = logging.getLogger(__name__)
 
 
 def get_right_and_left_inds(signature: Signature) -> List[List[Soquet]]:
@@ -53,14 +56,10 @@ def bloq_to_dense(bloq: Bloq) -> NDArray:
     a 2-dimensional matrix, we follow the quantum computing / matrix multiplication convention
     of (right, left) indices.
 
-    For more fine grained control over the final shape of the tensor, use
+    For more fine-grained control over the final shape of the tensor, use
     `cbloq_to_quimb` and `TensorNetwork.to_dense` directly.
     """
+    logging.info("Contracting a bloq %s", bloq)
     cbloq = bloq.as_composite_bloq()
-    tn, _ = cbloq_to_quimb(cbloq)
     inds = get_right_and_left_inds(cbloq.signature)
-
-    if inds:
-        return tn.to_dense(*inds)
-
-    return tn.contract()
+    return _contract_with_instrumentation(cbloq, inds)

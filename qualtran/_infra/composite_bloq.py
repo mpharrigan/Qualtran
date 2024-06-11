@@ -454,6 +454,9 @@ class CompositeBloq(Bloq):
         delimited_gens = ('\n' + '-' * 20 + '\n').join(gen_texts)
         return delimited_gens
 
+    def __str__(self):
+        return f'CompositeBloq([{len(self.bloq_instances)} subbloqs])'
+
 
 def _create_binst_graph(
     cxns: Iterable[Connection], nodes: Iterable[BloqInstance] = ()

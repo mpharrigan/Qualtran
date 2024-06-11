@@ -13,9 +13,16 @@
 #  limitations under the License.
 from qualtran.bloqs.basic_gates import CNOT
 from qualtran.bloqs.mcmt.and_bloq import MultiAnd
-from qualtran.simulation.tensor import bloq_has_custom_tensors
+from qualtran.bloqs.phase_estimation.lp_resource_state import LPResourceState
+from qualtran.simulation.tensor import bloq_has_custom_tensors, flatten_for_tensor_contraction
 
 
 def test_bloq_has_custom_tensors():
     assert bloq_has_custom_tensors(CNOT())
     assert not bloq_has_custom_tensors(MultiAnd((1,) * 5))
+
+
+def test_flatten_lp_resource_state():
+    lp = LPResourceState(10)
+    ret = flatten_for_tensor_contraction(lp)
+    assert len(ret.connections) == 134

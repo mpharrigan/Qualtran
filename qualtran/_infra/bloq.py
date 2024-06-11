@@ -43,6 +43,10 @@ if TYPE_CHECKING:
     from qualtran.resource_counting import BloqCountT, CostKey, GeneralizerT, SympySymbolAllocator
     from qualtran.simulation.classical_sim import ClassicalValT
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def _decompose_from_build_composite_bloq(bloq: 'Bloq') -> 'CompositeBloq':
     from qualtran import BloqBuilder
@@ -273,6 +277,8 @@ class Bloq(metaclass=abc.ABCMeta):
                 the tensor network.
         """
         from qualtran.simulation.tensor import cbloq_as_contracted_tensor
+
+        logger.info("Deriving tensors for %s from decomposition", self)
 
         cbloq = self.decompose_bloq()
         tn.add(

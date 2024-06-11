@@ -12,6 +12,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import itertools
+import logging
+import time
 from typing import Dict, Optional, Set, Tuple
 
 import numpy as np
@@ -33,6 +35,8 @@ from qualtran._infra.composite_bloq import (
     _flatten_soquet_collection,
     _get_flat_dangling_soqs,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def cbloq_to_quimb(
@@ -56,6 +60,10 @@ def cbloq_to_quimb(
     """
     tn = qtn.TensorNetwork([])
     fix = {}
+
+    logging.info(
+        "Constructing a tensor network for composite bloq of size %d", len(cbloq.bloq_instances)
+    )
 
     def _assign_outgoing(cxn: Connection) -> Soquet:
         """Logic for naming outgoing indices in quimb-land.
@@ -102,16 +110,42 @@ def cbloq_to_quimb(
 
     # Special case: Add variables corresponding to all registers that don't connect to any Bloq.
     # This is needed because `CompositeBloq.iter_bloqnections` ignores `LeftDangle/RightDangle`
-    # bloqs and therefore we never see connections the exist only b/w LeftDangle and
+    # bloqs and therefore we never see connections that exist only b/w LeftDangle and
     # RightDangle bloqs.
     for cxn in cbloq.connections:
         if cxn.left.binst is LeftDangle and cxn.right.binst is RightDangle:
-            # This register has no Bloq acting  on it, and thus it would not have a variable in the
+            # This register has no Bloq acting  on it, and thus it would not have a variable in
             # the tensor network. Add an identity tensor acting on this register to make sure the
             # tensor network has variables corresponding to all input / output registers.
             tn.add(qtn.Tensor(data=np.eye(2**cxn.left.reg.bitsize), inds=[cxn.right, cxn.left]))
 
     return tn, fix
+
+
+def _contract_with_instrumentation(cbloq: CompositeBloq, inds, optimize='auto-hq'):
+    start = time.perf_counter()
+    tn, _ = cbloq_to_quimb(cbloq)
+    tn.rank_simplify(inplace=True)
+    tn.diagonal_reduce(inplace=True)
+    done_construct_tn = time.perf_counter()
+    cwidth = tn.contraction_width(optimize=optimize)
+    done_path_finding = time.perf_counter()
+    if inds:
+        data = tn.to_dense(*inds, optimize=optimize)
+    else:
+        data = tn.contract(optimize=optimize)
+    done_contracting = time.perf_counter()
+
+    logger.info(
+        "Tensor network took %.2g to create, %.2g to find a contraction path, "
+        "%.2g to contract with maximum width %.1f",
+        done_construct_tn - start,
+        done_path_finding - done_construct_tn,
+        done_contracting - done_path_finding,
+        cwidth,
+    )
+
+    return data
 
 
 def cbloq_as_contracted_tensor(
@@ -132,8 +166,7 @@ def cbloq_as_contracted_tensor(
     lsoqs = _get_flat_dangling_soqs(signature, right=False)
     inds_for_contract = rsoqs + lsoqs
     assert len(inds_for_contract) > 0
-    tn, _ = cbloq_to_quimb(cbloq)
-    data = tn.to_dense(*([x] for x in inds_for_contract))
+    data = _contract_with_instrumentation(cbloq, ([x] for x in inds_for_contract))
     assert data.ndim == len(inds_for_contract)
 
     # Now we just need to make sure the Soquets provided to us are in the correct
