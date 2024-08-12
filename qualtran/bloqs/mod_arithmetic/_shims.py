@@ -22,19 +22,89 @@ and moved to their final organizational location soon (written: 2024-05-06).
 
 from collections import defaultdict
 from functools import cached_property
-from typing import Dict, Optional, Set, Tuple, TYPE_CHECKING
+from typing import Dict, Optional, Set, Tuple, TYPE_CHECKING, Union
 
+import sympy
 from attrs import frozen
 
 from qualtran import Bloq, QBit, QUInt, Register, Signature
 from qualtran.bloqs.arithmetic import Add, AddK, Negate, Subtract
 from qualtran.bloqs.arithmetic._shims import CHalf, Lt, MultiCToffoli
 from qualtran.bloqs.basic_gates import CNOT, CSwap, Swap, Toffoli
+from qualtran.bloqs.mod_arithmetic.mod_addition import ModAddK
 from qualtran.drawing import Circle, Text, TextBox, WireSymbol
+from qualtran.simulation.classical_sim import ClassicalValT
 from qualtran.symbolics import ceil, log2
 
 if TYPE_CHECKING:
     from qualtran.resource_counting import BloqCountT, SympySymbolAllocator
+
+
+@frozen
+class ModSubK(Bloq):
+    n: int
+    k: int
+    mod: int
+
+    @cached_property
+    def signature(self) -> 'Signature':
+        return Signature([Register('x', QUInt(self.n))])
+
+    def build_call_graph(self, ssa: 'SympySymbolAllocator') -> Set['BloqCountT']:
+        # Roetteler
+        # return {(Toffoli(), 16 * self.n * log2(self.n) - 26.9 * self.n)}
+
+        return ModAddK(bitsize=self.n, add_val=self.k, mod=self.mod).build_call_graph(ssa)
+
+    def wire_symbol(
+        self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()
+    ) -> 'WireSymbol':
+        if reg is None:
+            return Text('')
+        if reg.name == 'x':
+            return TextBox(f'-{self.k}')
+
+    def __str__(self):
+        return self.__class__.__name__
+
+    def on_classical_vals(
+        self, x: Union['sympy.Symbol', 'ClassicalValT']
+    ) -> Dict[str, 'ClassicalValT']:
+        return {'x': (x - self.k) % self.mod}
+
+
+@frozen
+class CModSubK(Bloq):
+    n: int
+    k: int
+    mod: int
+
+    @cached_property
+    def signature(self) -> 'Signature':
+        return Signature([Register('ctrl', QBit()), Register('x', QUInt(self.n))])
+
+    def build_call_graph(self, ssa: 'SympySymbolAllocator') -> Set['BloqCountT']:
+        # Roetteler
+        return {(Toffoli(), 16 * self.n * log2(self.n) - 26.9 * self.n)}
+
+    def on_classical_vals(self, ctrl: int, x: int) -> Dict[str, 'ClassicalValT']:
+        if ctrl == 0:
+            return {'ctrl': ctrl, 'x': x}
+
+        return {'ctrl': ctrl, 'x': (x - self.k) % self.mod}
+
+    def wire_symbol(
+        self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()
+    ) -> 'WireSymbol':
+        if reg is None:
+            return Text('')
+        if reg.name == 'ctrl':
+            return Circle()
+        elif reg.name == 'x':
+            return TextBox(f'-{self.k}')
+
+    def __str__(self):
+        return self.__class__.__name__
 
 
 @frozen
@@ -61,6 +131,13 @@ class CModSub(Bloq):
     def build_call_graph(self, ssa: 'SympySymbolAllocator') -> Set['BloqCountT']:
         # Roetteler
         return {(Toffoli(), ceil(16 * self.n * log2(self.n) - 23.8 * self.n))}
+
+    def on_classical_vals(self, ctrl, x, y) -> Dict[str, 'ClassicalValT']:
+        if ctrl == 0:
+            return {'ctrl': ctrl, 'x': x, 'y': y}
+
+        # TODO: weird
+        return {'ctrl': ctrl, 'x': (x - y) % self.mod, 'y': y}
 
     def wire_symbol(
         self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()
@@ -154,6 +231,12 @@ class ModInv(Bloq):
             (Swap(self.n), 1),
         }
 
+    def on_classical_vals(self, x: int, out: int) -> Dict[str, 'ClassicalValT']:
+
+        res = pow(x, -1, self.mod)
+        out = (out + res) % 2
+        return {'x': x, 'out': out}
+
     def wire_symbol(
         self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()
     ) -> 'WireSymbol':
@@ -184,6 +267,10 @@ class ModMul(Bloq):
     def build_call_graph(self, ssa: 'SympySymbolAllocator') -> Set['BloqCountT']:
         # Roetteler montgomery
         return {(Toffoli(), ceil(16 * self.n**2 * log2(self.n) - 26.3 * self.n**2))}
+
+    def on_classical_vals(self, x, y, out) -> Dict[str, 'ClassicalValT']:
+        res = (x * y) % self.mod
+        return {'x': x, 'y': y, 'out': (out + res) % 2}
 
     def wire_symbol(
         self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()
@@ -219,6 +306,38 @@ class ModDbl(Bloq):
         elif reg.name == 'out':
             return TextBox('$2x$')
         raise ValueError(f'Unrecognized register name {reg.name}')
+
+
+@frozen
+class ModSq(Bloq):
+    n: int
+    mod: int
+
+    @cached_property
+    def signature(self) -> 'Signature':
+        return Signature([Register('x', QUInt(self.n)), Register('out', QUInt(self.n))])
+
+    def build_call_graph(self, ssa: 'SympySymbolAllocator') -> Set['BloqCountT']:
+        # Roetteler montgomery
+        return {(Toffoli(), 16 * self.n**2 * log2(self.n) - 26.3 * self.n**2)}
+
+    def on_classical_vals(self, x, out) -> Dict[str, 'ClassicalValT']:
+        res = x * x % self.mod
+        out = (out + res) % 2
+        return {'x': x, 'out': out}
+
+    def wire_symbol(
+        self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()
+    ) -> 'WireSymbol':
+        if reg is None:
+            return Text('')
+        if reg.name == 'x':
+            return TextBox('x')
+        elif reg.name == 'out':
+            return TextBox('$x^2$')
+
+    def __str__(self):
+        return self.__class__.__name__
 
 
 @frozen
@@ -260,6 +379,12 @@ class CModNeg(Bloq):
     def build_call_graph(self, ssa: 'SympySymbolAllocator') -> Set['BloqCountT']:
         # Roetteler
         return {(Toffoli(), ceil(8 * self.n * log2(self.n) - 14.5 * self.n))}
+
+    def on_classical_vals(self, ctrl, x) -> Dict[str, 'ClassicalValT']:
+        if ctrl == 0:
+            return {'ctrl': ctrl, 'x': x}
+
+        return {'ctrl': ctrl, 'x': (-x) % self.mod}
 
     def wire_symbol(
         self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()

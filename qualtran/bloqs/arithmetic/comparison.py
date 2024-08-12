@@ -749,8 +749,8 @@ class LinearDepthGreaterThan(Bloq):
     def build_composite_bloq(
         self, bb: 'BloqBuilder', a: Soquet, b: Soquet, target: SoquetT
     ) -> Dict[str, 'SoquetT']:
-        if not isinstance(self.bitsize, int):
-            raise NotImplementedError(f'symbolic decomposition is not supported for {self}')
+        if is_symbolic(self.bitsize):
+            raise DecomposeTypeError(f'Symbolic decomposition is not supported for {self}')
 
         # Base Case: Comparing two qubits.
         # Signed doesn't matter because we can't represent signed integers with 1 qubit.

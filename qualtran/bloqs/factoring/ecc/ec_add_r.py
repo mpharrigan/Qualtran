@@ -13,16 +13,80 @@
 #  limitations under the License.
 
 from functools import cached_property
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Type
 
 import sympy
 from attrs import frozen
 
-from qualtran import Bloq, bloq_example, BloqDocSpec, QBit, QUInt, Register, Signature
+from qualtran import (
+    Bloq,
+    bloq_example,
+    BloqBuilder,
+    BloqDocSpec,
+    QBit,
+    QUInt,
+    Register,
+    Signature,
+    Soquet,
+    SoquetT,
+)
+from qualtran.bloqs.mod_arithmetic import CModAddK, ModAddK
+from qualtran.bloqs.mod_arithmetic._shims import (
+    CModNeg,
+    CModSub,
+    CModSubK,
+    ModInv,
+    ModMul,
+    ModSq,
+    ModSubK,
+)
 from qualtran.drawing import Circle, Text, TextBox, WireSymbol
 from qualtran.simulation.classical_sim import ClassicalValT
-
+from ._ecc_shims import SimpleQROM
+from .ec_add import ECAdd
 from .ec_point import ECPoint
+
+
+class configure_bloq:
+    def __init__(self, bb, bloq_cls, **ctor_args):
+        self.bb = bb
+        self.bloq_cls = bloq_cls
+        self.ctor_args = ctor_args
+
+    def __call__(self, **kwargs):
+        ctor_args = self.ctor_args | kwargs
+        bloq = self.bloq_cls(**ctor_args)
+
+        def bb_add(**in_soqs):
+            return self.bb.add(bloq=bloq, **in_soqs)
+
+        return bb_add
+
+
+def cfg(bb: BloqBuilder, bloq_cls: Type[Bloq], **ctor_args):
+    def _inner(**kwargs):
+        all_ctor_args = ctor_args | kwargs
+        bloq = bloq_cls(**all_ctor_args)
+
+        def bb_add(**in_soqs):
+            return bb.add(bloq=bloq, **in_soqs)
+
+        return bb_add
+
+    return _inner
+
+
+@frozen
+class AssertZero(Bloq):
+    n: int
+
+    @property
+    def signature(self) -> 'Signature':
+        return Signature.build(reg=self.n)
+
+    def on_classical_vals(self, reg) -> Dict[str, 'ClassicalValT']:
+        assert sympy.simplify(reg) == 0, reg
+        return {'reg': reg}
 
 
 @frozen
@@ -67,7 +131,54 @@ class ECAddR(Bloq):
             [Register('ctrl', QBit()), Register('x', QUInt(self.n)), Register('y', QUInt(self.n))]
         )
 
-    def on_classical_vals(self, ctrl, x, y) -> Dict[str, Union['ClassicalValT', sympy.Expr]]:
+    def build_composite_bloq(
+        self, bb: 'BloqBuilder', ctrl: Soquet, x: Soquet, y: Soquet
+    ) -> Dict[str, 'SoquetT']:
+        # Set up some aliases: we always use the same `n` and `mod=p`.
+        n = self.n
+        p = self.R.mod
+        mModSubK = cfg(bb, ModSubK, n=n, mod=p)
+        mCModSubK = configure_bloq(bb, CModSubK, n=n, mod=p)
+        mModInv = configure_bloq(bb, ModInv, n=n, mod=p)
+        mModMul = configure_bloq(bb, ModMul, n=n, mod=p)
+        mModSq = configure_bloq(bb, ModSq, n=n, mod=p)
+        mCModSub = configure_bloq(bb, CModSub, n=n, mod=p)
+
+        mCModAddK = configure_bloq(bb, CModAddK, bitsize=n, mod=p)
+        mCModNeg = configure_bloq(bb, CModNeg, n=n, mod=p)
+        mModAddK = configure_bloq(bb, ModAddK, bitsize=n, mod=p)
+
+        x = mModSubK(k=self.R.x)(x=x)
+        ctrl, y = mCModSubK(k=self.R.y)(ctrl=ctrl, x=y)
+        tmp = bb.allocate(self.n)
+        x, tmp = mModInv()(x=x, out=tmp)
+        lam = bb.allocate(self.n)
+        y, tmp, lam = mModMul()(x=y, y=tmp, out=lam)
+        lam, x, y = mModMul()(x=lam, y=x, out=y)  # Zero out `y`
+        y = bb.add(AssertZero(self.n), reg=y)
+        x, tmp = mModInv()(x=x, out=tmp)  # zero out `tmp`
+        tmp = bb.add(AssertZero(self.n), reg=tmp)
+        lam, tmp = mModSq()(x=lam, out=tmp)
+
+        # FIXME! need to do x-tmp and put in x
+        ctrl, x, tmp = mCModSub()(ctrl=ctrl, x=x, y=tmp)
+
+        ctrl, x = mCModAddK(k=3 * self.R.x)(ctrl=ctrl, x=x)
+        lam, tmp = mModSq()(x=lam, out=tmp)
+        tmp = bb.add(AssertZero(self.n), reg=tmp)
+        lam, x, y = mModMul()(x=lam, y=x, out=y)
+        x, tmp = mModInv()(x=x, out=tmp)
+        y, tmp, lam = mModMul()(x=y, y=tmp, out=lam)  # zero out `lam`
+        bb.free(lam)
+        x, tmp = mModInv()(x=x, out=tmp)  # zero out `tmp`
+        bb.free(tmp)
+        ctrl, x = mCModNeg()(ctrl=ctrl, x=x)
+        x = mModAddK(add_val=self.R.x)(x=x)
+        ctrl, y = mCModSubK(k=self.R.y)(ctrl=ctrl, x=y)
+
+        return {'ctrl': ctrl, 'x': x, 'y': y}
+
+    def on_classical_vals(self, ctrl, x, y) -> Dict[str, 'ClassicalValT']:
         if ctrl == 0:
             return {'ctrl': ctrl, 'x': x, 'y': y}
 
@@ -139,6 +250,31 @@ class ECWindowAddR(Bloq):
                 Register('y', QUInt(self.n)),
             ]
         )
+
+    @cached_property
+    def lookup_bloq(self) -> SimpleQROM:
+        return SimpleQROM(
+            selection_bitsize=self.window_size,
+            targets=[('a', self.n), ('b', self.n), ('lam', self.n)],
+        )
+
+    def build_composite_bloq(
+        self, bb: 'BloqBuilder', ctrl: 'SoquetT', x: Soquet, y: Soquet
+    ) -> Dict[str, 'SoquetT']:
+        ctrl = bb.join(ctrl)
+        a = bb.allocate(dtype=QUInt(self.n))
+        b = bb.allocate(dtype=QUInt(self.n))
+        lam = bb.allocate(dtype=QUInt(self.n))
+
+        mod = self.R.mod
+        ctrl, a, b, lam = bb.add(self.lookup_bloq, selection=ctrl, a=a, b=b, lam=lam)
+        a, b, x, y, lam = bb.add(ECAdd(n=self.n, mod=mod), a=a, b=b, x=x, y=y, lam=lam)
+        ctrl, a, b, lam = bb.add(self.lookup_bloq.adjoint(), selection=ctrl, a=a, b=b, lam=lam)
+        bb.free(a)
+        bb.free(b)
+        bb.free(lam)
+
+        return {'ctrl': bb.split(ctrl), 'x': x, 'y': y}
 
     def wire_symbol(
         self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()

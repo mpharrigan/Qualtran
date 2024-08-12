@@ -13,16 +13,20 @@
 #  limitations under the License.
 
 from functools import cached_property
-from typing import Dict, Optional, Set, Tuple, TYPE_CHECKING, Union
+from typing import Dict, Iterable, Optional, Sequence, Set, Tuple, TYPE_CHECKING, Union
 
+import attrs
 import numpy as np
 import sympy
 from attrs import field, frozen
 
 from qualtran import (
+    AddControlledT,
     Bloq,
     bloq_example,
     BloqDocSpec,
+    CtrlSpec,
+    DecomposeTypeError,
     GateWithRegisters,
     QBit,
     QMontgomeryUInt,
@@ -86,7 +90,7 @@ class ModAdd(Bloq):
 
     def build_composite_bloq(self, bb: 'BloqBuilder', x: Soquet, y: Soquet) -> Dict[str, 'SoquetT']:
         if is_symbolic(self.bitsize):
-            raise NotImplementedError(f'symbolic decomposition is not supported for {self}')
+            raise DecomposeTypeError(f'Symbolic decomposition is not supported for {self}')
         # Allocate ancilla bits for use in addition.
         junk_bit = bb.allocate(n=1)
         sign = bb.allocate(n=1)
@@ -223,11 +227,45 @@ class ModAddK(GateWithRegisters):
         assert ctrl is None
         return {'x': out}
 
+    # def get_ctrl_system(self, ctrl_spec: 'CtrlSpec') -> Tuple['Bloq', 'AddControlledT']:
+    #     if len(self.cvs) > 0:
+    #         return super().get_ctrl_system(ctrl_spec)
+    #     if len(ctrl_spec.qdtypes) != 1:
+    #         return super().get_ctrl_system(ctrl_spec)
+    #     if ctrl_spec.qdtypes[0] != QBit():
+    #         return super().get_ctrl_system(ctrl_spec)
+    #
+    #     cvs = tuple(np.asarray(ctrl_spec.cvs))
+    #     bloq = attrs.evolve(self, cvs=cvs)
+    #     def _add_ctrl( bb: 'BloqBuilder', ctrl_soqs: Sequence['SoquetT'], in_soqs: Dict[str, 'SoquetT']
+    #         ) -> Tuple[Iterable['SoquetT'], Iterable['SoquetT']]:
+    #
+    #         ctrl_soq, = ctrl_soqs
+    #         ctrl_soq, x = bb.add(bloq, ctrl=ctrl_soq, x=in_soqs['x'])
+    #         return (ctrl_soq,), (x,)
+    #
+    #     return bloq, _add_ctrl
+
     def __pow__(self, power: int) -> 'ModAddK':
         return ModAddK(self.bitsize, self.mod, add_val=self.add_val * power, cvs=self.cvs)
 
     def build_call_graph(self, ssa: 'SympySymbolAllocator') -> Set['BloqCountT']:
         return {(Add(QUInt(self.bitsize), QUInt(self.bitsize)), 5)}
+
+    def wire_symbol(self, reg: Optional[Register], idx: Tuple[int, ...] = tuple()) -> 'WireSymbol':
+        if reg is None:
+            return Text('')
+        if reg.name == 'ctrl':
+            return Circle(filled=self.cvs[idx])
+        if reg.name == 'x':
+            return TextBox(f'+{self.add_val}')
+
+    # def __str__(self):
+    #     if self.cvs:
+    #         ctrl_str = 'C'
+    #     else:
+    #         ctrl_str = ''
+    #     return f'{ctrl_str}ModAddK({self.add_val})'
 
 
 @bloq_example
