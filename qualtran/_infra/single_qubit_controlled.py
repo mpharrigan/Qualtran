@@ -25,12 +25,30 @@ if TYPE_CHECKING:
     from qualtran import AddControlledT, BloqBuilder, SoquetT
 
 
-class SpecializedSingleQubitControlledExtension(Bloq):
-    """Add a specialized single-qubit controlled version of a Bloq.
+def get_single_reg_ctrl_system(
+    ctrl_bloq: 'Bloq', ctrl_reg_name: str
+) -> Tuple['Bloq', 'AddControlledT']:
+    def adder(
+        bb: 'BloqBuilder', ctrl_soqs: Sequence['SoquetT'], in_soqs: dict[str, 'SoquetT']
+    ) -> tuple[Iterable['SoquetT'], Iterable['SoquetT']]:
+        (ctrl_soq,) = ctrl_soqs
+        soqs = {ctrl_reg_name: ctrl_soq} | in_soqs
+        soqs = bb.add_d(ctrl_bloq, **soqs)
+        ctrl_soqs = [soqs.pop(ctrl_reg_name)]
+        return ctrl_soqs, soqs.values()
 
-    `control_val` is an optional single-bit control. When `control_val` is provided,
-     the `control_registers` property should return a single named qubit register,
-     and otherwise return an empty tuple.
+    return ctrl_bloq, adder
+
+
+class SpecializedSingleQubitControlledExtension(Bloq):
+    """A bloq with a specialized single-qubit controlled version.
+
+    Bloq authors can inherit from this class to provide a specialized version of the
+    construction that handles 0 or 1 bits of control.
+
+    The implementing class must have an attribute `control_val` which configures the single-bit
+    control. When `control_val` is not None, the `control_registers` property should return a
+    single named qubit register, and otherwise return an empty tuple.
 
     Example usage:
 
@@ -41,9 +59,32 @@ class SpecializedSingleQubitControlledExtension(Bloq):
             @property
             def control_registers() -> Tuple[Register, ...]:
                 return () if self.control_val is None else (Register('control', QBit()),)
+
+    Alternatively, bloq authors can use the static methods on this class to manually configure
+    a control system without using inheritance.
     """
 
     control_val: Optional[int]
+
+    @staticmethod
+    def ctrl_system_helper(
+        ctrl_bloq: 'Bloq', ctrl_reg_name: str
+    ) -> Tuple['Bloq', 'AddControlledT']:
+        """A static method for helping explicitly write your own `get_ctrl_system`.
+
+        Bloq authors can set up a controlled version of the bloq with a known control register
+        name, and use this function to easily return the callable required by `get_ctrl_system`.
+
+        Args:
+            ctrl_bloq: The controlled version of the bloq
+            ctrl_reg_name: The name of the new register that takes a control soquet.
+
+        Returns:
+            ctrl_bloq: The control bloq, per the `Bloq.get_ctrl_system` interface.
+            add_controlled: A function that adds the controlled version of the bloq to
+                a composite bloq that is being built, per the `Bloq.get_ctrl_system` interface.
+        """
+        return get_single_reg_ctrl_system(ctrl_bloq, ctrl_reg_name)
 
     @property
     @abc.abstractmethod
@@ -58,21 +99,14 @@ class SpecializedSingleQubitControlledExtension(Bloq):
     def get_ctrl_system(self, ctrl_spec: 'CtrlSpec') -> Tuple['Bloq', 'AddControlledT']:
         if self.control_val is None and ctrl_spec.shapes in [((),), ((1,),)]:
             control_val = int(ctrl_spec.cvs[0].item())
-            cbloq = self.get_single_qubit_controlled_bloq(control_val)
+            ctrl_bloq = self.get_single_qubit_controlled_bloq(control_val)
 
-            if not hasattr(cbloq, 'control_registers'):
-                raise TypeError("{cbloq} should have attribute `control_registers`")
+            if not hasattr(ctrl_bloq, 'control_registers'):
+                raise TypeError(f"{ctrl_bloq} should have attribute `control_registers`")
 
-            (ctrl_reg,) = cbloq.control_registers
-
-            def adder(
-                bb: 'BloqBuilder', ctrl_soqs: Sequence['SoquetT'], in_soqs: dict[str, 'SoquetT']
-            ) -> tuple[Iterable['SoquetT'], Iterable['SoquetT']]:
-                soqs = {ctrl_reg.name: ctrl_soqs[0]} | in_soqs
-                soqs = bb.add_d(cbloq, **soqs)
-                ctrl_soqs = [soqs.pop(ctrl_reg.name)]
-                return ctrl_soqs, soqs.values()
-
-            return cbloq, adder
+            (ctrl_reg,) = ctrl_bloq.control_registers
+            return SpecializedSingleQubitControlledExtension.ctrl_system_helper(
+                ctrl_bloq=ctrl_bloq, ctrl_reg_name=ctrl_reg.name
+            )
 
         return super().get_ctrl_system(ctrl_spec)
