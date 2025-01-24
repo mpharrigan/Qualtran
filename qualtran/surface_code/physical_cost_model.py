@@ -124,12 +124,16 @@ class PhysicalCostModel:
         n_cycles, n_phys_q, error = self._get_physical_cost_base_quantities(algo_summary)
         return n_cycles
 
-    def duration_hr(self, algo_summary: 'AlgorithmSummary'):
-        """The duration in hours required to execute the algorithm."""
+    def duration_s(self, algo_summary: 'AlgorithmSummary'):
+        """The duration in seconds required to execute the algorithm."""
         n_cycles = self.n_cycles(algo_summary)
         cycle_time_us = self.physical_params.cycle_time_us
-        duration_hr = (cycle_time_us * n_cycles) / (1_000_000 * 60 * 60)
-        return duration_hr
+        duration_s = (cycle_time_us * n_cycles) / (1_000_000)
+        return duration_s
+
+    def duration_hr(self, algo_summary: 'AlgorithmSummary'):
+        """The duration in hours required to execute the algorithm."""
+        return self.duration_s(algo_summary) / (60 * 60)
 
     def n_phys_qubits(self, algo_summary: 'AlgorithmSummary') -> int:
         """The number of physical qubits required to execute the algorithm"""

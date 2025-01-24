@@ -78,7 +78,7 @@ class DataBlock(metaclass=abc.ABCMeta):
 
         One surface code step is `data_d` cycles of error correction.
 
-        DataBlock imlpementation must override this method. This method is used by
+        DataBlock implementation must override this method. This method is used by
         `self.n_cycles` to report the total number of cycles required.
         """
 
