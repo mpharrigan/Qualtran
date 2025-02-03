@@ -24,6 +24,7 @@ from qualtran import (
     bloq_example,
     BloqBuilder,
     BloqDocSpec,
+    CBit,
     ConnectionT,
     CtrlSpec,
     QBit,
@@ -263,3 +264,22 @@ class XGate(Bloq):
             return Text('X')
 
         return ModPlus()
+
+
+@frozen
+class MeasX(Bloq):
+    @cached_property
+    def signature(self) -> 'Signature':
+        return Signature(
+            [Register('q', QBit(), side=Side.LEFT), Register('c', CBit(), side=Side.RIGHT)]
+        )
+
+    def on_classical_vals(self, q: int) -> Dict[str, 'ClassicalValT']:
+        if q == 0:
+            return np.random.choice([0, 1])
+        if q == 1:
+            result = np.random.choice([0, 1])
+            if result == 1:
+                do_a_big_phasey()
+            return result
+        raise ValueError(f"Invalid classical value encountered in {self}: {q}")

@@ -52,13 +52,14 @@ from ._infra.composite_bloq import (
 
 from ._infra.data_types import (
     QDType,
-    QInt,
-    QBit,
     QAny,
-    QFxp,
+    QBit,
+    CBit,
+    QInt,
     QIntOnesComp,
     QUInt,
     BQUInt,
+    QFxp,
     QMontgomeryUInt,
     QGF,
 )

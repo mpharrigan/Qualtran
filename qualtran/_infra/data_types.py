@@ -180,10 +180,54 @@ class QBit(QDType):
 
 
 @attrs.frozen
+class CBit(QDType):
+    @property
+    def num_qubits(self) -> int:
+        return 0
+
+    @property
+    def num_cbits(self) -> int:
+        return 1
+
+    def get_classical_domain(self) -> Iterable[int]:
+        yield from (0, 1)
+
+    def assert_valid_classical_val(self, val: int, debug_str: str = 'val'):
+        if not (val == 0 or val == 1):
+            raise ValueError(f"Bad {self} value {val} in {debug_str}")
+
+    def is_symbolic(self) -> bool:
+        return False
+
+    def to_bits(self, x) -> List[int]:
+        """Yields individual bits corresponding to binary representation of x"""
+        self.assert_valid_classical_val(x)
+        return [int(x)]
+
+    def from_bits(self, bits: Sequence[int]) -> int:
+        """Combine individual bits to form x"""
+        assert len(bits) == 1
+        return bits[0]
+
+    def assert_valid_classical_val_array(
+        self, val_array: NDArray[np.integer], debug_str: str = 'val'
+    ):
+        if not np.all((val_array == 0) | (val_array == 1)):
+            raise ValueError(f"Bad {self} value array in {debug_str}")
+
+
+@attrs.frozen
 class QAny(QDType):
     """Opaque bag-of-qubits type."""
 
     bitsize: SymbolicInt
+
+    def __attrs_post_init__(self):
+        if is_symbolic(self.bitsize):
+            return
+
+        if not isinstance(self.bitsize, int):
+            raise ValueError()
 
     @property
     def num_qubits(self):

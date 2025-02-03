@@ -12,8 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-from typing import cast, Dict, Iterable
+from typing import Any, cast, Dict, Iterable, Tuple
 
+import attrs
 import numpy as np
 import quimb.tensor as qtn
 
@@ -57,6 +58,11 @@ def cbloq_to_quimb(cbloq: CompositeBloq) -> qtn.TensorNetwork:
         out_d = _cxns_to_cxn_dict(bloq.signature.rights(), succ_cxns, get_me=lambda cxn: cxn.left)
 
         for tensor in bloq.my_tensors(inc_d, out_d):
+            if isinstance(tensor, DiscardInd):
+                # TODO finish error message
+                raise ValueError(
+                    f"During tensor simulation, {bloq} tried to discard information. This requires using TODO-open-system-sim-func"
+                )
             tn.add(tensor)
 
     # Special case: Add variables corresponding to all registers that don't connect to any Bloq.
@@ -69,9 +75,7 @@ def cbloq_to_quimb(cbloq: CompositeBloq) -> qtn.TensorNetwork:
             # the tensor network. Add an identity tensor acting on this register to make sure the
             # tensor network has variables corresponding to all input / output registers.
 
-            n = cxn.left.reg.bitsize
             for j in range(cxn.left.reg.bitsize):
-
                 placeholder = Soquet(None, Register('simulation_placeholder', QBit()))  # type: ignore
                 Connection(cxn.left, placeholder)
                 tn.add(
@@ -83,6 +87,65 @@ def cbloq_to_quimb(cbloq: CompositeBloq) -> qtn.TensorNetwork:
                         ],
                     )
                 )
+
+    return tn
+
+
+@attrs.frozen
+class DiscardInd:
+    ind_tuple: Tuple[str, int]
+
+
+def make_forward_tensor(t: qtn.Tensor):
+    new_inds = [(*ind, True) for ind in t.inds]
+
+    t2 = t.copy()
+    t2.modify(inds=new_inds)
+    return t2
+
+
+def make_backward_tensor(t: qtn.Tensor):
+    new_inds = []
+    for ind in t.inds:
+        new_inds.append((*ind, False))
+
+    t2 = t.H
+    t2.modify(inds=new_inds)
+    return t2
+
+
+def cbloq_to_superquimb(cbloq: CompositeBloq) -> qtn.TensorNetwork:
+    """Convert a composite bloq into a tensor network.
+
+    This function will call `Bloq.my_tensors` on each subbloq in the composite bloq to add
+    tensors to a quimb tensor network. This method has no default fallback, so you likely want to
+    call `bloq.as_composite_bloq().flatten()` to decompose-and-flatten all bloqs down to their
+    smallest form first. The small bloqs that result from a flattening 1) likely already have
+    their `my_tensors` method implemented; and 2) can enable a more efficient tensor contraction
+    path.
+    """
+    tn = qtn.TensorNetwork([])
+
+    logging.info(
+        "Constructing a tensor network for composite bloq of size %d", len(cbloq.bloq_instances)
+    )
+
+    for binst, pred_cxns, succ_cxns in cbloq.iter_bloqnections():
+        bloq = binst.bloq
+        assert isinstance(bloq, Bloq)
+
+        inc_d = _cxns_to_cxn_dict(bloq.signature.lefts(), pred_cxns, get_me=lambda cxn: cxn.right)
+        out_d = _cxns_to_cxn_dict(bloq.signature.rights(), succ_cxns, get_me=lambda cxn: cxn.left)
+
+        for tensor in bloq.my_tensors(inc_d, out_d):
+            if isinstance(tensor, DiscardInd):
+                dind = tensor.ind_tuple
+                tn.reindex({(*dind, True): dind, (*dind, False): dind}, inplace=True)
+            else:
+                forward_tensor = make_forward_tensor(tensor)
+                backward_tensor = make_backward_tensor(tensor)
+                tn.add(forward_tensor)
+                tn.add(backward_tensor)
 
     return tn
 

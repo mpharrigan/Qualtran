@@ -61,6 +61,9 @@ class Cast(_BookkeepingBloq):
     )
 
     def __attrs_post_init__(self):
+        # TODO: fix classical casting
+        return
+
         if isinstance(self.inp_dtype.num_qubits, int):
             if self.inp_dtype.num_qubits != self.out_dtype.num_qubits:
                 raise ValueError("Casting only permitted between same sized registers.")
@@ -89,7 +92,8 @@ class Cast(_BookkeepingBloq):
             qtn.Tensor(
                 data=np.eye(2), inds=[(outgoing['reg'], j), (incoming['reg'], j)], tags=[str(self)]
             )
-            for j in range(self.inp_dtype.num_qubits)
+            # TODO: support classical casting
+            for j in range(self.out_dtype.num_qubits)
         ]
 
     def on_classical_vals(self, reg: int) -> Dict[str, 'ClassicalValT']:

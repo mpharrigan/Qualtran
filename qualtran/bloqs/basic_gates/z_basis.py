@@ -27,6 +27,7 @@ from qualtran import (
     bloq_example,
     BloqBuilder,
     BloqDocSpec,
+    CBit,
     CompositeBloq,
     ConnectionT,
     CtrlSpec,
@@ -355,6 +356,34 @@ def _cz() -> CZ:
 
 
 _CZ_DOC = BloqDocSpec(bloq_cls=CZ, examples=[_cz], call_graph_example=None)
+
+
+@frozen
+class MeasZ(Bloq):
+    @cached_property
+    def signature(self) -> 'Signature':
+        return Signature(
+            [Register('q', QBit(), side=Side.LEFT), Register('c', CBit(), side=Side.RIGHT)]
+        )
+
+    def my_tensors(
+        self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
+    ) -> List['qtn.Tensor']:
+        import quimb.tensor as qtn
+
+        from qualtran.simulation.tensor._quimb import DiscardInd  # TODO
+
+        copy = np.zeros((2, 2, 2), dtype=np.complex128)
+        copy[0, 0, 0] = 1
+        copy[1, 1, 1] = 1
+        meas_result = qtn.rand_uuid('meas_result')
+        # TODO: expect all indices to be a tuple. Could be tricky if we tuple-unpack a string, e.g.
+        t = qtn.Tensor(
+            data=copy,
+            inds=[(incoming['q'], 0), (outgoing['c'], 0), (meas_result, 0)],
+            tags=[str(self)],
+        )
+        return [t, DiscardInd((meas_result, 0))]
 
 
 @frozen
