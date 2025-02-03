@@ -894,7 +894,7 @@ class BloqBuilder:
         this operation is not allowed.
 
         Args:
-            reg: Either the register or a register name. If this is a register, then `bitsize`
+            reg: Either the register or a register name. If this is a register name, then `bitsize`
                 must also be provided and a default THRU register will be added.
             bitsize: If `reg` is a register name, this is the bitsize for the added register.
                 Otherwise, this must not be provided.
@@ -904,8 +904,22 @@ class BloqBuilder:
             initial, left-dangling soquets for the register. Otherwise, this is a RIGHT register
             and will be used for error checking in `finalize()` and nothing is returned.
         """
-        if bitsize is not None:
-            return self.add_register_from_dtype(reg, QBit() if bitsize == 1 else QAny(bitsize))
+        from qualtran.symbolics import is_symbolic
+
+        if isinstance(reg, str):
+            if bitsize is None:
+                raise ValueError(
+                    f"When calling `add_register(reg={reg!r}, bitsize=?) bitsize must be provided."
+                )
+            if is_symbolic(bitsize) or isinstance(bitsize, int):
+                return self.add_register_from_dtype(reg, QBit() if bitsize == 1 else QAny(bitsize))
+            if isinstance(bitsize, QDType):
+                raise ValueError(
+                    f"Invalid bitsize {bitsize!r} for `add_register({reg!r}). "
+                    f"Consider `add_register_from_dtype`"
+                )
+            raise ValueError(f"Invalid bitsize {bitsize!r} for `add_register({reg!r}).")
+
         return self.add_register_from_dtype(reg)
 
     @classmethod
