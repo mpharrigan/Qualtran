@@ -51,8 +51,7 @@ class Cast(_BookkeepingBloq):
         shape: shape of the register to cast.
 
     Registers:
-        in: input register to cast from.
-        out: input register to cast to.
+        reg: The quantum variable to cast
     """
 
     inp_dtype: QDType
