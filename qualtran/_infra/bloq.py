@@ -203,6 +203,9 @@ class Bloq(metaclass=abc.ABCMeta):
         except NotImplementedError as e:
             raise NotImplementedError(f"{self} does not support classical simulation: {e}") from e
 
+    def basis_state_phase(self, **vals: 'ClassicalValT') -> Optional[complex]:
+        return None
+
     def call_classically(
         self, **vals: Union['sympy.Symbol', 'ClassicalValT']
     ) -> Tuple['ClassicalValT', ...]:

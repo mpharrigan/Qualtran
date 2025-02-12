@@ -28,6 +28,7 @@ from typing import (
     Union,
 )
 
+import attrs
 import networkx as nx
 import numpy as np
 import sympy
@@ -44,10 +45,10 @@ from qualtran import (
     Signature,
     Soquet,
 )
-from qualtran._infra.composite_bloq import _binst_to_cxns
+from qualtran._infra.composite_bloq import _binst_to_cxns, _get_soquet
 
 if TYPE_CHECKING:
-    from qualtran import QDType
+    from qualtran import CompositeBloq, QDType
 
 ClassicalValT = Union[int, np.integer, NDArray[np.integer]]
 
@@ -105,79 +106,292 @@ def _get_in_vals(
     return arg
 
 
-def _update_assign_from_vals(
-    regs: Iterable[Register],
-    binst: Union[DanglingT, BloqInstance],
-    vals: Union[Dict[str, Union[sympy.Symbol, ClassicalValT]], Dict[str, ClassicalValT]],
-    soq_assign: Union[
-        Dict[Soquet, Union[sympy.Symbol, ClassicalValT]], Dict[Soquet, ClassicalValT]
-    ],
-):
-    """Update `soq_assign` using `vals`.
-
-    This helper function is responsible for error checking. We use `regs` to make sure all the
-    keys are present in the vals dictionary. We check the classical value shapes, types, and
-    ranges.
-    """
-    for reg in regs:
-        debug_str = f'{binst}.{reg.name}'
-        try:
-            val = vals[reg.name]
-        except KeyError as e:
-            raise ValueError(f"{binst} requires an input register named {reg.name}") from e
-
-        if reg.shape:
-            # `val` is an array
-            val = np.asanyarray(val)
-            if val.shape != reg.shape:
-                raise ValueError(
-                    f"Incorrect shape {val.shape} received for {debug_str}. " f"Want {reg.shape}."
-                )
-            reg.dtype.assert_valid_classical_val_array(val, debug_str)
-
-            for idx in reg.all_idxs():
-                soq = Soquet(binst, reg, idx=idx)
-                soq_assign[soq] = val[idx]
-
-        elif isinstance(val, sympy.Expr):
-            # `val` is symbolic
-            soq = Soquet(binst, reg)
-            soq_assign[soq] = val  # type: ignore[assignment]
-
-        else:
-            # `val` is one value.
-            reg.dtype.assert_valid_classical_val(val, debug_str)
-            soq = Soquet(binst, reg)
-            soq_assign[soq] = val
+@attrs.frozen
+class RandomBit:
+    pass
 
 
-def _binst_on_classical_vals(
-    binst: BloqInstance, pred_cxns: Iterable[Connection], soq_assign: Dict[Soquet, ClassicalValT]
-):
-    """Call `on_classical_vals` on a given binst.
+class _ClassicalSimState:
+    """A mutable class for classically simulating composite bloqs.
+
+    Consider using the public method `Bloq.call_classically(...)` for a simple interface
+    for classical simulation.
+
+    The `.step()` and `.finalize()` methods provide fine-grained control over the progress
+    of the simulation; or the `.simulate()` method will step through the entire composite bloq.
 
     Args:
-        binst: The bloq instance whose bloq we will call `on_classical_vals`.
-        pred_cxns: Predecessor connections for the bloq instance.
-        soq_assign: Current assignment of soquets to classical values.
+        signature: The signature of the composite bloq.
+        binst_graph: The directed-graph form of the composite bloq. Consider constructing
+            this class with the `.from_cbloq` constructor method to correctly generate the
+            binst graph.
+        vals: A mapping of input register name to classical value to serve as inputs to the
+            procedure.
+
+    Attributes:
+        soq_assign: An assignment of soquets to classical values. We store the classical state
+            of each soquet (wire connection point in the compute graph) for debugging and/or
+            visualization. After stepping through each bloq instance, the right-dangling soquet
+            are assigned the output classical values
+        last_binst: A record of the last bloq instance we processed during simulation. This
+            can be used in concert with `.step()` for debugging.
+
     """
 
-    # Track inter-Bloq name changes
-    for cxn in pred_cxns:
-        soq_assign[cxn.right] = soq_assign[cxn.left]
+    def __init__(
+        self,
+        signature: 'Signature',
+        binst_graph: nx.DiGraph,
+        vals: Mapping[str, Union[sympy.Symbol, ClassicalValT]],
+    ):
+        self._signature = signature
+        self._binst_graph = binst_graph
+        self._binst_iter = nx.topological_sort(self._binst_graph)
 
-    def _in_vals(reg: Register):
-        # close over binst and `soq_assign`
-        return _get_in_vals(binst, reg, soq_assign=soq_assign)
+        # Keep track of each soquet's bit array. Initialize with LeftDangle
+        self.soq_assign: Dict[Soquet, ClassicalValT] = {}
+        self._update_assign_from_vals(self._signature.lefts(), LeftDangle, dict(vals))
 
-    bloq = binst.bloq
-    in_vals = {reg.name: _in_vals(reg) for reg in bloq.signature.lefts()}
+        self.last_binst = None
 
-    # Apply function
-    out_vals = bloq.on_classical_vals(**in_vals)
-    if not isinstance(out_vals, dict):
-        raise TypeError(f"{bloq.__class__.__name__}.on_classical_vals should return a dictionary.")
-    _update_assign_from_vals(bloq.signature.rights(), binst, out_vals, soq_assign)
+    @classmethod
+    def from_cbloq(
+        cls, cbloq: 'CompositeBloq', vals: Mapping[str, Union[sympy.Symbol, ClassicalValT]]
+    ) -> '_ClassicalSimState':
+        """Initiate a classical simulation from a CompositeBloq.
+
+        Args:
+            cbloq: The composite bloq
+            vals: A mapping of input register name to classical value to serve as inputs to the
+                procedure.
+
+        Returns:
+            A new classical sim state.
+
+        """
+        return cls(signature=cbloq.signature, binst_graph=cbloq._binst_graph, vals=vals)
+
+    def _update_assign_from_vals(
+        self,
+        regs: Iterable[Register],
+        binst: Union[DanglingT, BloqInstance],
+        vals: Union[Dict[str, Union[sympy.Symbol, ClassicalValT]], Dict[str, ClassicalValT]],
+    ) -> None:
+        """Update `self.soq_assign` using `vals`.
+
+        This helper function is responsible for error checking. We use `regs` to make sure all the
+        keys are present in the vals dictionary. We check the classical value shapes, types, and
+        ranges.
+        """
+        for reg in regs:
+            debug_str = f'{binst}.{reg.name}'
+            try:
+                val = vals[reg.name]
+            except KeyError as e:
+                raise ValueError(f"{binst} requires a {reg.side} register named {reg.name}") from e
+
+            if reg.shape:
+                # `val` is an array
+                val = np.asanyarray(val)
+                if val.shape != reg.shape:
+                    raise ValueError(
+                        f"Incorrect shape {val.shape} received for {debug_str}. "
+                        f"Want {reg.shape}."
+                    )
+                reg.dtype.assert_valid_classical_val_array(val, debug_str)
+
+                for idx in reg.all_idxs():
+                    soq = Soquet(binst, reg, idx=idx)
+                    self.soq_assign[soq] = val[idx]
+
+            elif isinstance(val, sympy.Expr):
+                # `val` is symbolic
+                soq = Soquet(binst, reg)
+                soq_assign[soq] = val  # type: ignore[assignment]
+
+            else:
+                # `val` is one value.
+                reg.dtype.assert_valid_classical_val(val, debug_str)
+                soq = Soquet(binst, reg)
+                self.soq_assign[soq] = val
+
+    def _binst_on_classical_vals(self, binst, in_vals) -> None:
+        """Call `on_classical_vals` on a given bloq instance."""
+        bloq = binst.bloq
+
+        out_vals = bloq.on_classical_vals(**in_vals)
+        if not isinstance(out_vals, dict):
+            raise TypeError(
+                f"{bloq.__class__.__name__}.on_classical_vals should return a dictionary."
+            )
+        self._update_assign_from_vals(bloq.signature.rights(), binst, out_vals)
+
+    def _binst_basis_state_phase(self, binst, in_vals) -> None:
+        """Call `basis_state_phase` on a given bloq instance.
+
+        This base simulation class will raise an error if the bloq reports any phasing.
+        This method is overwritten in `_PhasedClassicalSimState` to support phasing.
+        """
+        bloq = binst.bloq
+        bloq_phase = bloq.basis_state_phase(**in_vals)
+        if bloq_phase is not None:
+            raise ValueError(
+                f"{bloq} imparts a phase, and can't be simulated purely classically. Consider TODO"
+            )
+
+    def step(self) -> '_ClassicalSimState':
+        """Advance the simulation by one bloq instance.
+
+        After calling this method, `self.last_binst` will contain the bloq instance that
+        was just simulated. `self.soq_assign` and any other state variables will be updated.
+
+        Returns:
+            self
+        """
+        binst = next(self._binst_iter)
+        self.last_binst = binst
+        if isinstance(binst, DanglingT):
+            return self
+        pred_cxns, succ_cxns = _binst_to_cxns(binst, binst_graph=self._binst_graph)
+
+        # Track inter-Bloq name changes
+        for cxn in pred_cxns:
+            self.soq_assign[cxn.right] = self.soq_assign[cxn.left]
+
+        def _in_vals(reg: Register):
+            # close over binst and `soq_assign`
+            return _get_in_vals(binst, reg, soq_assign=self.soq_assign)
+
+        bloq = binst.bloq
+        in_vals = {reg.name: _in_vals(reg) for reg in bloq.signature.lefts()}
+
+        # Apply methods
+        self._binst_on_classical_vals(binst, in_vals)
+        self._binst_basis_state_phase(binst, in_vals)
+        return self
+
+    def finalize(self) -> Dict[str, 'ClassicalValT']:
+        """Finish simulating a composite bloq and extract final values.
+
+        Returns:
+            final_vals: The final classical values, keyed by the RIGHT register names of the
+                composite bloq.
+
+        Raises:
+            KeyError if `.step()` has not been called for each bloq instance.
+        """
+
+        # Track bloq-to-dangle name changes
+        if len(list(self._signature.rights())) > 0:
+            final_preds, _ = _binst_to_cxns(RightDangle, binst_graph=self._binst_graph)
+            for cxn in final_preds:
+                self.soq_assign[cxn.right] = self.soq_assign[cxn.left]
+
+        # Formulate output with expected API
+        def _f_vals(reg: Register):
+            return _get_in_vals(RightDangle, reg, soq_assign=self.soq_assign)
+
+        final_vals = {reg.name: _f_vals(reg) for reg in self._signature.rights()}
+        return final_vals
+
+    def simulate(self) -> Dict[str, 'ClassicalValT']:
+        """Simulate the composite bloq and return the final values."""
+        try:
+            while True:
+                self.step()
+        except StopIteration:
+            return self.finalize()
+
+
+@attrs.frozen
+class MeasurementPhase:
+    """Sentinel value to return from `Bloq.basis_state_phase` if a phase should be applied based on a measurement outcome.
+
+    This can be used in special circumstances to verify measurement-based uncomputation (MBUC).
+    """
+
+    reg_name: str
+    idx: Tuple[int, ...] = ()
+
+
+class _PhasedClassicalSimState(_ClassicalSimState):
+    """A mutable class for classically simulating composite bloqs with phase tracking.
+
+    Consider using TODO
+
+    This simulation scheme supports a class of circuits containing only:
+     - classical operations corresponding to permutation matrices in the computational basis
+     - phase-like operations corresponding to diagonal matrices in the computational basis.
+     - X-basis measurement.
+
+    In general, you cannot delete quantum data and must "uncompute" bits by adding inverse,
+    ("adjoint") operations to return variables to known states. Measurement based
+    uncomputation (MBUC) is a trick that uses X-basis measurement to _nearly_ remove quantum
+    data. Performing an X-basis measurement will not destroy computational-basis coherence
+    but it will generate phases on your remaining qubits. These phases are tracked by
+    this simulator; but note that they are classically stochastic.
+
+    A bloq that generates a negative phase based on its measurement result can return a
+    `MeasurementPhase` object in its `Bloq.basis_state_phase` method. This simulator will
+    correctly apply a -1 phase only if the measurement result was 1.
+
+    Args:
+        signature: The signature of the composite bloq.
+        binst_graph: The directed-graph form of the composite bloq. Consider constructing
+            this class with the `.from_cbloq` constructor method to correctly generate the
+            binst graph.
+        vals: A mapping of input register name to classical value to serve as inputs to the
+            procedure.
+        phase: The initial phase. It must be a valid phase: a complex number with unit modulus.
+
+    Attributes:
+        soq_assign: An assignment of soquets to classical values.
+        last_binst: A record of the last bloq instance we processed during simulation.
+        phase: The current phase of the simulation state.
+
+    References:
+        [Verifying Measurement Based Uncomputation](https://algassert.com/post/1903).
+        Gidney. 2019.
+    """
+
+    def __init__(self, signature, binst_graph, vals, phase: complex = 1.0):
+        super().__init__(signature, binst_graph, vals)
+        _assert_valid_phase(phase)
+        self.phase = phase
+
+    def _binst_basis_state_phase(self, binst, in_vals):
+        """Call `basis_state_phase` on a given bloq instance.
+
+        If this method returns a value, the current phase will be updated. Otherwise, we
+        leave the phase as-is. If the method returns `MeasurementPhase`, we employ the
+        special case described in TODO.
+        """
+        bloq = binst.bloq
+        bloq_phase = bloq.basis_state_phase(**in_vals)
+        if isinstance(bloq_phase, MeasurementPhase):
+            # In this special case, there is a coupling between the classical result and the
+            # phase result (because the classical result is stochastic). We look up the measurement
+            # result and apply a phase if it is `1`.
+            meas_result = self.soq_assign[
+                _get_soquet(
+                    binst=binst,
+                    reg_name=bloq_phase.reg_name,
+                    right=True,
+                    idx=bloq_phase.idx,
+                    binst_graph=self._binst_graph,
+                )
+            ]
+            if meas_result == 1:
+                self.phase *= -1.0
+            else:
+                # Measurement result of 0, phase of +1
+                pass
+        elif bloq_phase is not None:
+            _assert_valid_phase(bloq_phase)
+            self.phase *= bloq_phase
+        else:
+            # Purely classical bloq; phase of 1
+            pass
 
 
 def call_cbloq_classically(
@@ -201,29 +415,14 @@ def call_cbloq_classically(
             corresponding to thru registers will be mapped to the *output* classical
             value.
     """
-    # Keep track of each soquet's bit array. Initialize with LeftDangle
-    soq_assign: Dict[Soquet, ClassicalValT] = {}
-    _update_assign_from_vals(signature.lefts(), LeftDangle, dict(vals), soq_assign)
+    sim = _ClassicalSimState(signature, binst_graph, vals)
+    final_vals = sim.simulate()
+    return final_vals, sim.soq_assign
 
-    # Bloq-by-bloq application
-    for binst in nx.topological_sort(binst_graph):
-        if isinstance(binst, DanglingT):
-            continue
-        pred_cxns, succ_cxns = _binst_to_cxns(binst, binst_graph=binst_graph)
-        _binst_on_classical_vals(binst, pred_cxns, soq_assign)
 
-    # Track bloq-to-dangle name changes
-    if len(list(signature.rights())) > 0:
-        final_preds, _ = _binst_to_cxns(RightDangle, binst_graph=binst_graph)
-        for cxn in final_preds:
-            soq_assign[cxn.right] = soq_assign[cxn.left]
-
-    # Formulate output with expected API
-    def _f_vals(reg: Register):
-        return _get_in_vals(RightDangle, reg, soq_assign)
-
-    final_vals = {reg.name: _f_vals(reg) for reg in signature.rights()}
-    return final_vals, soq_assign
+def _assert_valid_phase(p: complex, atol: float = 1e-8):
+    if np.abs(np.abs(p) - 1.0) > atol:
+        raise ValueError(f"Phases must have unit modulus. Found {p}.")
 
 
 def get_classical_truth_table(

@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from functools import cached_property
+from typing import Dict, Union
 
 from attrs import frozen
 
@@ -23,3 +24,6 @@ class Discard(Bloq):
     @cached_property
     def signature(self) -> 'Signature':
         return Signature([Register('x', CBit(), side=Side.LEFT)])
+
+    def on_classical_vals(self, x: int) -> Dict[str, 'ClassicalValT']:
+        return {}

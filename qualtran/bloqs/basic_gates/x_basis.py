@@ -34,13 +34,13 @@ from qualtran import (
     SoquetT,
 )
 from qualtran.drawing import directional_text_box, Text, WireSymbol
+from qualtran.simulation.classical_sim import ClassicalValT, MeasurementPhase
 
 if TYPE_CHECKING:
     import cirq
     import quimb.tensor as qtn
 
     from qualtran.cirq_interop import CirqQuregT
-    from qualtran.simulation.classical_sim import ClassicalValT
 
 _PLUS = np.ones(2, dtype=np.complex128) / np.sqrt(2)
 _MINUS = np.array([1, -1], dtype=np.complex128) / np.sqrt(2)
@@ -275,11 +275,12 @@ class MeasX(Bloq):
         )
 
     def on_classical_vals(self, q: int) -> Dict[str, 'ClassicalValT']:
+        if q not in [0, 1]:
+            raise ValueError(f"Invalid classical value encountered in {self}: {q}")
+        return {'c': np.random.choice([0, 1])}
+
+    def basis_state_phase(self, q: int) -> Optional[complex]:
         if q == 0:
-            return np.random.choice([0, 1])
+            return 1
         if q == 1:
-            result = np.random.choice([0, 1])
-            if result == 1:
-                do_a_big_phasey()
-            return result
-        raise ValueError(f"Invalid classical value encountered in {self}: {q}")
+            return MeasurementPhase(reg_name='c')

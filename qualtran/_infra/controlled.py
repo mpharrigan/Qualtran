@@ -471,6 +471,13 @@ class Controlled(GateWithRegisters):
 
         return vals
 
+    def basis_state_phase(self, **vals: 'ClassicalValT') -> Optional[complex]:
+        ctrl_vals = [vals[reg_name] for reg_name in self.ctrl_reg_names]
+        other_vals = {reg.name: vals[reg.name] for reg in self.subbloq.signature}
+        if self.ctrl_spec.is_active(*ctrl_vals):
+            return self.subbloq.basis_state_phase(**other_vals)
+        return None
+
     def _tensor_data(self):
         from qualtran.simulation.tensor._tensor_data_manipulation import (
             active_space_for_ctrl_spec,

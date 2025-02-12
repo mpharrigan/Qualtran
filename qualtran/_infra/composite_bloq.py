@@ -314,6 +314,51 @@ class CompositeBloq(Bloq):
             get_assign=lambda x: x.left,
         )
 
+    def get_binst(self, binst_i: int) -> 'BloqInstance':
+        """Retrieve a bloq instance given a minimal address.
+
+        We can uniquely address a BloqInstance (in the context of this composite bloq) by its
+        internal integer index `binst_i`.
+        """
+        res = [binst for binst in self.bloq_instances if binst.i == binst_i]
+        if len(res) > 1:
+            raise ValueError(
+                f"Malformed composite bloq! Found two binsts with index {binst_i}: {res}"
+            )
+        if len(res) == 0:
+            raise ValueError(
+                f"A bloq instance with index {binst_i} doesn't exist in the given composite bloq."
+            )
+        return res[0]
+
+    def get_soquet(
+        self, binst: 'BloqInstance', reg_name: str, right: bool = False, idx: Tuple[int, ...] = ()
+    ) -> 'Soquet':
+        """Retrieve a soquet given an address.
+
+        We can uniquely address a Soquet by the arguments to this function.
+
+        its bloq instance `binst`;
+        the register name `reg_name`; which side we want: an input, left soquet if `right` is
+        False; otherwise the right, output soquet, and
+
+        If you want to address the soquet
+        using only plain-old-data-types or don't have the bloq instance handy, you can combine
+        this method with `get_binst`.
+
+        >>> cbloq.get_soquet(cbloq.get_binst(binst_i=23), reg_name='ctrl', right=False)
+
+        Args:
+            binst: The bloq instance associated with the desired soquet.
+            reg_name: The name of the register associated with the desired soquet.
+            right: If False, get the input, left soquet. Otherwise: the right, output soquet
+            idx: The index of the soquet within a multidimensional register, or the empty
+                tuple for basic registers.
+        """
+        return _get_soquet(
+            binst=binst, reg_name=reg_name, right=right, idx=idx, binst_graph=self._binst_graph
+        )
+
     def copy(self) -> 'CompositeBloq':
         """Create a copy of this composite bloq by re-building it."""
         bb, _ = BloqBuilder.from_signature(self.signature)
@@ -509,6 +554,48 @@ def _binst_to_cxns(
         succ_cxns.extend(binst_graph.edges[binst, succ]['cxns'])
 
     return pred_cxns, succ_cxns
+
+
+def _get_soquet(
+    binst: 'BloqInstance',
+    reg_name: str,
+    right: bool = False,
+    idx: Tuple[int, ...] = (),
+    *,
+    binst_graph: nx.DiGraph,
+) -> 'Soquet':
+    """Retrieve a soquet given an address.
+
+    We can uniquely address a Soquet by the arguments to this function.
+
+    its bloq instance `binst`;
+    the register name `reg_name`; which side we want: an input, left soquet if `right` is
+    False; otherwise the right, output soquet, and
+
+    If you want to address the soquet
+    using only plain-old-data-types or don't have the bloq instance handy, you can combine
+    this method with `get_binst`.
+
+    >>> cbloq.get_soquet(cbloq.get_binst(binst_i=23), reg_name='ctrl', right=False)
+
+    Args:
+        binst: The bloq instance associated with the desired soquet.
+        reg_name: The name of the register associated with the desired soquet.
+        right: If False, get the input, left soquet. Otherwise: the right, output soquet
+        idx: The index of the soquet within a multidimensional register, or the empty
+            tuple for basic registers.
+    """
+    preds, succs = _binst_to_cxns(binst, binst_graph=binst_graph)
+    if right:
+        for suc in succs:
+            me = suc.left
+            if me.reg.name == reg_name and me.idx == idx:
+                return me
+    else:
+        for pred in preds:
+            me = pred.right
+            if me.reg.name == reg_name and me.idx == idx:
+                return me
 
 
 def _cxns_to_soq_dict(
