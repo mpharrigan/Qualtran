@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from functools import cached_property
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 from attrs import frozen
 
@@ -27,3 +27,50 @@ class Discard(Bloq):
 
     def on_classical_vals(self, x: int) -> Dict[str, 'ClassicalValT']:
         return {}
+
+    def my_tensors(
+        self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
+    ) -> List['qtn.Tensor']:
+        import quimb.tensor as qtn
+
+        from qualtran.simulation.tensor._quimb import DiscardInd  # TODO
+
+        return [DiscardInd((incoming['x'], 0))]
+
+
+@frozen
+class DiscardQ(Bloq):
+    @cached_property
+    def signature(self) -> 'Signature':
+        return Signature([Register('x', QBit(), side=Side.LEFT)])
+
+    def on_classical_vals(self, x: int) -> Dict[str, 'ClassicalValT']:
+        return {}
+
+    def my_tensors(
+        self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
+    ) -> List['qtn.Tensor']:
+        import quimb.tensor as qtn
+
+        from qualtran.simulation.tensor._quimb import DiscardInd  # TODO
+
+        return [DiscardInd((incoming['x'], 0))]
+
+
+@frozen
+class ResetZero(Bloq):
+    @cached_property
+    def signature(self) -> 'Signature':
+        return Signature([Register('x', CBit(), side=Side.LEFT)])
+
+    def on_classical_vals(self, x: int) -> Dict[str, 'ClassicalValT']:
+        return {}
+
+    def my_tensors(
+        self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
+    ) -> List['qtn.Tensor']:
+        import quimb.tensor as qtn
+
+        from qualtran.simulation.tensor._quimb import DiscardInd  # TODO
+
+        return [DiscardInd((incoming['x'], 0))]

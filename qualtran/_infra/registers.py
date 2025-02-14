@@ -24,7 +24,7 @@ from attrs import field, frozen
 
 from qualtran.symbolics import is_symbolic, prod, smax, ssum, SymbolicInt
 
-from .data_types import QAny, QBit, QDType
+from .data_types import QAny, QBit, QCDType, QDType
 
 
 class Side(enum.Flag):
@@ -62,15 +62,15 @@ class Register:
     """
 
     name: str
-    dtype: QDType
+    dtype: QCDType
     _shape: Tuple[SymbolicInt, ...] = field(
         default=tuple(), converter=lambda v: (v,) if isinstance(v, int) else tuple(v)
     )
     side: Side = Side.THRU
 
     def __attrs_post_init__(self):
-        if not isinstance(self.dtype, QDType):
-            raise ValueError(f'dtype must be a QDType: found {type(self.dtype)}')
+        if not isinstance(self.dtype, QCDType):
+            raise ValueError(f'dtype must be a QCDType: found {type(self.dtype)}')
 
     def is_symbolic(self) -> bool:
         return is_symbolic(self.dtype, *self._shape)
@@ -87,7 +87,7 @@ class Register:
 
     @property
     def bitsize(self) -> int:
-        return self.dtype.num_qubits
+        return self.dtype.num_bits
 
     def all_idxs(self) -> Iterable[Tuple[int, ...]]:
         """Iterate over all possible indices of a multidimensional register."""

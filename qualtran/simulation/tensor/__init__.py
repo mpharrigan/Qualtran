@@ -16,7 +16,7 @@
 
 from ._dense import bloq_to_dense, get_right_and_left_inds, quimb_to_dense
 from ._flattening import bloq_has_custom_tensors, flatten_for_tensor_contraction
-from ._quimb import cbloq_to_quimb, initialize_from_zero
+from ._quimb import cbloq_to_quimb, DiscardInd, initialize_from_zero
 from ._tensor_data_manipulation import (
     active_space_for_ctrl_spec,
     eye_tensor_for_signature,

@@ -11,42 +11,8 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-"""Quantum data type definitions.
+"""Quantum data type definitions."""
 
-We often wish to write algorithms which operate on quantum data. One can think
-of quantum data types, similar to classical data types, where a collection of
-qubits can be used to represent a specific quantum data type (eg: a quantum
-integer of width 32 would comprise 32 qubits, similar to a classical uint32
-type). More generally, many current primitives and algorithms in qualtran
-implicitly expect registers which represent signed or unsigned integers,
-fixed-point (fp) numbers , or “classical registers” which store some classical
-value. Enforcing typing helps developers and users reason about algorithms, and
-will also allow better type checking.
-
-The basic principles we follow are:
-
-1. Typing should not be too invasive for the developer / user: We got pretty far
-without explicitly typing registers.
-2. For algorithms or bloqs which expect registers which are meant to encode
-numeric types (integers, reals, etc.) then typing should be strictly enforced.
-For example, a bloq multiplying two fixed point reals should be built with an
-explicit QFxp dtype.
-3. The smallest addressable unit is a QBit. Other types are interpretations of
-collections of QBits. A QUInt(32) is intended to represent a register
-encoding positive integers.
-4. To avoid too much overhead we have a QAny type, which is meant to represent
-an opaque bag of bits with no particular significance associated with them. A
-bloq defined with a QAny register (e.g. a n-bit CSwap) will accept any other
-type assuming the bitsizes match. QInt(32) == QAny(32), QInt(32) !=
-QFxp(32, 16). QInt(32) != QUInt(32).
-5. We assume a big endian convention for addressing QBits in registers
-throughout qualtran. Recall that in a big endian convention the most significant
-bit is at index 0. If you iterate through the bits in a register they will be
-yielded from most significant to least significant.
-6. Ones' complement integers are used extensively in quantum algorithms. We have
-two types QInt and QIntOnesComp for integers using two's and ones' complement
-respectively.
-"""
 
 import abc
 from enum import Enum
@@ -61,13 +27,22 @@ from numpy.typing import NDArray
 from qualtran.symbolics import bit_length, is_symbolic, SymbolicInt
 
 
-class QDType(metaclass=abc.ABCMeta):
-    """This defines the abstract interface for quantum data types."""
+class QCDType(metaclass=abc.ABCMeta):
+    """The abstract interface for quantum/classical quantum computing data types."""
+
+    @property
+    def num_bits(self) -> int:
+        return self.num_qubits + self.num_cbits
 
     @property
     @abc.abstractmethod
     def num_qubits(self) -> int:
         """Number of qubits required to represent a single instance of this data type."""
+
+    @property
+    @abc.abstractmethod
+    def num_cbits(self) -> int:
+        """Number of classical bits required to represent a single instance of this data type."""
 
     @abc.abstractmethod
     def get_classical_domain(self) -> Iterable[Any]:
@@ -128,7 +103,7 @@ class QDType(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def is_symbolic(self) -> bool:
-        """Returns True if this qdtype is parameterized with symbolic objects."""
+        """Returns True if this dtype is parameterized with symbolic objects."""
 
     def iteration_length_or_zero(self) -> SymbolicInt:
         """Safe version of iteration length.
@@ -136,6 +111,38 @@ class QDType(metaclass=abc.ABCMeta):
         Returns the iteration_length if the type has it or else zero.
         """
         return getattr(self, 'iteration_length', 0)
+
+    def __str__(self):
+        return f'{self.__class__.__name__}({self.num_qubits})'
+
+
+class QDType(QCDType, metaclass=abc.ABCMeta):
+    """The abstract interface for quantum data types."""
+
+    @property
+    def num_cbits(self) -> int:
+        return 0
+
+    @property
+    @abc.abstractmethod
+    def num_qubits(self) -> int:
+        """Number of qubits required to represent a single instance of this data type."""
+
+    def __str__(self):
+        return f'{self.__class__.__name__}({self.num_qubits})'
+
+
+class CDType(QCDType, metaclass=abc.ABCMeta):
+    """The abstract interface for quantum data types."""
+
+    @property
+    def num_qubits(self) -> int:
+        return 0
+
+    @property
+    @abc.abstractmethod
+    def num_cbits(self) -> int:
+        """Number of classical bits required to represent a single instance of this data type."""
 
     def __str__(self):
         return f'{self.__class__.__name__}({self.num_qubits})'
@@ -180,10 +187,7 @@ class QBit(QDType):
 
 
 @attrs.frozen
-class CBit(QDType):
-    @property
-    def num_qubits(self) -> int:
-        return 0
+class CBit(CDType):
 
     @property
     def num_cbits(self) -> int:

@@ -93,7 +93,7 @@ class Cast(_BookkeepingBloq):
                 data=np.eye(2), inds=[(outgoing['reg'], j), (incoming['reg'], j)], tags=[str(self)]
             )
             # TODO: support classical casting
-            for j in range(self.out_dtype.num_qubits)
+            for j in range(self.out_dtype.num_bits)
         ]
 
     def on_classical_vals(self, reg: int) -> Dict[str, 'ClassicalValT']:

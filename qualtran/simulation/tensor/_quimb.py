@@ -34,7 +34,7 @@ from qualtran._infra.composite_bloq import _cxns_to_cxn_dict, BloqBuilder
 logger = logging.getLogger(__name__)
 
 
-def cbloq_to_quimb(cbloq: CompositeBloq) -> qtn.TensorNetwork:
+def cbloq_to_quimb(cbloq: CompositeBloq, friendly_indices: bool = False) -> qtn.TensorNetwork:
     """Convert a composite bloq into a tensor network.
 
     This function will call `Bloq.my_tensors` on each subbloq in the composite bloq to add
@@ -43,6 +43,16 @@ def cbloq_to_quimb(cbloq: CompositeBloq) -> qtn.TensorNetwork:
     smallest form first. The small bloqs that result from a flattening 1) likely already have
     their `my_tensors` method implemented; and 2) can enable a more efficient tensor contraction
     path.
+
+    Args:
+        cbloq: The composite bloq
+        friendly_indices: If set to True, the outer indices of the tensor network will be renamed
+            from their Qualtran-computer-readable form to human-friendly strings. This may be
+            useful if you plan on manually manipulating the resulting tensor network but will
+            preclude any further processing by Qualtran functions.
+
+    Returns:
+        The tensor network
     """
     tn = qtn.TensorNetwork([])
 
@@ -88,7 +98,33 @@ def cbloq_to_quimb(cbloq: CompositeBloq) -> qtn.TensorNetwork:
                     )
                 )
 
+    if friendly_indices:
+        return tn.reindex(_get_friendly_indices(tn))
     return tn
+
+
+def _get_friendly_indices(tn: 'qtn.TensorNetwork') -> Dict[Any, str]:
+    """Go through a tensor network's outer inds to map them to unique strings."""
+    ind_name_map: Dict[Any, str] = {}
+
+    # Each index is a (cxn: Connection, j: int) tuple.
+    cxn: Connection
+    j: int
+
+    for ind in tn.outer_inds():
+        cxn, j = ind
+        if cxn.left.binst is LeftDangle:
+            soq = cxn.left
+            side = 'l'
+        elif cxn.right.binst is RightDangle:
+            soq = cxn.right
+            side = 'r'
+        else:
+            raise ValueError(f"Unknown side for {cxn}")
+
+        idx_str = f'{soq.idx}' if soq.idx else ''
+        ind_name_map[ind] = f'{soq.reg.name}{idx_str}_{j}{side}'
+    return ind_name_map
 
 
 @attrs.frozen
@@ -110,11 +146,11 @@ def make_backward_tensor(t: qtn.Tensor):
         new_inds.append((*ind, False))
 
     t2 = t.H
-    t2.modify(inds=new_inds)
+    t2.modify(inds=new_inds, tags=t.tags | {'dag'})
     return t2
 
 
-def cbloq_to_superquimb(cbloq: CompositeBloq) -> qtn.TensorNetwork:
+def cbloq_to_superquimb(cbloq: CompositeBloq, friendly_indices: bool = False) -> qtn.TensorNetwork:
     """Convert a composite bloq into a tensor network.
 
     This function will call `Bloq.my_tensors` on each subbloq in the composite bloq to add
@@ -147,7 +183,30 @@ def cbloq_to_superquimb(cbloq: CompositeBloq) -> qtn.TensorNetwork:
                 tn.add(forward_tensor)
                 tn.add(backward_tensor)
 
+    if friendly_indices:
+        tn = tn.reindex(_get_friendly_superindices(tn))
     return tn
+
+
+def _get_friendly_superindices(tn: 'qtn.TensorNetwork') -> Dict[Any, str]:
+
+    ind_name_map: Dict[Any, str] = {}
+    for ind in tn.outer_inds():
+        cxn, j, forward = ind
+        if cxn.left.binst is LeftDangle:
+            soq = cxn.left
+            side = 'l'
+        elif cxn.right.binst is RightDangle:
+            soq = cxn.right
+            side = 'r'
+        else:
+            raise ValueError(f"Unknown side for {cxn}")
+
+        d = 'f' if forward else 'b'
+        idx = f'{soq.idx}' if soq.idx else ''
+        ind_name_map[ind] = f'{soq.reg.name}{idx}_{j}{side}{d}'
+
+    return ind_name_map
 
 
 def _add_classical_kets(bb: BloqBuilder, registers: Iterable[Register]) -> Dict[str, 'SoquetT']:

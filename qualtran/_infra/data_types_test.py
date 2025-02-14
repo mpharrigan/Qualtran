@@ -41,6 +41,7 @@ from .data_types import (
 def test_qint():
     qint_8 = QInt(8)
     assert qint_8.num_qubits == 8
+    assert qint_8.num_cbits == 0
     assert str(qint_8) == 'QInt(8)'
     n = sympy.symbols('x')
     qint_8 = QInt(n)

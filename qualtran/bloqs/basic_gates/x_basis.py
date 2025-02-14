@@ -84,7 +84,10 @@ class _XVector(Bloq):
         ]
 
     def as_cirq_op(
-        self, qubit_manager: 'cirq.QubitManager', **cirq_quregs: 'CirqQuregT'  # type: ignore[type-var]
+        self,
+        qubit_manager: 'cirq.QubitManager',
+        **cirq_quregs: 'CirqQuregT',
+        # type: ignore[type-var]
     ) -> Tuple[Union['cirq.Operation', None], Dict[str, 'CirqQuregT']]:  # type: ignore[type-var]
         if not self.state:
             raise ValueError(f"There is no Cirq equivalent for {self}")
@@ -284,3 +287,24 @@ class MeasX(Bloq):
             return 1
         if q == 1:
             return MeasurementPhase(reg_name='c')
+
+    def my_tensors(
+        self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
+    ) -> List['qtn.Tensor']:
+        import quimb.tensor as qtn
+
+        from qualtran.simulation.tensor._quimb import DiscardInd  # TODO
+
+        data = np.array(
+            [
+                [[0.5 + 0.0j, 0.5 + 0.0j], [0.5 + 0.0j, -0.5 + 0.0j]],
+                [[0.5 + 0.0j, -0.5 + 0.0j], [0.5 + 0.0j, 0.5 + 0.0j]],
+            ]
+        )
+
+        q_trace = qtn.rand_uuid('q_trace')
+        # TODO: expect all indices to be a tuple. Could be tricky if we tuple-unpack a string, e.g.
+        t = qtn.Tensor(
+            data=data, inds=[(incoming['q'], 0), (q_trace, 0), (outgoing['c'], 0)], tags=[str(self)]
+        )
+        return [t, DiscardInd((q_trace, 0))]
