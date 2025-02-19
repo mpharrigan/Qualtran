@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from qualtran import QFxp, QInt, QUInt
+from qualtran import CBit, QBit, QFxp, QInt, QUInt
 from qualtran.bloqs.bookkeeping import Cast
 from qualtran.bloqs.bookkeeping.cast import _cast
 from qualtran.bloqs.for_testing import TestCastToFrom
@@ -57,3 +57,11 @@ def test_cast_unsiged_signed():
 
     c = Cast(QInt(5), QUInt(5))
     assert c.call_classically(reg=-1) == (31,)
+
+
+def test_cast_classical():
+    c = Cast(QBit(), CBit())
+    assert c.call_classically(reg=1) == (1,)
+
+    c = Cast(CBit(), QBit())
+    assert c.call_classically(reg=1) == (1,)

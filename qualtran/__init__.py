@@ -51,6 +51,8 @@ from ._infra.composite_bloq import (
 )
 
 from ._infra.data_types import (
+    QCDType,
+    CDType,
     QDType,
     QAny,
     QBit,

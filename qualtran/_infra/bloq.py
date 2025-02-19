@@ -47,6 +47,7 @@ if TYPE_CHECKING:
         SympySymbolAllocator,
     )
     from qualtran.simulation.classical_sim import ClassicalValT
+    from qualtran.simulation.tensor import DiscardInd
 
 
 def _decompose_from_build_composite_bloq(bloq: 'Bloq') -> 'CompositeBloq':
@@ -244,7 +245,7 @@ class Bloq(metaclass=abc.ABCMeta):
 
     def my_tensors(
         self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
-    ) -> List['qtn.Tensor']:
+    ) -> List[Union['qtn.Tensor', 'DiscardInd']]:
         """Override this method to support native quimb simulation of this Bloq.
 
         This method is responsible for returning tensors corresponding to the unitary, state, or

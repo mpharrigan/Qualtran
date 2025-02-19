@@ -25,12 +25,13 @@ from qualtran import (
     CompositeBloq,
     ConnectionT,
     DecomposeTypeError,
-    QDType,
+    QCDType,
     Register,
     Side,
     Signature,
 )
 from qualtran.bloqs.bookkeeping._bookkeeping_bloq import _BookkeepingBloq
+from qualtran.symbolics import is_symbolic
 
 if TYPE_CHECKING:
     import quimb.tensor as qtn
@@ -41,32 +42,33 @@ if TYPE_CHECKING:
 
 @frozen
 class Cast(_BookkeepingBloq):
-    """Cast a register from one n-bit QDType to another QDType.
+    """Cast a register from one n-bit QCDType to another QCDType.
 
-    This re-interprets the register's data type from `inp_dtype` to `out_dtype`.
+    This simply re-interprets the register's data, and is a bookkeeping operation.
 
     Args:
-        inp_dtype: Input QDType to cast from.
-        out_dtype: Output QDType to cast to.
-        shape: shape of the register to cast.
+        inp_dtype: Input QCDType to cast from.
+        out_dtype: Output QCDType to cast to.
+        shape: Optional multidimensional shape of the register to cast.
 
     Registers:
         reg: The quantum variable to cast
     """
 
-    inp_dtype: QDType
-    out_dtype: QDType
+    inp_dtype: QCDType
+    out_dtype: QCDType
     shape: Tuple[int, ...] = attrs.field(
         default=tuple(), converter=lambda v: (v,) if isinstance(v, int) else tuple(v)
     )
 
     def __attrs_post_init__(self):
-        # TODO: fix classical casting
-        return
+        if is_symbolic(self.inp_dtype.num_bits):
+            return
 
-        if isinstance(self.inp_dtype.num_qubits, int):
-            if self.inp_dtype.num_qubits != self.out_dtype.num_qubits:
-                raise ValueError("Casting only permitted between same sized registers.")
+        if self.inp_dtype.num_bits != self.out_dtype.num_bits:
+            raise ValueError(
+                f"Casting must preserve the number of bits in the data. Cannot cast {self.inp_dtype} to {self.out_dtype}: {self.inp_dtype.num_bits} != {self.out_dtype.num_bits}."
+            )
 
     def decompose_bloq(self) -> 'CompositeBloq':
         raise DecomposeTypeError(f'{self} is atomic')
@@ -92,7 +94,6 @@ class Cast(_BookkeepingBloq):
             qtn.Tensor(
                 data=np.eye(2), inds=[(outgoing['reg'], j), (incoming['reg'], j)], tags=[str(self)]
             )
-            # TODO: support classical casting
             for j in range(self.out_dtype.num_bits)
         ]
 

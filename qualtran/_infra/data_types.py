@@ -47,6 +47,15 @@ class QCDType(metaclass=abc.ABCMeta):
     def num_cbits(self) -> int:
         """Number of classical bits required to represent a single instance of this data type."""
 
+    @property
+    @abc.abstractmethod
+    def is_abstract(self):
+        """Whether this type is 'abstract'.
+
+        An abstract QCDType can be used in a `qualtran.Signature`, but cannot be used in a
+        soquet (?? TODO).
+        """
+
     @abc.abstractmethod
     def get_classical_domain(self) -> Iterable[Any]:
         """Yields all possible classical (computational basis state) values representable
@@ -151,76 +160,52 @@ class CDType(QCDType, metaclass=abc.ABCMeta):
         return f'{self.__class__.__name__}({self.num_qubits})'
 
 
+class _Bit(metaclass=abc.ABCMeta):
+    """A single qubit. The smallest addressable unit of quantum data."""
+
+    def get_classical_domain(self) -> Iterable[int]:
+        yield from (0, 1)
+
+    def assert_valid_classical_val(self, val: int, debug_str: str = 'val'):
+        if not (val == 0 or val == 1):
+            raise ValueError(f"Bad {self} value {val} in {debug_str}")
+
+    def is_symbolic(self) -> bool:
+        return False
+
+    def to_bits(self, x) -> List[int]:
+        """Yields individual bits corresponding to binary representation of x"""
+        self.assert_valid_classical_val(x)
+        return [int(x)]
+
+    def from_bits(self, bits: Sequence[int]) -> int:
+        """Combine individual bits to form x"""
+        assert len(bits) == 1
+        return bits[0]
+
+    def assert_valid_classical_val_array(
+        self, val_array: NDArray[np.integer], debug_str: str = 'val'
+    ):
+        if not np.all((val_array == 0) | (val_array == 1)):
+            raise ValueError(f"Bad {self} value array in {debug_str}")
+
+
 @attrs.frozen
-class QBit(QDType):
+class QBit(_Bit, QDType):
     """A single qubit. The smallest addressable unit of quantum data."""
 
     @property
     def num_qubits(self):
         return 1
 
-    def get_classical_domain(self) -> Iterable[int]:
-        yield from (0, 1)
-
-    def assert_valid_classical_val(self, val: int, debug_str: str = 'val'):
-        if not (val == 0 or val == 1):
-            raise ValueError(f"Bad {self} value {val} in {debug_str}")
-
-    def is_symbolic(self) -> bool:
-        return False
-
-    def to_bits(self, x) -> List[int]:
-        """Yields individual bits corresponding to binary representation of x"""
-        self.assert_valid_classical_val(x)
-        return [int(x)]
-
-    def from_bits(self, bits: Sequence[int]) -> int:
-        """Combine individual bits to form x"""
-        assert len(bits) == 1
-        return bits[0]
-
-    def assert_valid_classical_val_array(
-        self, val_array: NDArray[np.integer], debug_str: str = 'val'
-    ):
-        if not np.all((val_array == 0) | (val_array == 1)):
-            raise ValueError(f"Bad {self} value array in {debug_str}")
-
-    def __str__(self):
-        return 'QBit()'
-
 
 @attrs.frozen
-class CBit(CDType):
+class CBit(_Bit, CDType):
+    """A single classical bit. The smallest addressable unit of classical data."""
 
     @property
     def num_cbits(self) -> int:
         return 1
-
-    def get_classical_domain(self) -> Iterable[int]:
-        yield from (0, 1)
-
-    def assert_valid_classical_val(self, val: int, debug_str: str = 'val'):
-        if not (val == 0 or val == 1):
-            raise ValueError(f"Bad {self} value {val} in {debug_str}")
-
-    def is_symbolic(self) -> bool:
-        return False
-
-    def to_bits(self, x) -> List[int]:
-        """Yields individual bits corresponding to binary representation of x"""
-        self.assert_valid_classical_val(x)
-        return [int(x)]
-
-    def from_bits(self, bits: Sequence[int]) -> int:
-        """Combine individual bits to form x"""
-        assert len(bits) == 1
-        return bits[0]
-
-    def assert_valid_classical_val_array(
-        self, val_array: NDArray[np.integer], debug_str: str = 'val'
-    ):
-        if not np.all((val_array == 0) | (val_array == 1)):
-            raise ValueError(f"Bad {self} value array in {debug_str}")
 
 
 @attrs.frozen
@@ -1069,8 +1054,8 @@ class QGF(QDType):
         return f'QGF({self.characteristic}**{self.degree})'
 
 
-QAnyInt = (QInt, QUInt, BQUInt, QMontgomeryUInt)
-QAnyUInt = (QUInt, BQUInt, QMontgomeryUInt, QGF)
+_QAnyInt = (QInt, QUInt, BQUInt, QMontgomeryUInt)
+_QAnyUInt = (QUInt, BQUInt, QMontgomeryUInt, QGF)
 
 
 class QDTypeCheckingSeverity(Enum):
@@ -1123,13 +1108,13 @@ def check_dtypes_consistent(
         return same_n_qubits
     if type_checking_severity == QDTypeCheckingSeverity.ANY:
         return False
-    if isinstance(dtype_a, QAnyInt) and isinstance(dtype_b, QAnyInt):
+    if isinstance(dtype_a, _QAnyInt) and isinstance(dtype_b, _QAnyInt):
         # A subset of the integers should be freely interchangeable.
         return same_n_qubits
-    elif isinstance(dtype_a, QAnyUInt) and isinstance(dtype_b, QFxp):
+    elif isinstance(dtype_a, _QAnyUInt) and isinstance(dtype_b, QFxp):
         # unsigned Fxp which is wholy an integer or < 1 part is a uint.
         return _check_uint_fxp_consistent(dtype_a, dtype_b)
-    elif isinstance(dtype_b, QAnyUInt) and isinstance(dtype_a, QFxp):
+    elif isinstance(dtype_b, _QAnyUInt) and isinstance(dtype_a, QFxp):
         # unsigned Fxp which is wholy an integer or < 1 part is a uint.
         return _check_uint_fxp_consistent(dtype_b, dtype_a)
     else:
