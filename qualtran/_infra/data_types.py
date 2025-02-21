@@ -47,15 +47,6 @@ class QCDType(metaclass=abc.ABCMeta):
     def num_cbits(self) -> int:
         """Number of classical bits required to represent a single instance of this data type."""
 
-    @property
-    @abc.abstractmethod
-    def is_abstract(self):
-        """Whether this type is 'abstract'.
-
-        An abstract QCDType can be used in a `qualtran.Signature`, but cannot be used in a
-        soquet (?? TODO).
-        """
-
     @abc.abstractmethod
     def get_classical_domain(self) -> Iterable[Any]:
         """Yields all possible classical (computational basis state) values representable
