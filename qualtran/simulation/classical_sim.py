@@ -512,9 +512,28 @@ def _assert_valid_phase(p: complex, atol: float = 1e-8):
         raise ValueError(f"Phases must have unit modulus. Found {p}.")
 
 
-def do_phased_classical_simulation(bloq: 'Bloq', vals: Mapping[str, 'ClassicalValT']):
+def do_phased_classical_simulation(
+    bloq: 'Bloq', vals: Mapping[str, 'ClassicalValT'], rng: 'np.random.Generator'
+):
+    """Do a phased classical simulation of the bloq.
+
+    This provides a simple interface to `_PhasedClassicalSimState`. Particularly advanced users
+    may wish to use that class directly.
+
+    Args:
+        bloq: The bloq to simulate
+        vals: A mapping from input register name to initial classical values. The initial phase is
+            assumed to be 1.0.
+        rng: A numpy random generator (e.g. from `np.random.default_rng()`). This function
+            will use this generator to supply random values from certain phased-classical operations
+            like `MeasX`.
+
+    Returns:
+        final_vals: A mapping of output register name to final classical values.
+        phase: The final phase.
+    """
     cbloq = bloq.as_composite_bloq()
-    sim = _PhasedClassicalSimState.from_cbloq(cbloq, vals=vals, rng=np.random.default_rng())
+    sim = _PhasedClassicalSimState.from_cbloq(cbloq, vals=vals, rng=rng)
     final_vals = sim.simulate()
     phase = sim.phase
     return final_vals, phase

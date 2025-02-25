@@ -201,6 +201,7 @@ class Signature:
         is taken to be the greater of the number of left or right qubits. A bloq with this
         signature uses at least this many qubits.
         """
+        # TODO: num bits!
         left_size = ssum(reg.total_bits() for reg in self.lefts())
         right_size = ssum(reg.total_bits() for reg in self.rights())
         return smax(left_size, right_size)

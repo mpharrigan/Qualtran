@@ -122,10 +122,11 @@ def _get_ctrl_system_1bit_cv(
             If the callable returns `None`, then the default fallback is used.
     """
     from qualtran import Soquet
+    from qualtran._infra.controlled import make_ctrl_system_with_correct_metabloq  # TODO
     from qualtran.bloqs.mcmt import ControlledViaAnd
 
     def _get_default_fallback():
-        return ControlledViaAnd.make_ctrl_system(bloq=bloq, ctrl_spec=ctrl_spec)
+        return make_ctrl_system_with_correct_metabloq(bloq=bloq, ctrl_spec=ctrl_spec)
 
     if ctrl_spec.num_qubits != 1:
         return _get_default_fallback()

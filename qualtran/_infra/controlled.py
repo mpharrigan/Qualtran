@@ -11,6 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import abc
 from collections import Counter
 from functools import cached_property
 from typing import (
@@ -33,7 +34,7 @@ from numpy.typing import NDArray
 
 from ..symbolics import is_symbolic, prod, Shaped, SymbolicInt
 from .bloq import Bloq, DecomposeNotImplementedError, DecomposeTypeError
-from .data_types import QBit, QDType
+from .data_types import CDType, QBit, QCDType, QDType
 from .gate_with_registers import GateWithRegisters
 from .registers import Register, Side, Signature
 
@@ -348,8 +349,7 @@ def _get_nice_ctrl_reg_names(reg_names: List[str], n: int) -> Tuple[str, ...]:
     return tuple(names)
 
 
-@attrs.frozen
-class Controlled(GateWithRegisters):
+class _ControlledBase(metaclass=abc.ABCMeta):
     """A controlled version of `subbloq`.
 
     This meta-bloq is part of the 'controlled' protocol. As a default fallback,
@@ -363,16 +363,20 @@ class Controlled(GateWithRegisters):
         ctrl_spec: The specification for how to control the bloq.
     """
 
-    subbloq: 'Bloq'
-    ctrl_spec: 'CtrlSpec'
+    @property
+    @abc.abstractmethod
+    def subbloq(self) -> 'Bloq': ...
 
-    @classmethod
-    def make_ctrl_system(cls, bloq: 'Bloq', ctrl_spec: 'CtrlSpec') -> Tuple[Bloq, AddControlledT]:
+    @property
+    @abc.abstractmethod
+    def ctrl_spec(self) -> 'CtrlSpec': ...
+
+    @staticmethod
+    def _make_ctrl_system(cb: '_ControlledBase') -> Tuple['Bloq', 'AddControlledT']:
         """A factory method for creating both the Controlled and the adder function.
 
         See `Bloq.get_ctrl_system`.
         """
-        cb = cls(subbloq=bloq, ctrl_spec=ctrl_spec)
         ctrl_reg_names = cb.ctrl_reg_names
 
         def add_controlled(
@@ -410,54 +414,6 @@ class Controlled(GateWithRegisters):
     def signature(self) -> 'Signature':
         # Prepend register(s) corresponding to `ctrl_spec`.
         return Signature(self.ctrl_regs + tuple(self.subbloq.signature))
-
-    def decompose_bloq(self) -> 'CompositeBloq':
-        return Bloq.decompose_bloq(self)
-
-    def build_composite_bloq(
-        self, bb: 'BloqBuilder', **initial_soqs: 'SoquetT'
-    ) -> Dict[str, 'SoquetT']:
-        # Use subbloq's decomposition but wire up the additional ctrl_soqs.
-        from qualtran import CompositeBloq
-
-        if isinstance(self.subbloq, CompositeBloq):
-            cbloq = self.subbloq
-        else:
-            cbloq = self.subbloq.decompose_bloq()
-
-        ctrl_soqs: List['SoquetT'] = [initial_soqs[creg_name] for creg_name in self.ctrl_reg_names]
-
-        soq_map: List[Tuple[SoquetT, SoquetT]] = []
-        for binst, in_soqs, old_out_soqs in cbloq.iter_bloqsoqs():
-            in_soqs = bb.map_soqs(in_soqs, soq_map)
-            new_bloq, adder = binst.bloq.get_ctrl_system(self.ctrl_spec)
-            adder_output = adder(bb, ctrl_soqs=ctrl_soqs, in_soqs=in_soqs)
-            ctrl_soqs = list(adder_output[0])
-            new_out_soqs = adder_output[1]
-            soq_map.extend(zip(old_out_soqs, new_out_soqs))
-
-        fsoqs = bb.map_soqs(cbloq.final_soqs(), soq_map)
-        fsoqs |= dict(zip(self.ctrl_reg_names, ctrl_soqs))
-        return fsoqs
-
-    def build_call_graph(self, ssa: 'SympySymbolAllocator') -> 'BloqCountDictT':
-        try:
-            sub_cg = self.subbloq.build_call_graph(ssa=ssa)
-        except DecomposeTypeError as e1:
-            raise DecomposeTypeError(f"Could not build call graph for {self}: {e1}") from e1
-        except DecomposeNotImplementedError as e2:
-            raise DecomposeNotImplementedError(
-                f"Could not build call graph for {self}: {e2}"
-            ) from e2
-
-        counts = Counter['Bloq']()
-        if isinstance(sub_cg, set):
-            for bloq, n in sub_cg:
-                counts[bloq.controlled(self.ctrl_spec)] += n
-        else:
-            for bloq, n in sub_cg.items():
-                counts[bloq.controlled(self.ctrl_spec)] += n
-        return counts
 
     def on_classical_vals(self, **vals: 'ClassicalValT') -> Dict[str, 'ClassicalValT']:
         ctrl_vals = [vals[reg_name] for reg_name in self.ctrl_reg_names]
@@ -548,9 +504,6 @@ class Controlled(GateWithRegisters):
         i = self.ctrl_reg_names.index(reg.name)
         return self.ctrl_spec.wire_symbol(i, reg, idx)
 
-    def adjoint(self) -> 'Bloq':
-        return self.subbloq.adjoint().controlled(ctrl_spec=self.ctrl_spec)
-
     def __str__(self) -> str:
         num_ctrls = self.ctrl_spec.num_qubits
         ctrl_string = 'C' if num_ctrls == 1 else f'C[{num_ctrls}]'
@@ -586,3 +539,120 @@ class Controlled(GateWithRegisters):
                 )
 
         return _wire_symbol_to_cirq_diagram_info(self, args)
+
+
+@attrs.frozen
+class Controlled(_ControlledBase, GateWithRegisters):
+    """A controlled version of `subbloq`.
+
+    This meta-bloq is part of the 'controlled' protocol. As a default fallback,
+    we wrap any bloq without a custom controlled version in this meta-bloq.
+
+    Users should likely not use this class directly. Prefer using `bloq.controlled(ctrl_spec)`,
+    which may return a tailored Bloq that is controlled in the desired way.
+
+    Args:
+        subbloq: The bloq we are controlling.
+        ctrl_spec: The specification for how to control the bloq.
+    """
+
+    subbloq: 'Bloq'
+    ctrl_spec: 'CtrlSpec'
+
+    def __attrs_post_init__(self):
+        for qdtype in self.ctrl_spec.qdtypes:
+            if not isinstance(qdtype, QCDType):
+                raise ValueError(f"Invalid type found in `ctrl_spec`: {qdtype}")
+            if not isinstance(qdtype, QDType):
+                raise ValueError(
+                    f"`qualtran.Controlled` requires a purely-quantum control spec for accurate resource estimation. Found {qdtype}. Consider using TODO"
+                )
+
+    @classmethod
+    def make_ctrl_system(cls, bloq: 'Bloq', ctrl_spec: 'CtrlSpec') -> Tuple[Bloq, AddControlledT]:
+        """A factory method for creating both the Controlled and the adder function.
+
+        See `Bloq.get_ctrl_system`.
+        """
+        cb = cls(subbloq=bloq, ctrl_spec=ctrl_spec)
+        return cls._make_ctrl_system(cb)
+
+    def decompose_bloq(self) -> 'CompositeBloq':
+        return Bloq.decompose_bloq(self)
+
+    def build_composite_bloq(
+        self, bb: 'BloqBuilder', **initial_soqs: 'SoquetT'
+    ) -> Dict[str, 'SoquetT']:
+        # Use subbloq's decomposition but wire up the additional ctrl_soqs.
+        from qualtran import CompositeBloq
+
+        if isinstance(self.subbloq, CompositeBloq):
+            cbloq = self.subbloq
+        else:
+            cbloq = self.subbloq.decompose_bloq()
+
+        ctrl_soqs: List['SoquetT'] = [initial_soqs[creg_name] for creg_name in self.ctrl_reg_names]
+
+        soq_map: List[Tuple[SoquetT, SoquetT]] = []
+        for binst, in_soqs, old_out_soqs in cbloq.iter_bloqsoqs():
+            in_soqs = bb.map_soqs(in_soqs, soq_map)
+            new_bloq, adder = binst.bloq.get_ctrl_system(self.ctrl_spec)
+            adder_output = adder(bb, ctrl_soqs=ctrl_soqs, in_soqs=in_soqs)
+            ctrl_soqs = list(adder_output[0])
+            new_out_soqs = adder_output[1]
+            soq_map.extend(zip(old_out_soqs, new_out_soqs))
+
+        fsoqs = bb.map_soqs(cbloq.final_soqs(), soq_map)
+        fsoqs |= dict(zip(self.ctrl_reg_names, ctrl_soqs))
+        return fsoqs
+
+    def build_call_graph(self, ssa: 'SympySymbolAllocator') -> 'BloqCountDictT':
+        try:
+            sub_cg = self.subbloq.build_call_graph(ssa=ssa)
+        except DecomposeTypeError as e1:
+            raise DecomposeTypeError(f"Could not build call graph for {self}: {e1}") from e1
+        except DecomposeNotImplementedError as e2:
+            raise DecomposeNotImplementedError(
+                f"Could not build call graph for {self}: {e2}"
+            ) from e2
+
+        counts = Counter['Bloq']()
+        if isinstance(sub_cg, set):
+            for bloq, n in sub_cg:
+                counts[bloq.controlled(self.ctrl_spec)] += n
+        else:
+            for bloq, n in sub_cg.items():
+                counts[bloq.controlled(self.ctrl_spec)] += n
+        return counts
+
+    def adjoint(self) -> 'Bloq':
+        return self.subbloq.adjoint().controlled(ctrl_spec=self.ctrl_spec)
+
+
+def make_ctrl_system_with_correct_metabloq(bloq: 'Bloq', ctrl_spec: 'CtrlSpec'):
+    from qualtran.bloqs.mcmt.classically_controlled import ClassicallyControlled
+    from qualtran.bloqs.mcmt.controlled_via_and import ControlledViaAnd
+
+    if ctrl_spec == CtrlSpec():
+        return Controlled.make_ctrl_system(bloq, ctrl_spec=ctrl_spec)
+
+    qdtypes = []
+    cdtypes = []
+    for qcdtype in ctrl_spec.qdtypes:
+        if not isinstance(qcdtype, QCDType):
+            raise ValueError(f"Invalid data type encountered in the control spec: {qcdtype}")
+        if isinstance(qcdtype, QDType):
+            qdtypes.append(qcdtype)
+        if isinstance(qcdtype, CDType):
+            cdtypes.append(qcdtype)
+
+    if qdtypes and cdtypes:
+        raise NotImplementedError(
+            "At present, Qualtran does not support mixing quantum and classical controls within a single CtrlSpec. As an alternative, consider first getting a quantum controlled bloq and then classically controlling it."
+        )
+    if qdtypes:
+        return ControlledViaAnd.make_ctrl_system(bloq, ctrl_spec=ctrl_spec)
+    if cdtypes:
+        return ClassicallyControlled.make_ctrl_system(bloq, ctrl_spec=ctrl_spec)
+
+    raise ValueError("Invalid control spec: no data types.")
