@@ -34,9 +34,11 @@ from numpy.typing import NDArray
 from qualtran import (
     Bloq,
     BloqInstance,
+    CDType,
     Connection,
     DanglingT,
     LeftDangle,
+    QCDType,
     QDType,
     Register,
     RightDangle,
@@ -74,10 +76,10 @@ class HLineFlavor(Enum):
     CLASSICAL = 2
 
     @classmethod
-    def from_qdtype(cls, qdtype: QDType) -> 'HLineFlavor':
-        if qdtype.num_qubits > 0:
+    def from_qdtype(cls, qcdtype: QCDType) -> 'HLineFlavor':
+        if isinstance(qcdtype, QDType):
             return cls.QUANTUM
-        if hasattr(qdtype, 'num_cbits') and qdtype.num_cbits > 0:
+        if isinstance(qcdtype, CDType):
             return cls.CLASSICAL
 
         # Fallback

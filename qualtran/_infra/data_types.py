@@ -136,7 +136,7 @@ class QDType(QCDType, metaclass=abc.ABCMeta):
 
 
 class CDType(QCDType, metaclass=abc.ABCMeta):
-    """The abstract interface for quantum data types."""
+    """The abstract interface for classical data types."""
 
     @property
     def num_qubits(self) -> int:
@@ -152,7 +152,10 @@ class CDType(QCDType, metaclass=abc.ABCMeta):
 
 
 class _Bit(metaclass=abc.ABCMeta):
-    """A single qubit. The smallest addressable unit of quantum data."""
+    """A single quantum or classical bit. The smallest addressable unit of data.
+
+    Use either `QBit()` or `CBit()` for quantum or classical implementations, respectively.
+    """
 
     def get_classical_domain(self) -> Iterable[int]:
         yield from (0, 1)

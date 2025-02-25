@@ -123,7 +123,6 @@ def _get_ctrl_system_1bit_cv(
     """
     from qualtran import Soquet
     from qualtran._infra.controlled import make_ctrl_system_with_correct_metabloq  # TODO
-    from qualtran.bloqs.mcmt import ControlledViaAnd
 
     def _get_default_fallback():
         return make_ctrl_system_with_correct_metabloq(bloq=bloq, ctrl_spec=ctrl_spec)

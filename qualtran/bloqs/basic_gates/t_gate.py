@@ -19,18 +19,7 @@ import attrs
 import numpy as np
 from attrs import frozen
 
-from qualtran import (
-    Bloq,
-    bloq_example,
-    BloqBuilder,
-    BloqDocSpec,
-    ConnectionT,
-    QBit,
-    Register,
-    Side,
-    Signature,
-    SoquetT,
-)
+from qualtran import Bloq, bloq_example, BloqDocSpec, ConnectionT, Register, Signature
 from qualtran.drawing import Text, TextBox, WireSymbol
 
 if TYPE_CHECKING:
@@ -125,17 +114,3 @@ def _t_gate() -> TGate:
 
 
 _T_GATE_DOC = BloqDocSpec(bloq_cls=TGate, examples=[_t_gate])
-
-
-@frozen
-class TState(Bloq):
-    @cached_property
-    def signature(self) -> 'Signature':
-        return Signature([Register('q', QBit(), side=Side.RIGHT)])
-
-    def build_composite_bloq(self, bb: 'BloqBuilder') -> Dict[str, 'SoquetT']:
-        from qualtran.bloqs.basic_gates import PlusState
-
-        q = bb.add(PlusState())
-        q = bb.add(TGate(), q=q)
-        return {'q': q}

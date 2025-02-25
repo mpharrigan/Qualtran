@@ -378,7 +378,7 @@ class QECGatesCost(CostKey[GateCounts]):
         if bloq_is_rotation(bloq):
             return GateCounts(rotation=1)
 
-        from qualtran._infra.classical_branching import HasClassicalBranches
+        from qualtran._infra.classical_branching import HasClassicalBranches  # TODO
 
         if isinstance(bloq, HasClassicalBranches):
             for callee, prob in bloq.classical_branching_probabilities().items():

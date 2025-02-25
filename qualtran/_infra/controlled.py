@@ -350,30 +350,27 @@ def _get_nice_ctrl_reg_names(reg_names: List[str], n: int) -> Tuple[str, ...]:
 
 
 class _ControlledBase(metaclass=abc.ABCMeta):
-    """A controlled version of `subbloq`.
+    """Base class for representing the controlled version of an arbitrary bloq.
 
-    This meta-bloq is part of the 'controlled' protocol. As a default fallback,
-    we wrap any bloq without a custom controlled version in this meta-bloq.
-
-    Users should likely not use this class directly. Prefer using `bloq.controlled(ctrl_spec)`,
-    which may return a tailored Bloq that is controlled in the desired way.
-
-    Args:
-        subbloq: The bloq we are controlling.
-        ctrl_spec: The specification for how to control the bloq.
+    This meta-bloq interface is part of the 'controlled' protocol.
     """
 
     @property
     @abc.abstractmethod
-    def subbloq(self) -> 'Bloq': ...
+    def subbloq(self) -> 'Bloq':
+        """The bloq being controlled."""
 
     @property
     @abc.abstractmethod
-    def ctrl_spec(self) -> 'CtrlSpec': ...
+    def ctrl_spec(self) -> 'CtrlSpec':
+        """The specification of how the `subbloq` is controlled."""
 
     @staticmethod
     def _make_ctrl_system(cb: '_ControlledBase') -> Tuple['Bloq', 'AddControlledT']:
-        """A factory method for creating both the Controlled and the adder function.
+        """A static method to create the adder function from an implementation of this class.
+
+        Classes implementing this interface can use this static method to create a factory
+        class method to construct both the controlled bloq and its adder function.
 
         See `Bloq.get_ctrl_system`.
         """
@@ -416,6 +413,11 @@ class _ControlledBase(metaclass=abc.ABCMeta):
         return Signature(self.ctrl_regs + tuple(self.subbloq.signature))
 
     def on_classical_vals(self, **vals: 'ClassicalValT') -> Dict[str, 'ClassicalValT']:
+        """Classical action of controlled bloqs.
+
+        This involves conditionally doing the classical action of `subbloq`. All implementers
+        of `_ControlledBase` should provide a decomposition that satisfies this classical action.
+        """
         ctrl_vals = [vals[reg_name] for reg_name in self.ctrl_reg_names]
         other_vals = {reg.name: vals[reg.name] for reg in self.subbloq.signature}
         if self.ctrl_spec.is_active(*ctrl_vals):
@@ -428,6 +430,11 @@ class _ControlledBase(metaclass=abc.ABCMeta):
         return vals
 
     def basis_state_phase(self, **vals: 'ClassicalValT') -> Optional[complex]:
+        """Phasing action of controlled bloqs.
+
+        This involves conditionally doing the phasing action of `subbloq`. All implementers
+        of `_ControlledBase` should provide a decomposition that satisfies this phase funciton.
+        """
         ctrl_vals = [vals[reg_name] for reg_name in self.ctrl_reg_names]
         other_vals = {reg.name: vals[reg.name] for reg in self.subbloq.signature}
         if self.ctrl_spec.is_active(*ctrl_vals):
@@ -435,6 +442,10 @@ class _ControlledBase(metaclass=abc.ABCMeta):
         return None
 
     def _tensor_data(self):
+        """Dense tensor encoding a controlled unitary.
+
+        This is used by Bloq.my_tensors and cirq.Gate._unitary_ to support tensor simulation.
+        """
         from qualtran.simulation.tensor._tensor_data_manipulation import (
             active_space_for_ctrl_spec,
             eye_tensor_for_signature,
@@ -454,6 +465,7 @@ class _ControlledBase(metaclass=abc.ABCMeta):
         return data
 
     def _unitary_(self):
+        """Cirq-style unitary protocol."""
         if isinstance(self.subbloq, GateWithRegisters):
             # subbloq is a cirq gate, use the cirq-style API to derive a unitary.
             import cirq
@@ -545,11 +557,13 @@ class _ControlledBase(metaclass=abc.ABCMeta):
 class Controlled(_ControlledBase, GateWithRegisters):
     """A controlled version of `subbloq`.
 
-    This meta-bloq is part of the 'controlled' protocol. As a default fallback,
-    we wrap any bloq without a custom controlled version in this meta-bloq.
+    This bloq represents a "total control" strategy of controlling `subbloq`: the decomposition
+    of `Controlled(b)` uses the decomposition of `b` and controls each subbloq in that
+    decomposition.
 
     Users should likely not use this class directly. Prefer using `bloq.controlled(ctrl_spec)`,
-    which may return a tailored Bloq that is controlled in the desired way.
+    which may return a natively-controlled Bloq or a more intelligent construction for
+    complex control specs.
 
     Args:
         subbloq: The bloq we are controlling.
@@ -629,7 +643,22 @@ class Controlled(_ControlledBase, GateWithRegisters):
         return self.subbloq.adjoint().controlled(ctrl_spec=self.ctrl_spec)
 
 
-def make_ctrl_system_with_correct_metabloq(bloq: 'Bloq', ctrl_spec: 'CtrlSpec'):
+def make_ctrl_system_with_correct_metabloq(
+    bloq: 'Bloq', ctrl_spec: 'CtrlSpec'
+) -> Tuple['_ControlledBase', 'AddControlledT']:
+    """The default fallback for `Bloq.make_ctrl_system.
+
+    This intelligently selects the correct implemetation of `_ControlledBase` based
+    on the control spec.
+
+     - A 1-qubit, positive control (i.e. `CtrlSpec()`) uses `Controlled`, which uses a
+       "total control" decomposition.
+     - Complex quantum controls (i.e. `CtrlSpec(...)` with quantum data types) uses
+       `ControlledViaAnd`, which computes the activation function once and re-uses it
+       for each subbloq in the decomposition of `bloq`.
+     - Classical controls (i.e. `CtrlSpec(...)` with classical data types) uses
+       `ClassicallyControlled`.
+    """
     from qualtran.bloqs.mcmt.classically_controlled import ClassicallyControlled
     from qualtran.bloqs.mcmt.controlled_via_and import ControlledViaAnd
 

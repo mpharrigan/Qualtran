@@ -12,11 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import abc
+from typing import Dict, TYPE_CHECKING
 
-import attrs
-
-from qualtran import Bloq, CDType, CtrlSpec, QCDType
-from qualtran._infra.controlled import _ControlledBase  # TODO
+if TYPE_CHECKING:
+    from qualtran import Bloq
 
 
 class HasClassicalBranches(metaclass=abc.ABCMeta):
@@ -28,7 +27,7 @@ class HasClassicalBranches(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def classical_branching_probabilities(self): ...
+    def classical_branching_probabilities(self) -> Dict['Bloq', float]: ...
 
 
 class ClassicalApplyLthBloq(HasClassicalBranches): ...

@@ -28,14 +28,9 @@ if TYPE_CHECKING:
 @frozen
 class Discard(Bloq):
 
-    allow_qubits: bool = False
-
     @cached_property
     def signature(self) -> 'Signature':
-        if self.allow_qubits:
-            return Signature([Register('x', QCBit(), side=Side.LEFT)])
-        else:
-            return Signature([Register('x', CBit(), side=Side.LEFT)])
+        return Signature([Register('x', CBit(), side=Side.LEFT)])
 
     def on_classical_vals(self, x: int) -> Dict[str, 'ClassicalValT']:
         return {}
