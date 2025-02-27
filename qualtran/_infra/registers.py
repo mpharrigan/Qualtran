@@ -154,7 +154,7 @@ class Signature:
         )
 
     @classmethod
-    def build_from_dtypes(cls, **registers: QDType) -> 'Signature':
+    def build_from_dtypes(cls, **registers: QCDType) -> 'Signature':
         """Construct a Signature comprised of simple thru registers given the register dtypes.
 
         Args:

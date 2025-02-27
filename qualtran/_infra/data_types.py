@@ -148,7 +148,7 @@ class CDType(QCDType, metaclass=abc.ABCMeta):
         """Number of classical bits required to represent a single instance of this data type."""
 
     def __str__(self):
-        return f'{self.__class__.__name__}({self.num_qubits})'
+        return f'{self.__class__.__name__}({self.num_cbits})'
 
 
 class _Bit(metaclass=abc.ABCMeta):
@@ -182,6 +182,9 @@ class _Bit(metaclass=abc.ABCMeta):
     ):
         if not np.all((val_array == 0) | (val_array == 1)):
             raise ValueError(f"Bad {self} value array in {debug_str}")
+
+    def __str__(self):
+        return f'{self.__class__.__name__}()'
 
 
 @attrs.frozen
@@ -1073,8 +1076,8 @@ def _check_uint_fxp_consistent(a: Union[QUInt, BQUInt, QMontgomeryUInt, QGF], b:
 
 
 def check_dtypes_consistent(
-    dtype_a: QDType,
-    dtype_b: QDType,
+    dtype_a: QCDType,
+    dtype_b: QCDType,
     type_checking_severity: QDTypeCheckingSeverity = QDTypeCheckingSeverity.LOOSE,
 ) -> bool:
     """Check if two types are consistent given our current definition on consistent types.
@@ -1106,7 +1109,7 @@ def check_dtypes_consistent(
         # A subset of the integers should be freely interchangeable.
         return same_n_qubits
     elif isinstance(dtype_a, _QAnyUInt) and isinstance(dtype_b, QFxp):
-        # unsigned Fxp which is wholy an integer or < 1 part is a uint.
+        # unsigned Fxp which is wholly an integer or < 1 part is a uint.
         return _check_uint_fxp_consistent(dtype_a, dtype_b)
     elif isinstance(dtype_b, _QAnyUInt) and isinstance(dtype_a, QFxp):
         # unsigned Fxp which is wholy an integer or < 1 part is a uint.

@@ -13,10 +13,10 @@
 #  limitations under the License.
 from functools import cached_property
 
+from qualtran import Bloq, Register, Signature
+
 
 class ClassicallyChooseLthBloq(Bloq):
     @cached_property
     def signature(self):
-        return Signature([Register('asdf', dtype=CUInt(n))])
-
-    ...
+        raise NotImplementedError()

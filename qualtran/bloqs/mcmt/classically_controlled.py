@@ -11,7 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Set, Tuple, Union
+from typing import Set, Tuple, TYPE_CHECKING, Union
 
 import attrs
 
@@ -19,6 +19,9 @@ from qualtran import AddControlledT, Bloq, CDType, CtrlSpec, QCDType
 from qualtran._infra.classical_branching import HasClassicalBranches
 from qualtran._infra.controlled import _ControlledBase
 from qualtran.bloqs.basic_gates import Identity
+
+if TYPE_CHECKING:
+    from qualtran.resource_counting import BloqCountDictT, BloqCountT, SympySymbolAllocator
 
 
 @attrs.frozen

@@ -27,6 +27,7 @@ from qualtran import (
     DanglingT,
     LeftDangle,
     QBit,
+    QCDType,
     QDType,
     Register,
     RightDangle,
@@ -405,7 +406,7 @@ class PrettyGraphDrawer(GraphDrawer):
 
 class TypedGraphDrawer(PrettyGraphDrawer):
     @staticmethod
-    def _fmt_dtype(dtype: QDType):
+    def _fmt_dtype(dtype: QCDType):
         return str(dtype)
 
     def cxn_label(self, cxn: Connection) -> str:

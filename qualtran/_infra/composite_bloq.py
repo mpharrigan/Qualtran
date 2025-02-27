@@ -42,7 +42,7 @@ from numpy.typing import NDArray
 
 from .binst_graph_iterators import greedy_topological_sort
 from .bloq import Bloq, DecomposeNotImplementedError, DecomposeTypeError
-from .data_types import check_dtypes_consistent, QAny, QBit, QDType
+from .data_types import check_dtypes_consistent, QAny, QBit, QCDType, QDType
 from .quantum_graph import BloqInstance, Connection, DanglingT, LeftDangle, RightDangle, Soquet
 from .registers import Register, Side, Signature
 
@@ -597,6 +597,10 @@ def _get_soquet(
             if me.reg.name == reg_name and me.idx == idx:
                 return me
 
+    raise ValueError(
+        f"Could not find the requested soquet with {binst=}, {reg_name=}, {right=}, {idx=}"
+    )
+
 
 def _cxns_to_soq_dict(
     regs: Iterable[Register],
@@ -918,7 +922,7 @@ class BloqBuilder:
         self.add_register_allowed = add_registers_allowed
 
     def add_register_from_dtype(
-        self, reg: Union[str, Register], dtype: Optional[QDType] = None
+        self, reg: Union[str, Register], dtype: Optional[QCDType] = None
     ) -> Union[None, SoquetT]:
         """Add a new typed register to the composite bloq being built.
 
@@ -950,9 +954,9 @@ class BloqBuilder:
         else:
             if not isinstance(reg, str):
                 raise ValueError("`reg` must be a string register name if not a Register.")
-            if not isinstance(dtype, QDType):
+            if not isinstance(dtype, QCDType):
                 raise ValueError(
-                    "`dtype` must be specified and must be an QDType if `reg` is a register name."
+                    "`dtype` must be specified and must be a QCDType if `reg` is a register name."
                 )
             reg = Register(name=reg, dtype=dtype)
 
@@ -1324,7 +1328,11 @@ class BloqBuilder:
         if not isinstance(soq, Soquet):
             raise ValueError("`free` expects a single Soquet to free.")
 
-        self.add(Free(dtype=soq.reg.dtype, dirty=dirty), reg=soq)
+        qdtype = soq.reg.dtype
+        if not isinstance(qdtype, QDType):
+            raise ValueError("`free` can only free quantum registers.")
+
+        self.add(Free(dtype=qdtype, dirty=dirty), reg=soq)
 
     def split(self, soq: Soquet) -> NDArray[Soquet]:  # type: ignore[type-var]
         """Add a Split bloq to split up a register."""

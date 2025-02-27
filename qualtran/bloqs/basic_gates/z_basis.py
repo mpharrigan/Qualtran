@@ -51,6 +51,7 @@ if TYPE_CHECKING:
 
     from qualtran.cirq_interop import CirqQuregT
     from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
+    from qualtran.simulation.classical_sim import ClassicalValT
 
 _ZERO = np.array([1, 0], dtype=np.complex128)
 _ONE = np.array([0, 1], dtype=np.complex128)

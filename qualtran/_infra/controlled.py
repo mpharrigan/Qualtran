@@ -117,8 +117,8 @@ class CtrlSpec:
             of the ctrl register is implied to be `cv.shape`).
     """
 
-    qdtypes: Tuple[QDType, ...] = attrs.field(
-        default=QBit(), converter=lambda qt: (qt,) if isinstance(qt, QDType) else tuple(qt)
+    qdtypes: Tuple[QCDType, ...] = attrs.field(
+        default=QBit(), converter=lambda qt: (qt,) if isinstance(qt, QCDType) else tuple(qt)
     )
     cvs: Tuple[Union[NDArray[np.integer], Shaped], ...] = attrs.field(
         default=1, converter=_cvs_convert
@@ -257,7 +257,7 @@ class CtrlSpec:
         cls,
         cirq_cv: 'cirq.ops.AbstractControlValues',
         *,
-        qdtypes: Optional[Sequence[QDType]] = None,
+        qdtypes: Optional[Sequence[QCDType]] = None,
         shapes: Optional[Sequence[Tuple[int, ...]]] = None,
     ) -> 'CtrlSpec':
         """Construct a CtrlSpec from cirq.SumOfProducts representation of control values."""
@@ -274,18 +274,16 @@ class CtrlSpec:
 
         # Verify that the given values for qdtypes and shapes are compatible with cv.
         if sum(dt.num_qubits * np.prod(sh) for dt, sh in zip(qdtypes, shapes)) != len(cv):
-            raise ValueError(
-                f"Sum of qubits across {qdtypes=} and {shapes=} should match {len(cv)=}"
-            )
+            raise ValueError(f"Sum of bits across {qdtypes=} and {shapes=} should match {len(cv)=}")
 
         # Convert the AND clause to a CtrlSpec.
         idx = 0
         bloq_cvs = []
 
-        for qdtype, shape in zip(qdtypes, shapes):
-            full_shape = shape + (qdtype.num_qubits,)
+        for dtype, shape in zip(qdtypes, shapes):
+            full_shape = shape + (dtype.num_bits,)
             curr_cvs_bits = np.array(cv[idx : idx + int(np.prod(full_shape))]).reshape(full_shape)
-            curr_cvs = np.apply_along_axis(qdtype.from_bits, -1, curr_cvs_bits)  # type: ignore
+            curr_cvs = np.apply_along_axis(dtype.from_bits, -1, curr_cvs_bits)  # type: ignore
             bloq_cvs.append(curr_cvs)
         return CtrlSpec(tuple(qdtypes), tuple(bloq_cvs))
 
