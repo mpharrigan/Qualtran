@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from qualtran import CompositeBloq, QCDType
 
 ClassicalValT = Union[int, np.integer, NDArray[np.integer]]
+ClassicalValRetT = Union[int, np.integer, NDArray[np.integer], 'ClassicalValDistribution']
 
 
 def _numpy_dtype_from_qlt_dtype(dtype: 'QCDType') -> Type:
@@ -148,7 +149,7 @@ class _FixedRandomValHandler(_RandomValHandler):
 class _BannedRandomValHandler(_RandomValHandler):
 
     def get(self, binst: 'BloqInstance', a, p) -> Any:
-        raise ValueError("{binst} has non-deterministic classical action. TODO: advice.")
+        raise ValueError(f"{binst} has non-deterministic classical action. TODO: advice.")
 
 
 class _ClassicalSimState:
@@ -433,6 +434,8 @@ class _PhasedClassicalSimState(_ClassicalSimState):
         """
         if rng is not None and fixed_rnd_vals is not None:
             raise ValueError("Supply either `seed` or `fixed_rnd_vals`, not both.")
+
+        rnd_handler: _RandomValHandler
         if rng is not None:
             rnd_handler = _RandomRandomValHandler(rng=rng)
         elif fixed_rnd_vals is not None:

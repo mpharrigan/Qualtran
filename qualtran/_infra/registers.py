@@ -24,7 +24,7 @@ from attrs import field, frozen
 
 from qualtran.symbolics import is_symbolic, prod, smax, ssum, SymbolicInt
 
-from .data_types import QAny, QBit, QCDType, QDType
+from .data_types import QAny, QBit, QCDType
 
 
 class Side(enum.Flag):

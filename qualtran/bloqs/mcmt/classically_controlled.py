@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 
 @attrs.frozen
-class ClassicallyControlled(HasClassicalBranches, _ControlledBase, Bloq):
+class ClassicallyControlled(HasClassicalBranches, _ControlledBase):
 
     subbloq: 'Bloq'
     ctrl_spec: 'CtrlSpec'
@@ -41,7 +41,7 @@ class ClassicallyControlled(HasClassicalBranches, _ControlledBase, Bloq):
     @classmethod
     def make_ctrl_system(
         cls, bloq: 'Bloq', ctrl_spec: 'CtrlSpec'
-    ) -> Tuple['Bloq', 'AddControlledT']:
+    ) -> Tuple['_ControlledBase', 'AddControlledT']:
         """A factory method for creating both the Controlled and the adder function.
 
         See `Bloq.get_ctrl_system`.

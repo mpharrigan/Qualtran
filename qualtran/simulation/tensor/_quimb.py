@@ -22,6 +22,7 @@ from qualtran import (
     Bloq,
     CompositeBloq,
     Connection,
+    ConnectionT,
     LeftDangle,
     QBit,
     Register,
@@ -129,7 +130,7 @@ def _get_friendly_indices(tn: 'qtn.TensorNetwork') -> Dict[Any, str]:
 
 @attrs.frozen
 class DiscardInd:
-    ind_tuple: Tuple[str, int]
+    ind_tuple: Tuple['ConnectionT', int]
 
 
 def make_forward_tensor(t: qtn.Tensor):

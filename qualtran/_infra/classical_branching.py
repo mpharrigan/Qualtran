@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 class HasClassicalBranches(metaclass=abc.ABCMeta):
     """This mixin lets you annotate classical branches.
 
-    Classical branches are fundamentally different than quantum branching in resource
+    Classical branches are fundamentally different from quantum branching in resource
     estimation. Quantum "branching" (via controlled or select operations) costs at least
     as much as executing each possible branch.
     """

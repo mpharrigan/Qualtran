@@ -36,6 +36,7 @@ from qualtran import (
 from qualtran.drawing import directional_text_box, Text, WireSymbol
 from qualtran.simulation.classical_sim import (
     ClassicalValDistribution,
+    ClassicalValRetT,
     ClassicalValT,
     MeasurementPhase,
 )
@@ -281,16 +282,17 @@ class MeasX(Bloq):
             [Register('q', QBit(), side=Side.LEFT), Register('c', CBit(), side=Side.RIGHT)]
         )
 
-    def on_classical_vals(self, q: int) -> Dict[str, 'ClassicalValT']:
+    def on_classical_vals(self, q: int) -> Dict[str, 'ClassicalValRetT']:
         if q not in [0, 1]:
             raise ValueError(f"Invalid classical value encountered in {self}: {q}")
         return {'c': ClassicalValDistribution(2)}
 
-    def basis_state_phase(self, q: int) -> Optional[complex]:
+    def basis_state_phase(self, q: int) -> Union[complex, MeasurementPhase]:
         if q == 0:
             return 1
         if q == 1:
             return MeasurementPhase(reg_name='c')
+        raise ValueError(f"Invalid classical value encountered in {self}: {q}")
 
     def my_tensors(
         self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']

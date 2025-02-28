@@ -35,7 +35,6 @@ from qualtran import (
     GateWithRegisters,
     QAny,
     QBit,
-    QCDType,
     QDType,
     Register,
     Side,

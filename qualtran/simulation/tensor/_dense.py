@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Tuple, TYPE_CHECKING
 
 from numpy.typing import NDArray
 
-from qualtran import Bloq, Connection, ConnectionT, LeftDangle, RightDangle, Signature, Soquet
+from qualtran import Bloq, Connection, ConnectionT, LeftDangle, RightDangle, Signature
 
 from ._flattening import flatten_for_tensor_contraction
 from ._quimb import cbloq_to_quimb

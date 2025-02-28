@@ -38,7 +38,6 @@ class Discard(Bloq):
     def my_tensors(
         self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
     ) -> List['DiscardInd']:
-        import quimb.tensor as qtn
 
         from qualtran.simulation.tensor import DiscardInd
 
@@ -57,7 +56,6 @@ class DiscardQ(Bloq):
     def my_tensors(
         self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
     ) -> List['qtn.Tensor']:
-        import quimb.tensor as qtn
 
         from qualtran.simulation.tensor._quimb import DiscardInd  # TODO
 

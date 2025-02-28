@@ -16,7 +16,18 @@
 """Contains the main interface for defining `Bloq`s."""
 
 import abc
-from typing import Callable, Dict, List, Optional, Sequence, Set, Tuple, TYPE_CHECKING, Union
+from typing import (
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    TYPE_CHECKING,
+    Union,
+)
 
 if TYPE_CHECKING:
     import cirq
@@ -46,7 +57,7 @@ if TYPE_CHECKING:
         GeneralizerT,
         SympySymbolAllocator,
     )
-    from qualtran.simulation.classical_sim import ClassicalValT
+    from qualtran.simulation.classical_sim import ClassicalValRetT, ClassicalValT, MeasurementPhase
     from qualtran.simulation.tensor import DiscardInd
 
 
@@ -171,7 +182,7 @@ class Bloq(metaclass=abc.ABCMeta):
 
     def on_classical_vals(
         self, **vals: Union['sympy.Symbol', 'ClassicalValT']
-    ) -> Dict[str, 'ClassicalValT']:
+    ) -> Mapping[str, 'ClassicalValRetT']:
         """How this bloq operates on classical data.
 
         Override this method if your bloq represents classical, reversible logic. For example:
@@ -202,7 +213,9 @@ class Bloq(metaclass=abc.ABCMeta):
         except NotImplementedError as e:
             raise NotImplementedError(f"{self} does not support classical simulation: {e}") from e
 
-    def basis_state_phase(self, **vals: 'ClassicalValT') -> Optional[complex]:
+    def basis_state_phase(
+        self, **vals: 'ClassicalValT'
+    ) -> Union[complex, 'MeasurementPhase', None]:
         return None
 
     def call_classically(

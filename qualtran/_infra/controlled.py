@@ -19,6 +19,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Mapping,
     Optional,
     Protocol,
     Sequence,
@@ -46,7 +47,7 @@ if TYPE_CHECKING:
     from qualtran.cirq_interop import CirqQuregT
     from qualtran.drawing import WireSymbol
     from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
-    from qualtran.simulation.classical_sim import ClassicalValT
+    from qualtran.simulation.classical_sim import ClassicalValRetT, ClassicalValT, MeasurementPhase
 
 ControlBit: TypeAlias = int
 """A control bit, either 0 or 1."""
@@ -154,7 +155,7 @@ class CtrlSpec:
     def is_symbolic(self):
         return is_symbolic(*self.qdtypes) or is_symbolic(*self.cvs)
 
-    def activation_function_dtypes(self) -> Sequence[Tuple[QDType, Tuple[SymbolicInt, ...]]]:
+    def activation_function_dtypes(self) -> Sequence[Tuple[QCDType, Tuple[SymbolicInt, ...]]]:
         """The data types that serve as input to the 'activation function'.
 
         The activation function takes in (quantum) inputs of these types and shapes and determines
@@ -347,7 +348,7 @@ def _get_nice_ctrl_reg_names(reg_names: List[str], n: int) -> Tuple[str, ...]:
     return tuple(names)
 
 
-class _ControlledBase(metaclass=abc.ABCMeta):
+class _ControlledBase(GateWithRegisters, metaclass=abc.ABCMeta):
     """Base class for representing the controlled version of an arbitrary bloq.
 
     This meta-bloq interface is part of the 'controlled' protocol.
@@ -364,7 +365,7 @@ class _ControlledBase(metaclass=abc.ABCMeta):
         """The specification of how the `subbloq` is controlled."""
 
     @staticmethod
-    def _make_ctrl_system(cb: '_ControlledBase') -> Tuple['Bloq', 'AddControlledT']:
+    def _make_ctrl_system(cb: '_ControlledBase') -> Tuple['_ControlledBase', 'AddControlledT']:
         """A static method to create the adder function from an implementation of this class.
 
         Classes implementing this interface can use this static method to create a factory
@@ -410,7 +411,7 @@ class _ControlledBase(metaclass=abc.ABCMeta):
         # Prepend register(s) corresponding to `ctrl_spec`.
         return Signature(self.ctrl_regs + tuple(self.subbloq.signature))
 
-    def on_classical_vals(self, **vals: 'ClassicalValT') -> Dict[str, 'ClassicalValT']:
+    def on_classical_vals(self, **vals: 'ClassicalValT') -> Mapping[str, 'ClassicalValRetT']:
         """Classical action of controlled bloqs.
 
         This involves conditionally doing the classical action of `subbloq`. All implementers
@@ -419,15 +420,19 @@ class _ControlledBase(metaclass=abc.ABCMeta):
         ctrl_vals = [vals[reg_name] for reg_name in self.ctrl_reg_names]
         other_vals = {reg.name: vals[reg.name] for reg in self.subbloq.signature}
         if self.ctrl_spec.is_active(*ctrl_vals):
-            rets = self.subbloq.on_classical_vals(**other_vals)
-            rets |= {
-                reg_name: ctrl_val for reg_name, ctrl_val in zip(self.ctrl_reg_names, ctrl_vals)
+            rets = {
+                **self.subbloq.on_classical_vals(**other_vals),
+                **{
+                    reg_name: ctrl_val for reg_name, ctrl_val in zip(self.ctrl_reg_names, ctrl_vals)
+                },
             }
             return rets
 
         return vals
 
-    def basis_state_phase(self, **vals: 'ClassicalValT') -> Optional[complex]:
+    def basis_state_phase(
+        self, **vals: 'ClassicalValT'
+    ) -> Union[complex, 'MeasurementPhase', None]:
         """Phasing action of controlled bloqs.
 
         This involves conditionally doing the phasing action of `subbloq`. All implementers
@@ -552,7 +557,7 @@ class _ControlledBase(metaclass=abc.ABCMeta):
 
 
 @attrs.frozen
-class Controlled(_ControlledBase, GateWithRegisters):
+class Controlled(_ControlledBase):
     """A controlled version of `subbloq`.
 
     This bloq represents a "total control" strategy of controlling `subbloq`: the decomposition
@@ -581,7 +586,9 @@ class Controlled(_ControlledBase, GateWithRegisters):
                 )
 
     @classmethod
-    def make_ctrl_system(cls, bloq: 'Bloq', ctrl_spec: 'CtrlSpec') -> Tuple[Bloq, AddControlledT]:
+    def make_ctrl_system(
+        cls, bloq: 'Bloq', ctrl_spec: 'CtrlSpec'
+    ) -> Tuple['_ControlledBase', 'AddControlledT']:
         """A factory method for creating both the Controlled and the adder function.
 
         See `Bloq.get_ctrl_system`.

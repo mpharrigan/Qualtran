@@ -349,9 +349,7 @@ class CZ(Bloq):
             self, ctrl_spec, current_ctrl_bit=1, bloq_with_ctrl=self, ctrl_reg_name='q1'
         )
 
-    def on_classical_vals(
-        self, **vals: Union['sympy.Symbol', 'ClassicalValT']
-    ) -> Dict[str, 'ClassicalValT']:
+    def on_classical_vals(self, **vals: 'ClassicalValT') -> Dict[str, 'ClassicalValT']:
         # Diagonal, but causes phases: see `basis_state_phase`
         return vals
 
