@@ -205,7 +205,7 @@ class QROAMCleanAdjoint(QROMBase, GateWithRegisters):  # type: ignore[misc]
         if reg is None:
             return Text('QROAM').adjoint()
         name = reg.name
-        if name == 'selection':
+        if name.startswith('selection'):
             return TextBox('In').adjoint()
         elif 'target' in name:
             trg_indx = int(name.replace('target', '').replace('_', ''))
@@ -293,9 +293,9 @@ class QROAMCleanAdjointWrapper(Bloq):
         if reg is None:
             return Text('QROAM').adjoint()
         name = reg.name
-        if name == 'selection':
+        if name.startswith('selection'):
             return TextBox('In')
-        elif 'target' in name:
+        elif 'target' in name and 'junk' not in name:
             trg_indx = int(name.replace('target', '').replace('_', ''))
             # match the sel index
             subscript = chr(ord('a') + trg_indx)
@@ -537,7 +537,7 @@ class QROAMClean(SelectSwapQROM):
         if reg is None:
             return Text('QROAM')
         name = reg.name
-        if name == 'selection':
+        if name.startswith('selection'):
             return TextBox('In')
         elif 'target' in name and 'junk' not in name:
             trg_indx = int(name.replace('target', '').replace('_', ''))
