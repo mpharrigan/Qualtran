@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     from qualtran.bloqs.bookkeeping.auto_partition import Unused
     from qualtran.cirq_interop._cirq_to_bloq import CirqQuregInT, CirqQuregT
     from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
-    from qualtran.simulation.classical_sim import ClassicalValRetT, ClassicalValT
+    from qualtran.simulation.classical_sim import ClassicalValT
 
 # NDArrays must be bound to np.generic
 _SoquetType = TypeVar('_SoquetType', bound=np.generic)

@@ -100,6 +100,22 @@ class Register:
         """
         return self.bitsize * prod(self.shape_symbolic)
 
+    def total_qubits(self) -> int:
+        """The total number of qubits in this register.
+
+        This is the product of the register's data type's number of qubits
+        and each of the dimensions in `shape`.
+        """
+        return self.dtype.num_qubits * prod(self.shape_symbolic)
+
+    def total_cbits(self) -> int:
+        """The total number of classical bits in this register.
+
+        This is the product of the register's data type's number of classical bits
+        and each of the dimensions in `shape`.
+        """
+        return self.dtype.num_cbits * prod(self.shape_symbolic)
+
     def adjoint(self) -> 'Register':
         """Return the 'adjoint' of this register by switching RIGHT and LEFT registers."""
         if self.side is Side.THRU:
@@ -200,10 +216,11 @@ class Signature:
         If the signature has LEFT and RIGHT registers, the number of qubits in the signature
         is taken to be the greater of the number of left or right qubits. A bloq with this
         signature uses at least this many qubits.
+
+        Classical registers are ignored.
         """
-        # TODO: num bits!
-        left_size = ssum(reg.total_bits() for reg in self.lefts())
-        right_size = ssum(reg.total_bits() for reg in self.rights())
+        left_size = ssum(reg.total_qubits() for reg in self.lefts())
+        right_size = ssum(reg.total_qubits() for reg in self.rights())
         return smax(left_size, right_size)
 
     def __repr__(self):

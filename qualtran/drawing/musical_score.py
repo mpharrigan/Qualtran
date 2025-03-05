@@ -76,7 +76,7 @@ class HLineFlavor(Enum):
     CLASSICAL = 2
 
     @classmethod
-    def from_qdtype(cls, qcdtype: QCDType) -> 'HLineFlavor':
+    def from_qcdtype(cls, qcdtype: QCDType) -> 'HLineFlavor':
         if isinstance(qcdtype, QDType):
             return cls.QUANTUM
         if isinstance(qcdtype, CDType):
@@ -167,7 +167,7 @@ class LineManager:
         `seq_x` and `topo_gen` are passed through.
         """
         self.unreserve(binst, reg)
-        flavor = HLineFlavor.from_qdtype(reg.dtype)
+        flavor = HLineFlavor.from_qcdtype(reg.dtype)
         if not reg.shape:
             y = self.new_y(binst, reg)
             self.hlines.add(HLine(y=y, seq_x_start=seq_x, flavor=flavor))

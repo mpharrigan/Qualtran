@@ -12,11 +12,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from functools import cached_property
-from typing import Dict, List, TYPE_CHECKING, Union
+from typing import Dict, List, TYPE_CHECKING
 
 from attrs import frozen
 
-from qualtran import Bloq, BloqBuilder, CBit, ConnectionT, QBit, Register, Side, Signature
+from qualtran import Bloq, CBit, ConnectionT, QBit, Register, Side, Signature
 from qualtran.simulation.classical_sim import ClassicalValT
 
 if TYPE_CHECKING:
@@ -55,7 +55,7 @@ class DiscardQ(Bloq):
 
     def my_tensors(
         self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
-    ) -> List['qtn.Tensor']:
+    ) -> List['DiscardInd']:
 
         from qualtran.simulation.tensor._quimb import DiscardInd  # TODO
 

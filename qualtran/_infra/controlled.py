@@ -146,11 +146,21 @@ class CtrlSpec:
         return shapes  # type: ignore
 
     @cached_property
+    def num_bits(self) -> SymbolicInt:
+        """Total number of bits required for control registers represented by this CtrlSpec."""
+        return sum(dtype.num_bits * prod(shape) for dtype, shape in zip(self.qdtypes, self.shapes))
+
+    @cached_property
     def num_qubits(self) -> SymbolicInt:
         """Total number of qubits required for control registers represented by this CtrlSpec."""
         return sum(
             dtype.num_qubits * prod(shape) for dtype, shape in zip(self.qdtypes, self.shapes)
         )
+
+    @cached_property
+    def num_cbits(self) -> SymbolicInt:
+        """Total number of classical bits required for control registers represented by this CtrlSpec."""
+        return sum(dtype.num_cbits * prod(shape) for dtype, shape in zip(self.qdtypes, self.shapes))
 
     def is_symbolic(self):
         return is_symbolic(*self.qdtypes) or is_symbolic(*self.cvs)
@@ -244,13 +254,17 @@ class CtrlSpec:
         import cirq
 
         if self.is_symbolic():
-            raise ValueError(f"Cannot convert symbolic {self} to cirq control values.")
+            raise ValueError(f"Cannot convert symbolic {self} to Cirq control values.")
+        if self.num_cbits > 0:
+            raise ValueError(
+                f"Cannot convert classical control spec {self} to Cirq control values."
+            )
 
         cirq_cv = []
-        for qdtype, cv in zip(self.qdtypes, self.cvs):
+        for dtype, cv in zip(self.qdtypes, self.cvs):
             assert isinstance(cv, np.ndarray)
-            for idx in Register('', qdtype, cv.shape).all_idxs():
-                cirq_cv += [*qdtype.to_bits(cv[idx])]
+            for idx in Register('', dtype, cv.shape).all_idxs():
+                cirq_cv += [*dtype.to_bits(cv[idx])]
         return cirq.SumOfProducts([tuple(cirq_cv)])
 
     @classmethod
@@ -288,18 +302,18 @@ class CtrlSpec:
             bloq_cvs.append(curr_cvs)
         return CtrlSpec(tuple(qdtypes), tuple(bloq_cvs))
 
-    def get_single_ctrl_bit(self) -> ControlBit:
+    def get_single_ctrl_val(self) -> ControlBit:
         """If controlled by a single qubit, return the control bit, otherwise raise"""
         if self.is_symbolic():
             raise ValueError(f"cannot get ctrl bit for symbolic {self}")
-        if self.num_qubits != 1:
+        if self.num_bits != 1:
             raise ValueError(f"expected a single qubit control, got {self.num_qubits}")
 
-        (qdtype,) = self.qdtypes
+        (dtype,) = self.qdtypes
         (cv,) = self.cvs
         assert isinstance(cv, np.ndarray)
-        (idx,) = Register('', qdtype, cv.shape).all_idxs()
-        (control_bit,) = qdtype.to_bits(cv[idx])
+        (idx,) = Register('', dtype, cv.shape).all_idxs()
+        (control_bit,) = dtype.to_bits(cv[idx])
 
         return int(control_bit)
 
@@ -364,6 +378,13 @@ class _ControlledBase(GateWithRegisters, metaclass=abc.ABCMeta):
     def ctrl_spec(self) -> 'CtrlSpec':
         """The specification of how the `subbloq` is controlled."""
 
+    @cached_property
+    def _thru_registers_only(self) -> bool:
+        for reg in self.subbloq.signature:
+            if reg.side != Side.THRU:
+                return False
+        return True
+
     @staticmethod
     def _make_ctrl_system(cb: '_ControlledBase') -> Tuple['_ControlledBase', 'AddControlledT']:
         """A static method to create the adder function from an implementation of this class.
@@ -417,6 +438,8 @@ class _ControlledBase(GateWithRegisters, metaclass=abc.ABCMeta):
         This involves conditionally doing the classical action of `subbloq`. All implementers
         of `_ControlledBase` should provide a decomposition that satisfies this classical action.
         """
+        if not self._thru_registers_only:
+            raise ValueError(f"Cannot handle non-thru registers in {self}.")
         ctrl_vals = [vals[reg_name] for reg_name in self.ctrl_reg_names]
         other_vals = {reg.name: vals[reg.name] for reg in self.subbloq.signature}
         if self.ctrl_spec.is_active(*ctrl_vals):
@@ -449,6 +472,8 @@ class _ControlledBase(GateWithRegisters, metaclass=abc.ABCMeta):
 
         This is used by Bloq.my_tensors and cirq.Gate._unitary_ to support tensor simulation.
         """
+        if not self._thru_registers_only:
+            raise ValueError(f"Cannot handle non-thru registers in {self}.")
         from qualtran.simulation.tensor._tensor_data_manipulation import (
             active_space_for_ctrl_spec,
             eye_tensor_for_signature,
@@ -491,7 +516,7 @@ class _ControlledBase(GateWithRegisters, metaclass=abc.ABCMeta):
             # to a unitary matrix.
             return self.tensor_contract()
         # Unable to determine the unitary effect.
-        return NotImplemented
+        raise ValueError(f"Cannot handle non-thru registers in {self}.")
 
     def my_tensors(
         self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
@@ -520,7 +545,7 @@ class _ControlledBase(GateWithRegisters, metaclass=abc.ABCMeta):
         return self.ctrl_spec.wire_symbol(i, reg, idx)
 
     def __str__(self) -> str:
-        num_ctrls = self.ctrl_spec.num_qubits
+        num_ctrls = self.ctrl_spec.num_bits
         ctrl_string = 'C' if num_ctrls == 1 else f'C[{num_ctrls}]'
         return f'{ctrl_string}[{self.subbloq}]'
 
@@ -602,6 +627,9 @@ class Controlled(_ControlledBase):
     def build_composite_bloq(
         self, bb: 'BloqBuilder', **initial_soqs: 'SoquetT'
     ) -> Dict[str, 'SoquetT']:
+        if not self._thru_registers_only:
+            raise DecomposeTypeError(f"Cannot handle non-thru registers in {self.subbloq}")
+
         # Use subbloq's decomposition but wire up the additional ctrl_soqs.
         from qualtran import CompositeBloq
 
@@ -689,4 +717,4 @@ def make_ctrl_system_with_correct_metabloq(
     if cdtypes:
         return ClassicallyControlled.make_ctrl_system(bloq, ctrl_spec=ctrl_spec)
 
-    raise ValueError("Invalid control spec: no data types.")
+    raise ValueError(f"Invalid control spec: {ctrl_spec}")

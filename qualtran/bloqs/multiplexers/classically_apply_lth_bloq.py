@@ -12,11 +12,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from functools import cached_property
+from typing import Dict, Tuple
 
-from qualtran import Bloq, Register, Signature
+from attrs import frozen
+
+from qualtran import Bloq, HasClassicalBranches
 
 
-class ClassicallyChooseLthBloq(Bloq):
+@frozen
+class ClassicallyChooseLthBloq(HasClassicalBranches, Bloq):
+    bloqs: Tuple[Bloq]
+
     @cached_property
     def signature(self):
         raise NotImplementedError()
+
+    def classical_branching_probabilities(self) -> Dict['Bloq', float]:
+        p = 1.0 / len(self.bloqs)
+        return {b: p for b in self.bloqs}

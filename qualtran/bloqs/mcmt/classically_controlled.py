@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 
 @attrs.frozen
-class ClassicallyControlled(HasClassicalBranches, _ControlledBase):
+class ClassicallyControlled(HasClassicalBranches, _ControlledBase):  # type: ignore[misc]
 
     subbloq: 'Bloq'
     ctrl_spec: 'CtrlSpec'

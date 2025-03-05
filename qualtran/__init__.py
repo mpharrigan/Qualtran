@@ -88,7 +88,14 @@ from ._infra.gate_with_registers import GateWithRegisters
 
 from ._infra.adjoint import Adjoint
 
-from ._infra.controlled import Controlled, CtrlSpec, AddControlledT
+from ._infra.classical_branching import HasClassicalBranches
+from ._infra.controlled import (
+    Controlled,
+    CtrlSpec,
+    AddControlledT,
+    _ControlledBase,
+    make_ctrl_system_with_correct_metabloq,
+)
 
 from ._infra.bloq_example import BloqExample, bloq_example, BloqDocSpec
 

@@ -23,11 +23,10 @@ class HasClassicalBranches(metaclass=abc.ABCMeta):
 
     Classical branches are fundamentally different from quantum branching in resource
     estimation. Quantum "branching" (via controlled or select operations) costs at least
-    as much as executing each possible branch.
+    as much as executing each possible branch. Classical branching only costs at most
+    as much as executing the most expensive branch.
     """
 
     @abc.abstractmethod
-    def classical_branching_probabilities(self) -> Dict['Bloq', float]: ...
-
-
-class ClassicalApplyLthBloq(HasClassicalBranches): ...
+    def classical_branching_probabilities(self) -> Dict['Bloq', float]:
+        """Implementers must provide the classical probability of branching to each bloq key."""
