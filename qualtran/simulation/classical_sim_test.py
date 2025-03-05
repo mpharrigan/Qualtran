@@ -15,6 +15,7 @@
 import itertools
 from typing import Dict
 
+import networkx as nx
 import numpy as np
 import pytest
 from attrs import frozen
@@ -51,7 +52,7 @@ def test_dtype_validation():
     # set up mocks for `_update_assign_from_vals`
     soq_assign: Dict[Soquet, ClassicalValT] = {}  # gets assigned to; we discard in this test.
     binst = 'MyBinst'  # binst is only used for error messages, so we can mock with a string
-    sim = _ClassicalSimState(None, None, None, None)  # TODO: types
+    sim = _ClassicalSimState(Signature([]), nx.DiGraph(), {})
 
     # set up different register dtypes
     regs = [

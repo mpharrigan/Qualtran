@@ -38,7 +38,6 @@ from numpy.typing import NDArray
 from qualtran import (
     Bloq,
     BloqInstance,
-    Connection,
     DanglingT,
     LeftDangle,
     Register,
