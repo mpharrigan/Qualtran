@@ -1004,7 +1004,7 @@ class BloqBuilder:
                 )
             if is_symbolic(bitsize) or isinstance(bitsize, int):
                 return self.add_register_from_dtype(reg, QBit() if bitsize == 1 else QAny(bitsize))
-            if isinstance(bitsize, QDType):
+            if isinstance(bitsize, QCDType):
                 raise ValueError(
                     f"Invalid bitsize {bitsize!r} for `add_register({reg!r}). "
                     f"Consider `add_register_from_dtype`"
