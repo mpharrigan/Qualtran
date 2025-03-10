@@ -151,7 +151,7 @@ class _BannedRandomValHandler(_RandomValHandler):
         raise ValueError(f"{binst} has non-deterministic classical action. TODO: advice.")
 
 
-class _ClassicalSimState:
+class ClassicalSimState:
     """A mutable class for classically simulating composite bloqs.
 
     Consider using the public method `Bloq.call_classically(...)` for a simple interface
@@ -194,12 +194,12 @@ class _ClassicalSimState:
         self.soq_assign: Dict[Soquet, ClassicalValT] = {}
         self._update_assign_from_vals(self._signature.lefts(), LeftDangle, dict(vals))
 
-        self.last_binst = None
+        self.last_binst: Optional['BloqInstance'] = None
 
     @classmethod
     def from_cbloq(
         cls, cbloq: 'CompositeBloq', vals: Mapping[str, Union[sympy.Symbol, ClassicalValT]]
-    ) -> '_ClassicalSimState':
+    ) -> 'ClassicalSimState':
         """Initiate a classical simulation from a CompositeBloq.
 
         Args:
@@ -274,16 +274,16 @@ class _ClassicalSimState:
         """Call `basis_state_phase` on a given bloq instance.
 
         This base simulation class will raise an error if the bloq reports any phasing.
-        This method is overwritten in `_PhasedClassicalSimState` to support phasing.
+        This method is overwritten in `PhasedClassicalSimState` to support phasing.
         """
         bloq = binst.bloq
         bloq_phase = bloq.basis_state_phase(**in_vals)
         if bloq_phase is not None:
             raise ValueError(
-                f"{bloq} imparts a phase, and can't be simulated purely classically. Consider TODO"
+                f"{bloq} imparts a phase, and can't be simulated purely classically. Consider using `do_phased_classical_simulation`."
             )
 
-    def step(self) -> '_ClassicalSimState':
+    def step(self) -> 'ClassicalSimState':
         """Advance the simulation by one bloq instance.
 
         After calling this method, `self.last_binst` will contain the bloq instance that
@@ -358,26 +358,15 @@ class MeasurementPhase:
     idx: Tuple[int, ...] = ()
 
 
-class _PhasedClassicalSimState(_ClassicalSimState):
+class PhasedClassicalSimState(ClassicalSimState):
     """A mutable class for classically simulating composite bloqs with phase tracking.
 
-    Consider using TODO
+    The convenience function `do_phased_classical_simulation` will simulate a bloq. Use this
+    class directly for more fine-grained control.
 
     This simulation scheme supports a class of circuits containing only:
      - classical operations corresponding to permutation matrices in the computational basis
      - phase-like operations corresponding to diagonal matrices in the computational basis.
-     - X-basis measurement.
-
-    In general, you cannot delete quantum data and must "uncompute" bits by adding inverse,
-    ("adjoint") operations to return variables to known states. Measurement based
-    uncomputation (MBUC) is a trick that uses X-basis measurement to _nearly_ remove quantum
-    data. Performing an X-basis measurement will not destroy computational-basis coherence
-    but it will generate phases on your remaining qubits. These phases are tracked by
-    this simulator; but note that they are classically stochastic.
-
-    A bloq that generates a negative phase based on its measurement result can return a
-    `MeasurementPhase` object in its `Bloq.basis_state_phase` method. This simulator will
-    correctly apply a -1 phase only if the measurement result was 1.
 
     Args:
         signature: The signature of the composite bloq.
@@ -392,10 +381,6 @@ class _PhasedClassicalSimState(_ClassicalSimState):
         soq_assign: An assignment of soquets to classical values.
         last_binst: A record of the last bloq instance we processed during simulation.
         phase: The current phase of the simulation state.
-
-    References:
-        [Verifying Measurement Based Uncomputation](https://algassert.com/post/1903).
-        Gidney. 2019.
     """
 
     def __init__(
@@ -419,7 +404,7 @@ class _PhasedClassicalSimState(_ClassicalSimState):
         vals: Mapping[str, Union[sympy.Symbol, ClassicalValT]],
         rng=None,
         fixed_rnd_vals=None,
-    ) -> '_PhasedClassicalSimState':
+    ) -> 'PhasedClassicalSimState':
         """Initiate a classical simulation from a CompositeBloq.
 
         Args:
@@ -429,7 +414,6 @@ class _PhasedClassicalSimState(_ClassicalSimState):
 
         Returns:
             A new classical sim state.
-
         """
         if rng is not None and fixed_rnd_vals is not None:
             raise ValueError("Supply either `seed` or `fixed_rnd_vals`, not both.")
@@ -453,8 +437,7 @@ class _PhasedClassicalSimState(_ClassicalSimState):
         """Call `basis_state_phase` on a given bloq instance.
 
         If this method returns a value, the current phase will be updated. Otherwise, we
-        leave the phase as-is. If the method returns `MeasurementPhase`, we employ the
-        special case described in TODO.
+        leave the phase as-is.
         """
         bloq = binst.bloq
         bloq_phase = bloq.basis_state_phase(**in_vals)
@@ -505,7 +488,7 @@ def call_cbloq_classically(
             corresponding to thru registers will be mapped to the *output* classical
             value.
     """
-    sim = _ClassicalSimState(signature, binst_graph, vals)
+    sim = ClassicalSimState(signature, binst_graph, vals)
     final_vals = sim.simulate()
     return final_vals, sim.soq_assign
 
@@ -520,7 +503,7 @@ def do_phased_classical_simulation(
 ):
     """Do a phased classical simulation of the bloq.
 
-    This provides a simple interface to `_PhasedClassicalSimState`. Particularly advanced users
+    This provides a simple interface to `PhasedClassicalSimState`. Advanced users
     may wish to use that class directly.
 
     Args:
@@ -536,7 +519,7 @@ def do_phased_classical_simulation(
         phase: The final phase.
     """
     cbloq = bloq.as_composite_bloq()
-    sim = _PhasedClassicalSimState.from_cbloq(cbloq, vals=vals, rng=rng)
+    sim = PhasedClassicalSimState.from_cbloq(cbloq, vals=vals, rng=rng)
     final_vals = sim.simulate()
     phase = sim.phase
     return final_vals, phase
