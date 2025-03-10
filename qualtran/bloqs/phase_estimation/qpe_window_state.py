@@ -13,12 +13,13 @@
 #  limitations under the License.
 import abc
 from functools import cached_property
-from typing import Dict, TYPE_CHECKING
+from typing import Dict, Optional, Tuple, TYPE_CHECKING
 
 import attrs
 
 from qualtran import Bloq, bloq_example, BloqDocSpec, QDType, QFxp, Register, Side, Signature
 from qualtran.bloqs.basic_gates import Hadamard, OnEach
+from qualtran.drawing import directional_text_box, Text, WireSymbol
 from qualtran.symbolics import ceil, log2, pi, SymbolicFloat, SymbolicInt
 
 if TYPE_CHECKING:
@@ -103,6 +104,15 @@ class RectangularWindowState(QPEWindowStateBase):
         qpe_reg = bb.allocate(dtype=self.m_qdtype)
         qpe_reg = bb.add(OnEach(self.m_bits, Hadamard()), q=qpe_reg)
         return {'qpe_reg': qpe_reg}
+
+    def wire_symbol(
+        self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()
+    ) -> 'WireSymbol':
+        if reg is None:
+            return Text("")
+        if reg.name == 'qpe_reg':
+            return directional_text_box(r'$H^{\otimes %s}$' % self.m_bits, side=reg.side)
+        raise ValueError()
 
 
 @bloq_example

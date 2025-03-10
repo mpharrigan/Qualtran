@@ -206,6 +206,9 @@ class Signature:
 
         yield from groups.items()
 
+    def names(self) -> Iterable[str]:
+        yield from (reg.name for reg in self._registers)
+
     def adjoint(self) -> 'Signature':
         """Swap all RIGHT and LEFT registers in this collection."""
         return Signature(reg.adjoint() for reg in self._registers)

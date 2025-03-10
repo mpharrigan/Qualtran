@@ -12,13 +12,32 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from functools import cached_property
-from typing import Iterator, Tuple, TYPE_CHECKING
+from typing import Dict, final, Iterator, Tuple, TYPE_CHECKING
 
 import attrs
 import cirq
+import sympy
+from attrs import frozen
 
-from qualtran import Bloq, bloq_example, BloqDocSpec, GateWithRegisters, Register, Signature
+from qualtran import (
+    Bloq,
+    bloq_example,
+    BloqBuilder,
+    BloqDocSpec,
+    CUInt,
+    GateWithRegisters,
+    QAny,
+    QDType,
+    QFxp,
+    QUInt,
+    Register,
+    Side,
+    Signature,
+    SoquetT,
+)
+from qualtran.bloqs.basic_gates.apply_l_times import ApplyLTimes
 from qualtran.bloqs.phase_estimation.qpe_window_state import QPEWindowStateBase
+from qualtran.bloqs.qft.meas_qft import MeasQFT
 from qualtran.bloqs.qft.qft_text_book import QFTTextBook
 from qualtran.symbolics import is_symbolic, SymbolicInt
 
@@ -26,7 +45,86 @@ if TYPE_CHECKING:
     from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
 
 
-@attrs.frozen
+@frozen
+class UnitaryBloqForPhaseEstimate(Bloq):
+    @cached_property
+    @final
+    def signature(self) -> 'Signature':
+        return Signature([Register('system', QAny(sympy.Symbol('n')))])
+
+    def __str__(self):
+        return 'U'
+
+
+@frozen
+class PhaseEstimate(Bloq):
+    unitary: 'Bloq'
+    ctrl_state_prep: 'Bloq'
+
+    @cached_property
+    def signature(self) -> 'Signature':
+        return Signature(
+            [
+                Register('phase', CUInt(self.m), side=Side.RIGHT),
+                Register('system', self.system_qdtype),
+            ]
+        )
+
+    @cached_property
+    def m(self) -> int:
+        """Number of bits in the ctrl register."""
+        m_sig = self.ctrl_state_prep.signature
+        if len(list(m_sig.lefts())) != 0:
+            raise ValueError(f"`ctrl_state_prep` must have a single, right register. Found {m_sig}")
+        regs = list(m_sig.rights())
+        if len(regs) != 1:
+            raise ValueError(f"`ctrl_state_prep` must have a single, right register. Found {m_sig}")
+
+        (reg,) = regs
+        dtype = reg.dtype
+        if not isinstance(dtype, QFxp):
+            raise ValueError(f"`ctrl_state_prep` must prepare a QFxp state. Found {reg.dtype}")
+
+        m1 = dtype.bitsize
+        m2 = dtype.num_frac
+        if m1 != m2:
+            raise ValueError(
+                f"`ctrl_state_prep` must prepare a QFxp(m, m) state. Found {reg.dtype}"
+            )
+
+        return m1
+
+    @property
+    def system_qdtype(self) -> QDType:
+        u_sig = self.unitary.signature
+        regs = list(u_sig)
+        if len(regs) != 1:
+            raise ValueError(f"`unitary` must have one thru register, found {u_sig}.")
+        (reg,) = regs
+        if reg.side != Side.THRU:
+            raise ValueError(f"`unitary` must have one thru register, found {reg}.")
+        if reg.shape != ():
+            raise ValueError(f"`unitary` must have one thru register, found {reg}.")
+
+        dtype = reg.dtype
+        if not isinstance(dtype, QDType):
+            raise ValueError(
+                f"`unitary` must have one thru register with a quantum type, found {dtype}."
+            )
+
+        if reg.name != 'system':
+            raise ValueError(f"`unitary` must have one register named 'system', not {reg.name}")
+
+        return dtype
+
+    def build_composite_bloq(self, bb: 'BloqBuilder', system: 'SoquetT') -> Dict[str, 'SoquetT']:
+        l = bb.add(self.ctrl_state_prep)
+        l, system = bb.add(ApplyLTimes(self.unitary, m=self.m), l=l, system=system)
+        phase = bb.add(MeasQFT(n=self.m), x=l)
+        return {'system': system, 'phase': phase}
+
+
+@frozen
 class TextbookQPE(GateWithRegisters):
     r"""Phase Estimation algorithm as presented in Chapter 5.2 of Neilson & Chuang
 

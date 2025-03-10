@@ -359,8 +359,7 @@ class QIntOnesComp(QDType):
             )
 
 
-@attrs.frozen
-class QUInt(QDType):
+class _UInt(metaclass=abc.ABCMeta):
     """Unsigned integer of a given width bitsize which wraps around upon overflow.
 
     Any intended wrap around effect is expected to be handled by the developer, similar
@@ -368,16 +367,14 @@ class QUInt(QDType):
 
     Here (and throughout Qualtran), we use a big-endian bit convention. The most significant
     bit is at index 0.
-
-    Attributes:
-        bitsize: The number of qubits used to represent the integer.
     """
 
     bitsize: SymbolicInt
 
     @property
-    def num_qubits(self):
-        return self.bitsize
+    @abc.abstractmethod
+    def bitsize(self):
+        """The number of bits."""
 
     def is_symbolic(self) -> bool:
         return is_symbolic(self.bitsize)
@@ -452,8 +449,53 @@ class QUInt(QDType):
         if np.any(val_array >= 2**self.bitsize):
             raise ValueError(f"Too-large classical values encountered in {debug_str}")
 
+
+@attrs.frozen
+class QUInt(_UInt, QDType):
+    """Unsigned integer of a given width bitsize which wraps around upon overflow.
+
+    Any intended wrap around effect is expected to be handled by the developer, similar
+    to an unsigned integer type in C.
+
+    Here (and throughout Qualtran), we use a big-endian bit convention. The most significant
+    bit is at index 0.
+
+    Attributes:
+        bitsize: The number of qubits used to represent the integer.
+    """
+
+    bitsize: SymbolicInt
+
+    @property
+    def num_qubits(self):
+        return self.bitsize
+
     def __str__(self):
         return f'QUInt({self.bitsize})'
+
+
+@attrs.frozen
+class CUInt(_UInt, CDType):
+    """Unsigned integer of a given width bitsize which wraps around upon overflow.
+
+    Any intended wrap around effect is expected to be handled by the developer, similar
+    to an unsigned integer type in C.
+
+    Here (and throughout Qualtran), we use a big-endian bit convention. The most significant
+    bit is at index 0.
+
+    Attributes:
+        bitsize: The number of classical bits used to represent the integer.
+    """
+
+    bitsize: SymbolicInt
+
+    @property
+    def num_cbits(self):
+        return self.bitsize
+
+    def __str__(self):
+        return f'CUInt({self.bitsize})'
 
 
 @attrs.frozen
