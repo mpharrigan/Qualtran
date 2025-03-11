@@ -213,7 +213,9 @@ class Bloq(metaclass=abc.ABCMeta):
         except NotImplementedError as e:
             raise NotImplementedError(f"{self} does not support classical simulation: {e}") from e
 
-    def basis_state_phase(self, **vals: 'ClassicalValT') -> Union[complex, 'MeasurementPhase', None]:
+    def basis_state_phase(
+        self, **vals: 'ClassicalValT'
+    ) -> Union[complex, 'MeasurementPhase', None]:
         """How this bloq phases classical basis states.
 
         Override this method if your bloq represents classical logic with basis-state
@@ -256,7 +258,7 @@ class Bloq(metaclass=abc.ABCMeta):
         res = self.as_composite_bloq().on_classical_vals(**vals)
         return tuple(res[reg.name] for reg in self.signature.rights())
 
-    def tensor_contract(self) -> 'NDArray':
+    def tensor_contract(self, superoperator: bool = False) -> 'NDArray':
         """Return a contracted, dense ndarray representing this bloq.
 
         This constructs a tensor network and then contracts it according to our registers,
@@ -266,7 +268,7 @@ class Bloq(metaclass=abc.ABCMeta):
         """
         from qualtran.simulation.tensor import bloq_to_dense
 
-        return bloq_to_dense(self)
+        return bloq_to_dense(self, superoperator=superoperator)
 
     def my_tensors(
         self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']

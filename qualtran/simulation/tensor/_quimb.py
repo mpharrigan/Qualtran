@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
-from typing import Any, cast, Dict, Iterable, Tuple
+from typing import Any, cast, Dict, Iterable, Tuple, Union
 
 import attrs
 import numpy as np
@@ -46,11 +46,13 @@ def cbloq_to_quimb(cbloq: CompositeBloq, friendly_indices: bool = False) -> qtn.
     path.
 
     Args:
-        cbloq: The composite bloq
+        cbloq: The composite bloq.
         friendly_indices: If set to True, the outer indices of the tensor network will be renamed
             from their Qualtran-computer-readable form to human-friendly strings. This may be
             useful if you plan on manually manipulating the resulting tensor network but will
-            preclude any further processing by Qualtran functions.
+            preclude any further processing by Qualtran functions. The indices are named
+            {soq.reg.name}{soq.idx}_{j}{side}, where j is the individual bit index and side is 'l'
+            or 'r' for left or right, respectively.
 
     Returns:
         The tensor network
@@ -85,28 +87,29 @@ def cbloq_to_quimb(cbloq: CompositeBloq, friendly_indices: bool = False) -> qtn.
             # This register has no Bloq acting on it, and thus it would not have a variable in
             # the tensor network. Add an identity tensor acting on this register to make sure the
             # tensor network has variables corresponding to all input / output registers.
+            for id_tensor in _get_placeholder_tensors(cxn):
+                tn.add(id_tensor)
 
-            for j in range(cxn.left.reg.bitsize):
-                placeholder = Soquet(None, Register('simulation_placeholder', QBit()))  # type: ignore
-                Connection(cxn.left, placeholder)
-                tn.add(
-                    qtn.Tensor(
-                        data=np.eye(2),
-                        inds=[
-                            (Connection(cxn.left, placeholder), j),
-                            (Connection(placeholder, cxn.right), j),
-                        ],
-                    )
-                )
-
-    if friendly_indices:
-        return tn.reindex(_get_friendly_indices(tn))
-    return tn
+    return tn.reindex(_get_outer_indices(tn, friendly_indices=friendly_indices))
 
 
-def _get_friendly_indices(tn: 'qtn.TensorNetwork') -> Dict[Any, str]:
-    """Go through a tensor network's outer inds to map them to unique strings."""
-    ind_name_map: Dict[Any, str] = {}
+def _get_placeholder_tensors(cxn):
+    for j in range(cxn.left.reg.bitsize):
+        placeholder = Soquet(None, Register('simulation_placeholder', QBit()))  # type: ignore
+        Connection(cxn.left, placeholder)
+        yield qtn.Tensor(
+            data=np.eye(2),
+            inds=[(Connection(cxn.left, placeholder), j), (Connection(placeholder, cxn.right), j)],
+        )
+
+
+def _get_outer_indices(tn: 'qtn.TensorNetwork', friendly_indices: bool = False) -> Dict[Any, Any]:
+    """Go through a tensor network's outer inds to map them to unique strings.
+
+    Assumes a tensor network constructed via `cbloq_to_quimb`.
+    """
+    _T = Tuple[str, Tuple[int, ...], int, str]
+    ind_name_map: Dict[Any, Union[str, _T]] = {}
 
     # Each index is a (cxn: Connection, j: int) tuple.
     cxn: Connection
@@ -116,15 +119,24 @@ def _get_friendly_indices(tn: 'qtn.TensorNetwork') -> Dict[Any, str]:
         cxn, j = ind
         if cxn.left.binst is LeftDangle:
             soq = cxn.left
-            side = 'l'
+            group = 'l'
         elif cxn.right.binst is RightDangle:
             soq = cxn.right
-            side = 'r'
+            group = 'r'
         else:
-            raise ValueError(f"Unknown side for {cxn}")
+            raise ValueError(
+                f"Outer indices of a tensor network should be "
+                f"connections to LeftDangle or RightDangle, not {cxn}"
+            )
 
-        idx_str = f'{soq.idx}' if soq.idx else ''
-        ind_name_map[ind] = f'{soq.reg.name}{idx_str}_{j}{side}'
+        if friendly_indices:
+            # Turn everything to strings
+            idx_str = f'{soq.idx}' if soq.idx else ''
+            ind_name_map[ind] = f'{soq.reg.name}{idx_str}_{j}{group}'
+        else:
+            # Keep as tuple
+            ind_name_map[ind] = (soq.reg.name, soq.idx, j, group)
+
     return ind_name_map
 
 
@@ -152,19 +164,39 @@ def make_backward_tensor(t: qtn.Tensor):
 
 
 def cbloq_to_superquimb(cbloq: CompositeBloq, friendly_indices: bool = False) -> qtn.TensorNetwork:
-    """Convert a composite bloq into a tensor network.
+    """Convert a composite bloq into a superoperator tensor network.
+
+    This simulation route can handle non-unitary dynamics, but is far more costly.
 
     This function will call `Bloq.my_tensors` on each subbloq in the composite bloq to add
-    tensors to a quimb tensor network. This method has no default fallback, so you likely want to
-    call `bloq.as_composite_bloq().flatten()` to decompose-and-flatten all bloqs down to their
-    smallest form first. The small bloqs that result from a flattening 1) likely already have
-    their `my_tensors` method implemented; and 2) can enable a more efficient tensor contraction
-    path.
+    tensors to a quimb tensor network. This uses ths system+environment strategy for modeling
+    open system dynamics. In contrast to `cbloq_to_quimb`, each bloq will have
+    its tensors added twice: once to the part of the network representing the "forward"
+    wavefunction, and its conjugate added to the part of the network representing the "backward"
+    part of the wavefunction. If the bloq returns a sentinel value of the `DiscardInd` class,
+    that particular index is *traced out*: the forward and backward copies of the index are joined.
+    This corresponds to removing the qubit from the computation and integrating over its possible
+    values. Arbitrary non-unitary dynamics can be modeled by unitary interaction of the 'system'
+    with an 'environment' that is traced out.
+
+    If a bloq returns a value of type `DiscardInd` in its tensors, this function must be
+    used. The ordinary `cbloq_to_quimb` will raise an error.
+
+    Args:
+        cbloq: The composite bloq.
+        friendly_indices: If set to True, the outer indices of the tensor network will be renamed
+            from their Qualtran-computer-readable form to human-friendly strings. This may be
+            useful if you plan on manually manipulating the resulting tensor network but will
+            preclude any further processing by Qualtran functions. The indices are named
+            {soq.reg.name}{soq.idx}_{j}{side}{direction}, where j is the individual bit index,
+            side is 'l' or 'r' for left or right (resp.), and direction is 'f' or 'b' for the
+            forward or backward (adjoint) wavefunctions.
     """
     tn = qtn.TensorNetwork([])
 
     logging.info(
-        "Constructing a tensor network for composite bloq of size %d", len(cbloq.bloq_instances)
+        "Constructing a super tensor network for composite bloq of size %d",
+        len(cbloq.bloq_instances),
     )
 
     for binst, pred_cxns, succ_cxns in cbloq.iter_bloqnections():
@@ -184,28 +216,51 @@ def cbloq_to_superquimb(cbloq: CompositeBloq, friendly_indices: bool = False) ->
                 tn.add(forward_tensor)
                 tn.add(backward_tensor)
 
-    if friendly_indices:
-        tn = tn.reindex(_get_friendly_superindices(tn))
-    return tn
+    # Special case: Add variables corresponding to all registers that don't connect to any Bloq.
+    for cxn in cbloq.connections:
+        if cxn.left.binst is LeftDangle and cxn.right.binst is RightDangle:
+            for id_tensor in _get_placeholder_tensors(cxn):
+                forward_tensor = make_forward_tensor(id_tensor)
+                backward_tensor = make_backward_tensor(id_tensor)
+                tn.add(forward_tensor)
+                tn.add(backward_tensor)
+
+    return tn.reindex(_get_outer_superindices(tn, friendly_indices=friendly_indices))
 
 
-def _get_friendly_superindices(tn: 'qtn.TensorNetwork') -> Dict[Any, str]:
+def _get_outer_superindices(
+    tn: 'qtn.TensorNetwork', friendly_indices: bool = False
+) -> Dict[Any, str]:
+    """Go through a tensor network's outer inds to map them to unique strings.
 
-    ind_name_map: Dict[Any, str] = {}
+    Assumes a tensor network constructed via `cbloq_to_superquimb`.
+    """
+    # Each index is a (cxn: Connection, j: int, forward: bool) tuple.
+    cxn: Connection
+    j: int
+    forward: bool
+
+    _T = Tuple[str, Tuple[int, ...], int, str]
+    ind_name_map: Dict[Any, Union[str, _T]] = {}
     for ind in tn.outer_inds():
         cxn, j, forward = ind
         if cxn.left.binst is LeftDangle:
             soq = cxn.left
-            side = 'l'
+            group = 'lf' if forward else 'lb'
         elif cxn.right.binst is RightDangle:
             soq = cxn.right
-            side = 'r'
+            group = 'rf' if forward else 'rb'
         else:
-            raise ValueError(f"Unknown side for {cxn}")
+            raise ValueError(
+                f"Outer indices of a tensor network should be "
+                f"connections to LeftDangle or RightDangle, not {cxn}"
+            )
 
-        d = 'f' if forward else 'b'
-        idx = f'{soq.idx}' if soq.idx else ''
-        ind_name_map[ind] = f'{soq.reg.name}{idx}_{j}{side}{d}'
+        if friendly_indices:
+            idx_str = f'{soq.idx}' if soq.idx else ''
+            ind_name_map[ind] = f'{soq.reg.name}{idx_str}_{j}{group}'
+        else:
+            ind_name_map[ind] = (soq.reg.name, soq.idx, j, group)
 
     return ind_name_map
 

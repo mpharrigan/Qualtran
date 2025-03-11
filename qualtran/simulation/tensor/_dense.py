@@ -13,14 +13,15 @@
 #  limitations under the License.
 
 import logging
-from typing import Any, Dict, List, Tuple, TYPE_CHECKING
+from collections import defaultdict
+from typing import Any, Dict, List, Mapping, MutableMapping, Tuple, TYPE_CHECKING
 
 from numpy.typing import NDArray
 
-from qualtran import Bloq, Connection, ConnectionT, LeftDangle, RightDangle, Signature
+from qualtran import Bloq, Connection, ConnectionT, LeftDangle, Register, RightDangle, Signature
 
 from ._flattening import flatten_for_tensor_contraction
-from ._quimb import cbloq_to_quimb
+from ._quimb import cbloq_to_quimb, cbloq_to_superquimb
 
 if TYPE_CHECKING:
     import quimb.tensor as qtn
@@ -64,7 +65,9 @@ def _order_incoming_outgoing_indices(
     return inds
 
 
-def get_right_and_left_inds(tn: 'qtn.TensorNetwork', signature: Signature) -> List[List[Any]]:
+def get_right_and_left_inds(
+    tn: 'qtn.TensorNetwork', signature: Signature, superoperator: bool = False
+) -> List[List[Any]]:
     """Return right and left tensor indices.
 
     In general, this will be returned as a list of length-2 corresponding
@@ -77,52 +80,46 @@ def get_right_and_left_inds(tn: 'qtn.TensorNetwork', signature: Signature) -> Li
     Args:
         tn: The tensor network to fetch the outer indices, which won't necessarily be ordered.
         signature: The signature of the bloq used to order the indices.
+        superoperator: TODO
     """
-    left_inds = {}
-    right_inds = {}
-
-    # Each index is a (cxn: Connection, j: int) tuple.
-    cxn: Connection
+    ind_groups_d: Dict[str, Dict[_KeyT, Any]] = defaultdict(dict)
+    reg_name: str
+    idx: Tuple[int, ...]
     j: int
+    group: str
 
     for ind in tn.outer_inds():
-        cxn, j = ind
-        if cxn.left.binst is LeftDangle:
-            soq = cxn.left
-            left_inds[soq.reg, soq.idx, j] = ind
-        elif cxn.right.binst is RightDangle:
-            soq = cxn.right
-            right_inds[soq.reg, soq.idx, j] = ind
-        else:
-            raise ValueError(
-                "Outer indices of a tensor network should be "
-                "connections to LeftDangle or RightDangle"
-            )
+        reg_name, idx, j, group = ind
+        ind_groups_d[group][reg_name, idx, j] = ind
 
-    left_ordered_inds = []
-    for reg in signature.lefts():
-        for idx in reg.all_idxs():
-            for j in range(reg.dtype.num_bits):
-                left_ordered_inds.append(left_inds[reg, idx, j])
+    ind_groups_l = defaultdict(list)
 
-    right_ordered_inds = []
-    for reg in signature.rights():
-        for idx in reg.all_idxs():
-            for j in range(reg.dtype.num_bits):
-                right_ordered_inds.append(right_inds[reg, idx, j])
+    def _sort_group(regs, group_name):
+        for reg in regs:
+            for idx in reg.all_idxs():
+                for j in range(reg.dtype.num_bits):
+                    ind_groups_l[group_name].append(ind_groups_d[group_name][reg.name, idx, j])
 
-    inds = []
-    if right_ordered_inds:
-        inds.append(right_ordered_inds)
-    if left_ordered_inds:
-        inds.append(left_ordered_inds)
+    if superoperator:
+        _sort_group(signature.lefts(), 'lf')
+        _sort_group(signature.lefts(), 'lb')
+        _sort_group(signature.rights(), 'rf')
+        _sort_group(signature.rights(), 'rb')
+        group_names = ['rf', 'rb', 'lf', 'lb']
+    else:
+        _sort_group(signature.lefts(), 'l')
+        _sort_group(signature.rights(), 'r')
+        group_names = ['r', 'l']
 
+    inds = [ind_groups_l[groupname] for groupname in group_names if ind_groups_l[groupname]]
     return inds
 
 
-def quimb_to_dense(tn: 'qtn.TensorNetwork', signature: Signature) -> NDArray:
+def quimb_to_dense(
+    tn: 'qtn.TensorNetwork', signature: Signature, superoperator: bool = False
+) -> NDArray:
     """Contract a quimb tensor network `tn` to a dense matrix consistent with `signature`."""
-    inds = get_right_and_left_inds(tn, signature)
+    inds = get_right_and_left_inds(tn, signature, superoperator=superoperator)
     if tn.contraction_width() > 8:
         tn.full_simplify(inplace=True)
 
@@ -134,7 +131,7 @@ def quimb_to_dense(tn: 'qtn.TensorNetwork', signature: Signature) -> NDArray:
     return data
 
 
-def bloq_to_dense(bloq: Bloq, full_flatten: bool = True) -> NDArray:
+def bloq_to_dense(bloq: Bloq, full_flatten: bool = True, superoperator: bool = False) -> NDArray:
     """Return a contracted, dense ndarray representing the composite bloq.
 
     This function is also available as the `Bloq.tensor_contract()` method.
@@ -157,5 +154,8 @@ def bloq_to_dense(bloq: Bloq, full_flatten: bool = True) -> NDArray:
     """
     logging.info("bloq_to_dense() on %s", bloq)
     flat_cbloq = flatten_for_tensor_contraction(bloq, full_flatten=full_flatten)
-    tn = cbloq_to_quimb(flat_cbloq)
-    return quimb_to_dense(tn, bloq.signature)
+    if superoperator:
+        tn = cbloq_to_superquimb(flat_cbloq)
+    else:
+        tn = cbloq_to_quimb(flat_cbloq)
+    return quimb_to_dense(tn, bloq.signature, superoperator=superoperator)
