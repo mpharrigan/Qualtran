@@ -48,7 +48,7 @@ class Discard(Bloq):
 class DiscardQ(Bloq):
     @cached_property
     def signature(self) -> 'Signature':
-        return Signature([Register('x', QBit(), side=Side.LEFT)])
+        return Signature([Register('q', QBit(), side=Side.LEFT)])
 
     def on_classical_vals(self, x: int) -> Dict[str, 'ClassicalValT']:
         return {}
@@ -59,4 +59,4 @@ class DiscardQ(Bloq):
 
         from qualtran.simulation.tensor._quimb import DiscardInd  # TODO
 
-        return [DiscardInd((incoming['x'], 0))]
+        return [DiscardInd((incoming['q'], 0))]

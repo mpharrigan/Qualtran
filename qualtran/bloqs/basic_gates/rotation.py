@@ -388,7 +388,7 @@ _Y_POW_DOC = BloqDocSpec(bloq_cls=YPowGate, examples=[_y_pow])
 
 
 @frozen
-class Rz(CirqGateAsBloqBase):
+class Rz(Bloq):
     r"""Apply a single-qubit Z rotation.
 
     Given `angle` $\theta$, the unitary matrix of this gate is:
@@ -456,6 +456,9 @@ class Rz(CirqGateAsBloqBase):
 
     def adjoint(self) -> 'Rz':
         return attrs.evolve(self, angle=-self.angle)
+
+    def __pow__(self, power):
+        return attrs.evolve(self, angle=power * self.angle)
 
     def wire_symbol(self, reg: Optional[Register], idx: Tuple[int, ...] = tuple()) -> 'WireSymbol':
         if reg is None:

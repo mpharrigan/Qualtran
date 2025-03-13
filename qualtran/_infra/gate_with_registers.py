@@ -363,15 +363,8 @@ class GateWithRegisters(Bloq, cirq.Gate, metaclass=abc.ABCMeta):
     ) -> 'cirq.Operation':
         return self.on(*merge_qubits(self.signature, **qubit_regs))
 
-    def __pow__(self, power: int) -> 'GateWithRegisters':
-        bloq = self if power > 0 else cast(GateWithRegisters, self.adjoint())
-        if abs(power) == 1:
-            return bloq
-        if all(reg.side == Side.THRU for reg in self.signature):
-            from qualtran.bloqs.basic_gates import Power
-
-            return Power(bloq, abs(power))
-        raise NotImplementedError(f"{self} does not implemented __pow__ for {power=}.")
+    def __pow__(self, power: int) -> 'Bloq':
+        return Bloq.__pow__(self, power)
 
     @classmethod
     def _get_ctrl_spec(

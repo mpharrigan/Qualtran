@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from functools import cached_property
-from typing import Dict, final, Iterator, Tuple, TYPE_CHECKING
+from typing import Dict, final, Iterator, Optional, Tuple, TYPE_CHECKING
 
 import attrs
 import cirq
@@ -36,24 +36,59 @@ from qualtran import (
     SoquetT,
 )
 from qualtran.bloqs.basic_gates.apply_l_times import ApplyLTimes
+from qualtran.bloqs.bookkeeping import AutoPartition
 from qualtran.bloqs.phase_estimation.qpe_window_state import QPEWindowStateBase
 from qualtran.bloqs.qft.meas_qft import MeasQFT
 from qualtran.bloqs.qft.qft_text_book import QFTTextBook
+from qualtran.drawing import directional_text_box, Text, WireSymbol
 from qualtran.symbolics import is_symbolic, SymbolicInt
 
 if TYPE_CHECKING:
     from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
 
 
+def _wrap_bloq(bloq: 'Bloq'):
+    if bloq.signature == Signature([Register('system', QAny(bloq.signature.n_qubits()))]):
+        return bloq
+    else:
+        return AutoPartition(
+            bloq,
+            [
+                (
+                    Register('system', QAny(bloq.signature.n_qubits())),
+                    [reg.name for reg in bloq.signature],
+                )
+            ],
+        )
+
+
 @frozen
 class UnitaryBloqForPhaseEstimate(Bloq):
+    pow: int = 1
+
     @cached_property
     @final
     def signature(self) -> 'Signature':
         return Signature([Register('system', QAny(sympy.Symbol('n')))])
 
+    def __pow__(self, power, modulo=None):
+        if not int(power) == power:
+            raise ValueError(f"Power must be an integer, not {power}")
+        return attrs.evolve(self, pow=self.pow * power)
+
+    def wire_symbol(
+        self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()
+    ) -> 'WireSymbol':
+        if reg is None:
+            return Text('')
+        if reg.name == 'system':
+            return directional_text_box(r'$U^{%d}$' % self.pow, reg.side)
+        raise ValueError(f"Unknown wire symbol register {reg}.")
+
     def __str__(self):
-        return 'U'
+        if self.pow == 1:
+            return 'U'
+        return f'U**{self.pow}'
 
 
 @frozen
@@ -69,6 +104,10 @@ class PhaseEstimate(Bloq):
                 Register('system', self.system_qdtype),
             ]
         )
+
+    @classmethod
+    def from_bloq_with_arb_signature(cls, bloq: 'Bloq', ctrl_state_prep: 'Bloq'):
+        return cls(_wrap_bloq(bloq), ctrl_state_prep)
 
     @cached_property
     def m(self) -> int:

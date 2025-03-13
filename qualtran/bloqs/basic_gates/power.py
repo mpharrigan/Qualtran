@@ -86,3 +86,6 @@ class Power(GateWithRegisters):
         wire_symbols = [f'{symbol}^{self.power}' for symbol in info.wire_symbols]
 
         return cirq.CircuitDiagramInfo(wire_symbols=wire_symbols)
+
+    def __str__(self):
+        return f'Pow({self.bloq}, {self.power})'

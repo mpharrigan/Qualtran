@@ -66,6 +66,10 @@ def _decompose_from_build_composite_bloq(bloq: 'Bloq') -> 'CompositeBloq':
 
     bb, initial_soqs = BloqBuilder.from_signature(bloq.signature, add_registers_allowed=False)
     out_soqs = bloq.build_composite_bloq(bb=bb, **initial_soqs)
+    if not isinstance(out_soqs, dict):
+        raise ValueError(
+            f'{bloq}.build_composite_bloq must return a dictionary mapping right register names to output soquets.'
+        )
     return bb.finalize(**out_soqs)
 
 
@@ -452,6 +456,17 @@ class Bloq(metaclass=abc.ABCMeta):
 
         controlled_bloq, _ = self.get_ctrl_system(ctrl_spec=ctrl_spec)
         return controlled_bloq
+
+    def __pow__(self, power: int) -> 'Bloq':
+        bloq = self if power > 0 else self.adjoint()
+        if abs(power) == 1:
+            return bloq
+        if self.signature.thru_registers_only:
+            from qualtran.bloqs.basic_gates import Power
+
+            return Power(bloq, abs(power))
+
+        raise ValueError(f"{self} does not support non-integer powers {power}.")
 
     def t_complexity(self) -> 'TComplexity':
         """The `TComplexity` for this bloq.

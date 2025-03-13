@@ -21,6 +21,7 @@ from attrs import frozen
 from qualtran import (
     Bloq,
     BloqBuilder,
+    CBit,
     CUInt,
     DecomposeTypeError,
     QAny,
@@ -33,6 +34,7 @@ from qualtran import (
     SoquetT,
 )
 from qualtran.bloqs.basic_gates import MeasZ
+from qualtran.bloqs.bookkeeping import Cast
 from qualtran.bloqs.qft import QFTTextBook
 from qualtran.drawing import directional_text_box, RarrowTextBox, Text, WireSymbol
 from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
@@ -51,6 +53,18 @@ class MeasQFT(Bloq):
                 Register('x', CUInt(self.n), side=Side.RIGHT),
             ]
         )
+
+    def build_composite_bloq(self, bb: 'BloqBuilder', x: 'SoquetT') -> Dict[str, 'SoquetT']:
+        x = bb.add(QFTTextBook(self.n).adjoint(), q=x)
+        xs = bb.split(x)
+        for i in range(self.n):
+            xs[i] = bb.add(MeasZ(), q=xs[i])
+            xs[i] = bb.add(Cast(CBit(), QBit(), allow_quantum_to_classical=True), reg=xs[i])
+
+        # TODO: need classical join
+        x = bb.join(xs, QUInt(self.n))
+        x = bb.add(Cast(QUInt(self.n), CUInt(self.n), allow_quantum_to_classical=True), reg=x)
+        return {'x': x}
 
     def build_call_graph(self, ssa: 'SympySymbolAllocator') -> 'BloqCountDictT':
         return {QFTTextBook(self.n): 1, MeasZ(): self.n}

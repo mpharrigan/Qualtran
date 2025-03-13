@@ -15,6 +15,7 @@ from functools import cached_property
 from itertools import chain
 from typing import Dict, Sequence, Tuple, Union
 
+import attrs
 from attrs import evolve, field, frozen
 
 from qualtran import (
@@ -137,6 +138,9 @@ class AutoPartition(Bloq):
                 },
             )
         return out_regs
+
+    def __pow__(self, power):
+        return attrs.evolve(self, bloq=self.bloq**power)
 
     def __str__(self) -> str:
         return str(self.bloq)
