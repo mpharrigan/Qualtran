@@ -45,7 +45,7 @@ from qualtran.drawing import Text, TextBox, WireSymbol
 from qualtran.symbolics import is_symbolic, SymbolicInt
 
 if TYPE_CHECKING:
-    from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
+    from qualtran.resource_counting import BloqCountDictT, BloqCountT, SympySymbolAllocator
 
 
 @frozen
@@ -98,9 +98,7 @@ class ApplyLTimes(Bloq):
 
         return {'l': bb.join(lbits), 'system': system}
 
-    def build_call_graph(
-        self, ssa: 'SympySymbolAllocator'
-    ) -> Union['BloqCountDictT', Set['BloqCountT']]:
+    def build_call_graph(self, ssa: 'SympySymbolAllocator') -> 'BloqCountDictT':
         # Approximation: assume fast-forwardability
         return {self.subbloq: self.m}
 

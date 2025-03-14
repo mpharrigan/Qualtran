@@ -72,21 +72,15 @@ def cbloq_to_quimb(cbloq: CompositeBloq, friendly_indices: bool = False) -> qtn.
 
         for tensor in bloq.my_tensors(inc_d, out_d):
             if isinstance(tensor, DiscardInd):
-                # TODO finish error message
                 raise ValueError(
-                    f"During tensor simulation, {bloq} tried to discard information. This requires using TODO-open-system-sim-func"
+                    f"During tensor simulation, {bloq} tried to discard information. This requires using `tensor_contract(superoperator=True)` or `cbloq_to_superquimb`."
                 )
             tn.add(tensor)
 
-    # Special case: Add variables corresponding to all registers that don't connect to any Bloq.
-    # This is needed because `CompositeBloq.iter_bloqnections` ignores `LeftDangle/RightDangle`
-    # bloqs, and therefore we never see connections that exist only b/w LeftDangle and
-    # RightDangle bloqs.
+    # Special case: Add indices corresponding to unused wires
     for cxn in cbloq.connections:
         if cxn.left.binst is LeftDangle and cxn.right.binst is RightDangle:
-            # This register has no Bloq acting on it, and thus it would not have a variable in
-            # the tensor network. Add an identity tensor acting on this register to make sure the
-            # tensor network has variables corresponding to all input / output registers.
+            # Connections that directly tie LeftDangle to RightDangle
             for id_tensor in _get_placeholder_tensors(cxn):
                 tn.add(id_tensor)
 
@@ -94,6 +88,18 @@ def cbloq_to_quimb(cbloq: CompositeBloq, friendly_indices: bool = False) -> qtn.
 
 
 def _get_placeholder_tensors(cxn):
+    """Get identity placeholder tensors to directly connect LeftDangle to RightDangle.
+
+    This function is used in `cbloq_to_quimb` and `cbloq_to_superquimb` for the following
+    contingency:
+
+    >>> for cxn in cbloq.connections:
+    >>>     if cxn.left.binst is LeftDangle and cxn.right.binst is RightDangle:
+
+    This is needed because `CompositeBloq.iter_bloqnections` ignores `LeftDangle/RightDangle`
+    bloqs, and therefore we never see connections that exist only between LeftDangle and
+    RightDangle sentinel values.
+    """
     for j in range(cxn.left.reg.bitsize):
         placeholder = Soquet(None, Register('simulation_placeholder', QBit()))  # type: ignore
         Connection(cxn.left, placeholder)
@@ -103,13 +109,27 @@ def _get_placeholder_tensors(cxn):
         )
 
 
-def _get_outer_indices(tn: 'qtn.TensorNetwork', friendly_indices: bool = False) -> Dict[Any, Any]:
-    """Go through a tensor network's outer inds to map them to unique strings.
+_OuterIndT = Tuple[str, Tuple[int, ...], int, str]
 
-    Assumes a tensor network constructed via `cbloq_to_quimb`.
+
+def _get_outer_indices(
+    tn: 'qtn.TensorNetwork', friendly_indices: bool = False
+) -> Dict[Any, Union[str, _OuterIndT]]:
+    """Provide a mapping for a tensor network's outer indices.
+
+    Internal indices effectively use `qualtran.Connection` objects as their indices. The
+    outer indices correspond to connections to `DanglingT` items, and you end up having to
+    do logic to disambiguate left dangling indices from right dangling indices. This function
+    facilitates re-indexing the tensor network's outer indices to better match a bloq's signature.
+
+    In particular, we map each outer index to a tuple (reg.name, soq.idx, j, group) where
+    group is 'l' or 'r' for left or right indices.
+
+    If `friendly_indices` is set to True, the tuple of items is converted to a string.
+
+    This function is called at the end of `cbloq_to_quimb` as part of a `tn.reindex(...) operation.
     """
-    _T = Tuple[str, Tuple[int, ...], int, str]
-    ind_name_map: Dict[Any, Union[str, _T]] = {}
+    ind_name_map: Dict[Any, Union[str, _OuterIndT]] = {}
 
     # Each index is a (cxn: Connection, j: int) tuple.
     cxn: Connection
@@ -142,6 +162,21 @@ def _get_outer_indices(tn: 'qtn.TensorNetwork', friendly_indices: bool = False) 
 
 @attrs.frozen
 class DiscardInd:
+    """Return `DiscardInd` in `Bloq.my_tensors()` to indicate an index should be discarded.
+
+    We cannot discard an index from a state-vector pure-state simulation, so any bloq that
+    returns `DiscardInd` in its `my_tensors` method will cause an error in the ordinary
+    tensor contraction simulator.
+
+    We can discard indices in open-system simulations by tracing out the index. When using
+    `Bloq.tensor_contract(superoperator=True)`, the index contained in a `DiscardInd` will be
+    traced out of the superoperator tensor network.
+
+    Args:
+        ind_tuple: The index to trace out, of the form (cxn, j) where `j` addresses
+            individual bits.
+    """
+
     ind_tuple: Tuple['ConnectionT', int]
 
 
@@ -166,7 +201,7 @@ def make_backward_tensor(t: qtn.Tensor):
 def cbloq_to_superquimb(cbloq: CompositeBloq, friendly_indices: bool = False) -> qtn.TensorNetwork:
     """Convert a composite bloq into a superoperator tensor network.
 
-    This simulation route can handle non-unitary dynamics, but is far more costly.
+    This simulation strategy can handle non-unitary dynamics, but is more costly.
 
     This function will call `Bloq.my_tensors` on each subbloq in the composite bloq to add
     tensors to a quimb tensor network. This uses ths system+environment strategy for modeling
@@ -216,9 +251,10 @@ def cbloq_to_superquimb(cbloq: CompositeBloq, friendly_indices: bool = False) ->
                 tn.add(forward_tensor)
                 tn.add(backward_tensor)
 
-    # Special case: Add variables corresponding to all registers that don't connect to any Bloq.
+    # Special case: Add indices corresponding to unused wires
     for cxn in cbloq.connections:
         if cxn.left.binst is LeftDangle and cxn.right.binst is RightDangle:
+            # Connections that directly tie LeftDangle to RightDangle
             for id_tensor in _get_placeholder_tensors(cxn):
                 forward_tensor = make_forward_tensor(id_tensor)
                 backward_tensor = make_backward_tensor(id_tensor)
@@ -228,20 +264,34 @@ def cbloq_to_superquimb(cbloq: CompositeBloq, friendly_indices: bool = False) ->
     return tn.reindex(_get_outer_superindices(tn, friendly_indices=friendly_indices))
 
 
+_SuperOuterIndT = Tuple[str, Tuple[int, ...], int, str]
+
+
 def _get_outer_superindices(
     tn: 'qtn.TensorNetwork', friendly_indices: bool = False
-) -> Dict[Any, str]:
-    """Go through a tensor network's outer inds to map them to unique strings.
+) -> Dict[Any, Union[str, _SuperOuterIndT]]:
+    """Provide a mapping for a super-tensor network's outer indices.
 
-    Assumes a tensor network constructed via `cbloq_to_superquimb`.
+    Internal indices effectively use `qualtran.Connection` objects as their indices. The
+    outer indices correspond to connections to `DanglingT` items, and you end up having to
+    do logic to disambiguate left dangling indices from right dangling indices. This function
+    facilitates re-indexing the tensor network's outer indices to better match a bloq's signature.
+
+    In particular, we map each outer index to a tuple (reg.name, soq.idx, j, group) where
+    group is 'lf', 'lb', 'rf', or 'rb' corresponding to (left or right) x (forward or backward)
+    indices.
+
+    If `friendly_indices` is set to True, the tuple of items is converted to a string.
+
+    This function is called at the end of `cbloq_to_superquimb` as part of a `tn.reindex(...)
+    operation.
     """
     # Each index is a (cxn: Connection, j: int, forward: bool) tuple.
     cxn: Connection
     j: int
     forward: bool
 
-    _T = Tuple[str, Tuple[int, ...], int, str]
-    ind_name_map: Dict[Any, Union[str, _T]] = {}
+    ind_name_map: Dict[Any, Union[str, _SuperOuterIndT]] = {}
     for ind in tn.outer_inds():
         cxn, j, forward = ind
         if cxn.left.binst is LeftDangle:

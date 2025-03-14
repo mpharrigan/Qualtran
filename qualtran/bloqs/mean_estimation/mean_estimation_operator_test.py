@@ -20,7 +20,7 @@ import numpy as np
 import pytest
 from attrs import frozen
 
-from qualtran import BQUInt, QAny, QUInt, Register
+from qualtran import BQUInt, CtrlSpec, QAny, QUInt, Register
 from qualtran._infra.gate_with_registers import get_named_qubits, total_bits
 from qualtran.bloqs.mean_estimation.mean_estimation_operator import (
     CodeForRandomVariable,
@@ -287,5 +287,5 @@ def test_mean_estimation_operator_consistent_protocols():
     ).wire_symbols == tuple(['(0)'] + ['U_ko'] * n_qubits)
 
     assert cirq.circuit_diagram_info(
-        (mean_gate**2).controlled(control_values=(0,))
+        (mean_gate**2).controlled(CtrlSpec(cvs=0))
     ).wire_symbols == tuple(['(0)'] + ['U_ko^2'] * n_qubits)

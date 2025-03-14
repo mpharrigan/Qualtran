@@ -38,6 +38,7 @@ from qualtran.bloqs.bookkeeping import Cast
 from qualtran.bloqs.qft import QFTTextBook
 from qualtran.drawing import directional_text_box, RarrowTextBox, Text, WireSymbol
 from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
+from qualtran.symbolics import is_symbolic
 from qualtran.symbolics.types import SymbolicInt
 
 
@@ -55,6 +56,8 @@ class MeasQFT(Bloq):
         )
 
     def build_composite_bloq(self, bb: 'BloqBuilder', x: 'SoquetT') -> Dict[str, 'SoquetT']:
+        if is_symbolic(self.n):
+            raise DecomposeTypeError(f"Cannot decompose symbolic {self}.")
         x = bb.add(QFTTextBook(self.n).adjoint(), q=x)
         xs = bb.split(x)
         for i in range(self.n):

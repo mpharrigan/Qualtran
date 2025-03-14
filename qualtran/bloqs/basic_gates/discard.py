@@ -20,19 +20,21 @@ from qualtran import Bloq, CBit, ConnectionT, QBit, Register, Side, Signature
 from qualtran.simulation.classical_sim import ClassicalValT
 
 if TYPE_CHECKING:
-    import quimb.tensor as qtn
-
     from qualtran.simulation.tensor import DiscardInd
 
 
 @frozen
 class Discard(Bloq):
+    """Discard a classical bit.
+
+    This is an allowed operation.
+    """
 
     @cached_property
     def signature(self) -> 'Signature':
-        return Signature([Register('x', CBit(), side=Side.LEFT)])
+        return Signature([Register('c', CBit(), side=Side.LEFT)])
 
-    def on_classical_vals(self, x: int) -> Dict[str, 'ClassicalValT']:
+    def on_classical_vals(self, c: int) -> Dict[str, 'ClassicalValT']:
         return {}
 
     def my_tensors(
@@ -41,22 +43,26 @@ class Discard(Bloq):
 
         from qualtran.simulation.tensor import DiscardInd
 
-        return [DiscardInd((incoming['x'], 0))]
+        return [DiscardInd((incoming['c'], 0))]
 
 
 @frozen
 class DiscardQ(Bloq):
+    """Discard a qubit.
+
+    This is a dangerous operation that can ruin your computation. This is equivalent to
+    measuring the qubit and throwing out the measurement operation, so it removes any coherences
+    involved with the qubit. Use with care.
+    """
+
     @cached_property
     def signature(self) -> 'Signature':
         return Signature([Register('q', QBit(), side=Side.LEFT)])
-
-    def on_classical_vals(self, x: int) -> Dict[str, 'ClassicalValT']:
-        return {}
 
     def my_tensors(
         self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
     ) -> List['DiscardInd']:
 
-        from qualtran.simulation.tensor._quimb import DiscardInd  # TODO
+        from qualtran.simulation.tensor import DiscardInd
 
         return [DiscardInd((incoming['q'], 0))]

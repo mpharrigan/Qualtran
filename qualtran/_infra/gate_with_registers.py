@@ -14,7 +14,6 @@
 
 import abc
 from typing import (
-    cast,
     Collection,
     Dict,
     Iterable,

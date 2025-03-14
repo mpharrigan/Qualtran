@@ -263,12 +263,36 @@ class Bloq(metaclass=abc.ABCMeta):
         return tuple(res[reg.name] for reg in self.signature.rights())
 
     def tensor_contract(self, superoperator: bool = False) -> 'NDArray':
-        """Return a contracted, dense ndarray representing this bloq.
+        """Return a contracted, dense ndarray encoding of this bloq.
 
-        This constructs a tensor network and then contracts it according to our registers,
-        i.e. the dangling indices. The returned array will be 0-, 1- or 2-dimensional. If it is
-        a 2-dimensional matrix, we follow the quantum computing / matrix multiplication convention
-        of (right, left) indices.
+        This method decomposes and flattens this bloq into a factorized CompositeBloq,
+        turns that composite bloq into a Quimb tensor network, and contracts it into a dense
+        ndarray.
+
+        The returned array will be 0-, 1-, 2-, or 4-dimensional with indices arranged according to the
+        bloq's signature and the type of simulation requested via the `superoperator` flag.
+
+        If `superoperator` is set to False (the default), a pure-state tensor network will be
+        constructed.
+         - If `bloq` has all thru-registers, the dense tensor will be 2-dimensional with shape `(n, n)`
+           where `n` is the number of bits in the signature. We follow the linear algebra convention
+           and order the indices as (right, left) so the matrix-vector product can be used to evolve
+           a state vector.
+         - If `bloq` has all left- or all right-registers, the tensor will be 1-dimensional with
+           shape `(n,)`. Note that we do not distinguish between 'row' and 'column' vectors in this
+           function.
+         - If `bloq` has no external registers, the contracted form is a 0-dimensional complex number.
+
+        If `superoperator` is set to True, an open-system tensor network will be constructed.
+         - States result in a 2-dimensional density matrix with indices (right_forward, right_backward)
+           or (left_forward, left_backward) depending on whether they're input or output states.
+         - Operations result in a 4-dimensional tensor with indices (right_forward, right_backward,
+           left_forward, left_backward).
+
+        Args:
+            superoperator: If toggled to True, do an open-system simulation. This supports
+                non-unitary operations like measurement, but is more costly and results in
+                higher-dimension resultant tensors.
         """
         from qualtran.simulation.tensor import bloq_to_dense
 

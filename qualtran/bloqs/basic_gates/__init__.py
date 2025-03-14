@@ -22,7 +22,7 @@ requirements.
 """
 
 from .cnot import CNOT
-from .discard import Discard
+from .discard import Discard, DiscardQ
 from .global_phase import GlobalPhase
 from .hadamard import CHadamard, Hadamard
 from .identity import Identity

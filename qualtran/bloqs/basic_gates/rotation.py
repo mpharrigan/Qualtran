@@ -388,7 +388,7 @@ _Y_POW_DOC = BloqDocSpec(bloq_cls=YPowGate, examples=[_y_pow])
 
 
 @frozen
-class Rz(Bloq):
+class Rz(CirqGateAsBloqBase):
     r"""Apply a single-qubit Z rotation.
 
     Given `angle` $\theta$, the unitary matrix of this gate is:

@@ -499,7 +499,7 @@ def _assert_valid_phase(p: complex, atol: float = 1e-8):
 
 
 def do_phased_classical_simulation(
-    bloq: 'Bloq', vals: Mapping[str, 'ClassicalValT'], rng: 'np.random.Generator'
+    bloq: 'Bloq', vals: Mapping[str, 'ClassicalValT'], rng: Optional['np.random.Generator'] = None
 ):
     """Do a phased classical simulation of the bloq.
 
@@ -512,7 +512,7 @@ def do_phased_classical_simulation(
             assumed to be 1.0.
         rng: A numpy random generator (e.g. from `np.random.default_rng()`). This function
             will use this generator to supply random values from certain phased-classical operations
-            like `MeasX`.
+            like `MeasX`. If not supplied, stochastic operations will result in an error.
 
     Returns:
         final_vals: A mapping of output register name to final classical values.

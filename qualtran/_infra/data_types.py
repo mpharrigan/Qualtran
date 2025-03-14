@@ -359,7 +359,7 @@ class QIntOnesComp(QDType):
             )
 
 
-class _UInt(metaclass=abc.ABCMeta):
+class _UInt(QCDType, metaclass=abc.ABCMeta):
     """Unsigned integer of a given width bitsize which wraps around upon overflow.
 
     Any intended wrap around effect is expected to be handled by the developer, similar
@@ -369,11 +369,9 @@ class _UInt(metaclass=abc.ABCMeta):
     bit is at index 0.
     """
 
-    bitsize: SymbolicInt
-
     @property
     @abc.abstractmethod
-    def bitsize(self):
+    def bitsize(self) -> SymbolicInt:
         """The number of bits."""
 
     def is_symbolic(self) -> bool:
