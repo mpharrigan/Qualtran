@@ -299,7 +299,7 @@ class MeasX(Bloq):
     ) -> List['qtn.Tensor']:
         import quimb.tensor as qtn
 
-        from qualtran.simulation.tensor._quimb import DiscardInd  # TODO
+        from qualtran.simulation.tensor import DiscardInd
 
         data = np.array(
             [
@@ -309,7 +309,6 @@ class MeasX(Bloq):
         )
 
         q_trace = qtn.rand_uuid('q_trace')
-        # TODO: expect all indices to be a tuple. Could be tricky if we tuple-unpack a string, e.g.
         t = qtn.Tensor(
             data=data, inds=[(incoming['q'], 0), (q_trace, 0), (outgoing['c'], 0)], tags=[str(self)]
         )
