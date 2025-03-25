@@ -32,9 +32,15 @@ def _add_classical_kets(
             reg_vals = np.asarray(vals[reg.name])
             soq = np.empty(reg.shape, dtype=object)
             for idx in reg.all_idxs():
-                soq[idx] = bb.add(IntState(val=reg_vals[idx], bitsize=reg.bitsize))
+                val = reg_vals[idx]
+                if val is None:
+                    continue
+                soq[idx] = bb.add(IntState(val=val, bitsize=reg.bitsize))
         else:
-            soq = bb.add(IntState(val=cast(int, vals[reg.name]), bitsize=reg.bitsize))
+            val = vals[reg.name]
+            if val is None:
+                continue
+            soq = bb.add(IntState(val=val, bitsize=reg.bitsize))
 
         soqs[reg.name] = soq
     return soqs
@@ -54,11 +60,15 @@ def _add_classical_bras(
             if isinstance(reg_name, Soquet):
                 raise ValueError(f'soqs {reg.name} must be a numpy array: {soqs[reg.name]}')
             for idx in reg.all_idxs():
-                bb.add(IntEffect(val=reg_vals[idx], bitsize=reg.bitsize), val=reg_name[idx])
+                val = reg_vals[idx]
+                if val is None:
+                    continue
+                bb.add(IntEffect(val=val, bitsize=reg.bitsize), val=reg_name[idx])
         else:
-            bb.add(
-                IntEffect(val=cast(int, vals[reg.name]), bitsize=reg.bitsize), val=soqs[reg.name]
-            )
+            val = vals[reg.name]
+            if val is None:
+                continue
+            bb.add(IntEffect(val=val, bitsize=reg.bitsize), val=soqs[reg.name])
 
 
 def flank_with_classical_vectors(
