@@ -1,3 +1,4 @@
+
 #  Copyright 2023 Google LLC
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,12 +31,11 @@ from qualtran import (
     Soquet,
     SoquetT,
 )
+from qualtran.bloqs.cryptography._factoring_shims import SimpleQROM
+from qualtran.bloqs.cryptography.ecc import ECPoint, ECAdd
 from qualtran.drawing import Circle, Text, TextBox, WireSymbol
 from qualtran.simulation.classical_sim import ClassicalValT
 
-from ._ecc_shims import SimpleQROM
-from .ec_add import ECAdd
-from .ec_point import ECPoint
 
 
 @frozen

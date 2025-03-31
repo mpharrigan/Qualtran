@@ -32,12 +32,13 @@ from qualtran import (
     Signature,
     SoquetT,
 )
-from qualtran.cirq_interop.t_complexity_protocol import TComplexity
 from qualtran.drawing import Circle, Text, TextBox, WireSymbol
 
 if TYPE_CHECKING:
     import cirq
     import quimb.tensor as qtn
+    from pennylane.operation import Operation
+    from pennylane.wires import Wires
 
     from qualtran.cirq_interop import CirqQuregT
 
@@ -98,8 +99,10 @@ class YGate(Bloq):
         (q,) = q
         return cirq.Y(q), {'q': np.asarray([q])}
 
-    def _t_complexity_(self) -> 'TComplexity':
-        return TComplexity(clifford=1)
+    def as_pl_op(self, wires: 'Wires') -> 'Operation':
+        import pennylane as qml
+
+        return qml.PauliY(wires=wires)
 
     def wire_symbol(
         self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()
@@ -166,6 +169,11 @@ class CYGate(Bloq):
             'target': np.array([target]),
         }
 
+    def as_pl_op(self, wires: 'Wires') -> 'Operation':
+        import pennylane as qml
+
+        return qml.CY(wires=wires)
+
     def wire_symbol(
         self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()
     ) -> 'WireSymbol':
@@ -176,6 +184,13 @@ class CYGate(Bloq):
         if reg.name == 'target':
             return TextBox('Y')
         raise ValueError(f"Unknown register {reg}.")
+
+    def get_ctrl_system(self, ctrl_spec: 'CtrlSpec') -> Tuple['Bloq', 'AddControlledT']:
+        from qualtran.bloqs.mcmt.specialized_ctrl import get_ctrl_system_1bit_cv_from_bloqs
+
+        return get_ctrl_system_1bit_cv_from_bloqs(
+            self, ctrl_spec, current_ctrl_bit=1, bloq_with_ctrl=self, ctrl_reg_name='ctrl'
+        )
 
 
 @bloq_example

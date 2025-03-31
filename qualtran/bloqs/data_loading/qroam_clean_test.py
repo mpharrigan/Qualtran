@@ -15,19 +15,72 @@ import numpy as np
 import pytest
 import sympy
 
+from qualtran._infra.data_types import QAny
+from qualtran._infra.registers import Register
 from qualtran.bloqs.data_loading.qroam_clean import (
     _qroam_clean_multi_data,
     _qroam_clean_multi_dim,
     get_optimal_log_block_size_clean_ancilla,
     QROAMClean,
+    QROAMCleanAdjoint,
     QROAMCleanAdjointWrapper,
 )
-from qualtran.symbolics import ceil
+from qualtran.drawing.musical_score import Circle, LarrowTextBox, RarrowTextBox, Text, TextBox
+from qualtran.resource_counting import get_cost_value, QubitCount
+from qualtran.symbolics import ceil, log2
 
 
 def test_bloq_examples(bloq_autotester):
     bloq_autotester(_qroam_clean_multi_data)
     bloq_autotester(_qroam_clean_multi_dim)
+
+
+@pytest.mark.parametrize(
+    "reg, reg_type",
+    [
+        (None, Text),
+        (Register("selection", QAny(5)), TextBox),
+        (Register("selection0", QAny(5)), TextBox),
+        (Register("target0_", QAny(5)), RarrowTextBox),
+        (Register("junk_target0_", QAny(5)), RarrowTextBox),
+        (Register("control", QAny(5)), Circle),
+    ],
+)
+def test_wire_symbol(reg, reg_type):
+    bloq = _qroam_clean_multi_dim.make()
+    assert isinstance(bloq.wire_symbol(reg, ()), reg_type)
+    assert isinstance(bloq.adjoint().wire_symbol(reg, ()), reg_type)
+
+
+@pytest.mark.parametrize(
+    "reg, reg_type",
+    [
+        (None, Text),
+        (Register("selection", QAny(5)), TextBox),
+        (Register("selection0", QAny(5)), TextBox),
+        (Register("target0_", QAny(5)), LarrowTextBox),
+        (Register("control", QAny(5)), Circle),
+    ],
+)
+def test_adjoint_wire_symbol(reg, reg_type):
+    data1 = np.arange(25, dtype=int).reshape((5, 5))
+    data2 = (np.arange(25, dtype=int) + 1).reshape((5, 5))
+    adjoint_bloq = QROAMCleanAdjoint.build_from_data(data1, data2, log_block_sizes=(1, 1))
+    assert isinstance(adjoint_bloq.wire_symbol(reg, ()), reg_type)
+
+
+def test_qroam_clean_qubit_counts():
+    bloq = _qroam_clean_multi_data.make()
+    assert get_cost_value(bloq, QubitCount()) == get_cost_value(bloq.decompose_bloq(), QubitCount())
+    bloq = _qroam_clean_multi_dim.make()
+    assert get_cost_value(bloq, QubitCount()) == get_cost_value(bloq.decompose_bloq(), QubitCount())
+    # Symbolic
+    N, b, k = sympy.symbols('N b k', positive=True, integer=True)
+    bloq = QROAMClean.build_from_bitsize((N,), (b,), log_block_sizes=(k,))
+    K = 2**k
+    # log(N) - k ancilla are required for the nested unary iteration.
+    expected_qubits = K * b + 2 * ceil(log2(N)) - k - 1
+    assert sympy.simplify(get_cost_value(bloq, QubitCount()) - expected_qubits) == 0
 
 
 def test_t_complexity_1d_data_symbolic():
@@ -42,7 +95,7 @@ def test_t_complexity_1d_data_symbolic():
     inv_k = sympy.symbols('kinv')
     inv_K = 2**inv_k
     bloq_inv = bloq_inv.with_log_block_sizes(log_block_sizes=(inv_k,))
-    expected_toffoli_inv = ceil(N / inv_K) + inv_K
+    expected_toffoli_inv = ceil(N / inv_K) + inv_K - 4
     assert bloq_inv.t_complexity().t == 4 * expected_toffoli_inv
 
 
@@ -58,7 +111,7 @@ def test_t_complexity_2d_data_symbolic():
     inv_k1, inv_k2 = sympy.symbols('kinv1, kinv2')
     inv_K1, inv_K2 = 2**inv_k1, 2**inv_k2
     bloq_inv = bloq_inv.with_log_block_sizes(log_block_sizes=(inv_k1, inv_k2))
-    expected_toffoli_inv = ceil(N1 * N2 / (inv_K1 * inv_K2)) + inv_K1 * inv_K2
+    expected_toffoli_inv = ceil(N1 * N2 / (inv_K1 * inv_K2)) + inv_K1 * inv_K2 - 4
     assert bloq_inv.t_complexity().t == 4 * expected_toffoli_inv
 
 

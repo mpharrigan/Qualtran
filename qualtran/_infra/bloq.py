@@ -21,9 +21,12 @@ from typing import Callable, Dict, List, Optional, Sequence, Set, Tuple, TYPE_CH
 if TYPE_CHECKING:
     import cirq
     import networkx as nx
+    import pennylane as qml
     import quimb.tensor as qtn
     import sympy
     from numpy.typing import NDArray
+    from pennylane.operation import Operation
+    from pennylane.wires import Wires
 
     from qualtran import (
         AddControlledT,
@@ -394,7 +397,12 @@ class Bloq(metaclass=abc.ABCMeta):
             add_controlled: A function with the signature documented above that the system
                 can use to automatically wire up the new control registers.
         """
-        from qualtran import Controlled
+        from qualtran import Controlled, CtrlSpec
+        from qualtran.bloqs.mcmt.controlled_via_and import ControlledViaAnd
+
+        if ctrl_spec != CtrlSpec():
+            # reduce controls to a single qubit
+            return ControlledViaAnd.make_ctrl_system(self, ctrl_spec=ctrl_spec)
 
         return Controlled.make_ctrl_system(self, ctrl_spec=ctrl_spec)
 
@@ -432,9 +440,6 @@ class Bloq(metaclass=abc.ABCMeta):
 
         return t_complexity(self)
 
-    def _t_complexity_(self) -> 'TComplexity':
-        return NotImplemented
-
     def as_cirq_op(
         self, qubit_manager: 'cirq.QubitManager', **cirq_quregs: 'CirqQuregT'
     ) -> Tuple[Union['cirq.Operation', None], Dict[str, 'CirqQuregT']]:
@@ -463,6 +468,25 @@ class Bloq(metaclass=abc.ABCMeta):
         return BloqAsCirqGate.bloq_on(
             bloq=self, cirq_quregs=cirq_quregs, qubit_manager=qubit_manager
         )
+
+    def as_pl_op(self, wires: 'Wires') -> 'Operation':
+        """Override this method to support conversion to a PennyLane operation.
+
+        If this method is not overriden, the default implementation will wrap this bloq
+        in a `FromBloq` shim.
+
+        Args:
+            wires: the wires that the op acts on
+
+        Returns:
+            ~.Operation: A PennyLane operation corresponding to this bloq acting on the
+                provided wires or None. This method should return None if and only if the bloq
+                instance truly should not be included in the PennyLane circuit (e.g. for reshaping
+                bloqs). A bloq with no PennyLane equivalent should raise an exception instead.
+        """
+        from pennylane.io import FromBloq
+
+        return FromBloq(bloq=self, wires=wires)
 
     def on(self, *qubits: 'cirq.Qid') -> 'cirq.Operation':
         """A `cirq.Operation` of this bloq operating on the given qubits.

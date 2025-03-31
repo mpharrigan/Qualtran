@@ -39,6 +39,7 @@ class BloqExample(Generic[_BloqType]):
         name: A name for the bloq instantiation.
         bloq_cls: The `Bloq` class that this instantiation is an instance of.
         generalizer: Passed to `get_bloq_counts_graph` calls for bloq-counts equivalence checking.
+        docstring: An optional one-line description of the example.
     """
 
     _func: Callable[[], _BloqType] = field(repr=False, hash=False)
@@ -47,6 +48,7 @@ class BloqExample(Generic[_BloqType]):
     generalizer: _GeneralizerType = field(
         converter=lambda x: tuple(x) if isinstance(x, Sequence) else x, default=lambda x: x
     )
+    docstring: Optional[str] = None
 
     def make(self) -> _BloqType:
         """Make the bloq."""
@@ -78,15 +80,13 @@ def _bloq_cls_from_func_annotation(func: Callable[[], _BloqType]) -> Type[_BloqT
 
 
 @typing.overload
-def bloq_example(_func: Callable[[], _BloqType], **kwargs: Any) -> BloqExample[_BloqType]:
-    ...
+def bloq_example(_func: Callable[[], _BloqType], **kwargs: Any) -> BloqExample[_BloqType]: ...
 
 
 @typing.overload
 def bloq_example(
     _func: None = None, *, generalizer: _GeneralizerType = lambda x: x
-) -> Callable[[Callable[[], _BloqType]], BloqExample[_BloqType]]:
-    ...
+) -> Callable[[Callable[[], _BloqType]], BloqExample[_BloqType]]: ...
 
 
 def bloq_example(
@@ -108,6 +108,7 @@ def bloq_example(
             name=_name_from_func_name(func),
             bloq_cls=_bloq_cls_from_func_annotation(func),
             generalizer=generalizer,
+            docstring=func.__doc__,
         )
 
     if _func is None:

@@ -33,12 +33,13 @@ from qualtran import (
     Signature,
     SoquetT,
 )
-from qualtran.cirq_interop.t_complexity_protocol import TComplexity
 from qualtran.drawing import Circle, ModPlus, Text, WireSymbol
 
 if TYPE_CHECKING:
     import cirq
     import quimb.tensor as qtn
+    from pennylane.operation import Operation
+    from pennylane.wires import Wires
 
     from qualtran.cirq_interop import CirqQuregT
     from qualtran.simulation.classical_sim import ClassicalValT
@@ -123,6 +124,11 @@ class CNOT(Bloq):
         (target,) = target
         return cirq.CNOT(ctrl, target), {'ctrl': np.array([ctrl]), 'target': np.array([target])}
 
+    def as_pl_op(self, wires: 'Wires') -> 'Operation':
+        import pennylane as qml
+
+        return qml.CNOT(wires=wires)
+
     def wire_symbol(self, reg: Optional[Register], idx: Tuple[int, ...] = tuple()) -> 'WireSymbol':
         if reg is None:
             return Text('')
@@ -131,9 +137,6 @@ class CNOT(Bloq):
         elif reg.name == 'target':
             return ModPlus()
         raise ValueError(f'Unknown wire symbol register name: {reg.name}')
-
-    def _t_complexity_(self) -> 'TComplexity':
-        return TComplexity(clifford=1)
 
 
 @bloq_example

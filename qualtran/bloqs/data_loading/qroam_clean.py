@@ -30,7 +30,7 @@ from qualtran.symbolics import ceil, is_symbolic, log2, prod, SymbolicFloat, Sym
 if TYPE_CHECKING:
     from qualtran import Bloq, BloqBuilder, SoquetT, QDType
     from qualtran.simulation.classical_sim import ClassicalValT
-    from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
+    from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator, CostKey
 
 from qualtran.bloqs.data_loading.select_swap_qrom import _alloc_anc_for_reg, SelectSwapQROM
 
@@ -97,19 +97,19 @@ class QROAMCleanAdjoint(QROMBase, GateWithRegisters):  # type: ignore[misc]
     original lookup).
 
     Registers:
-        - control_registers: If control is specified, a THRU register to denote the control qubits.
+        control_registers: If control is specified, a THRU register to denote the control qubits.
             Empty by default for uncontrolled version of the Bloq.
-        - selection_registers: $N$ THRU registers, each with shape (), to load $N$ dimensional
+        selection_registers: $N$ THRU registers, each with shape (), to load $N$ dimensional
             classical datasets.
-        - target_registers: $M$ LEFT registers to load $M$ different classical datasets. Each target
+        target_registers: $M$ LEFT registers to load $M$ different classical datasets. Each target
             register is of bitsize $b$ and shape described by a tuple of length $N + S$. Here $S$ is
             a parameter that describes the shape of the output to be loaded for each selection index.
 
-
     References:
         [Qubitization of Arbitrary Basis Quantum Chemistry Leveraging Sparsity and Low Rank Factorization](https://arxiv.org/abs/1902.02134).
-            Berry et. al. (2019). Appendix C.
+        Berry et al. (2019). Appendix C.
     """
+
     log_block_sizes: Tuple[SymbolicInt, ...] = attrs.field(
         converter=lambda x: tuple(x.tolist() if isinstance(x, np.ndarray) else x)
     )
@@ -179,7 +179,7 @@ class QROAMCleanAdjoint(QROMBase, GateWithRegisters):  # type: ignore[misc]
     def build_call_graph(self, ssa: 'SympySymbolAllocator') -> 'BloqCountDictT':
         block_sizes = prod([2**k for k in self.log_block_sizes])
         data_size = prod(self.data_shape)
-        n_toffoli = ceil(data_size / block_sizes) + block_sizes
+        n_toffoli = ceil(data_size / block_sizes) + block_sizes - 4 + self.num_controls
         return {Toffoli(): n_toffoli}
 
     @cached_property
@@ -195,7 +195,7 @@ class QROAMCleanAdjoint(QROMBase, GateWithRegisters):  # type: ignore[misc]
         if reg is None:
             return Text('QROAM').adjoint()
         name = reg.name
-        if name == 'selection':
+        if name.startswith('selection'):
             return TextBox('In').adjoint()
         elif 'target' in name:
             trg_indx = int(name.replace('target', '').replace('_', ''))
@@ -213,9 +213,9 @@ class QROAMCleanAdjointWrapper(Bloq):
 
     qroam_clean: 'QROAMClean'
     log_block_sizes: Tuple[SymbolicInt, ...] = attrs.field(
-        converter=lambda x: x
-        if x is None
-        else tuple(x.tolist() if isinstance(x, np.ndarray) else x)
+        converter=lambda x: (
+            x if x is None else tuple(x.tolist() if isinstance(x, np.ndarray) else x)
+        )
     )
 
     @cached_property
@@ -268,7 +268,7 @@ class QROAMCleanAdjointWrapper(Bloq):
     def build_call_graph(self, ssa: 'SympySymbolAllocator') -> 'BloqCountDictT':
         block_sizes = prod([2**k for k in self.log_block_sizes])
         data_size = prod(self.qroam_clean.data_shape)
-        n_toffoli = ceil(data_size / block_sizes) + block_sizes
+        n_toffoli = ceil(data_size / block_sizes) + block_sizes - 4 + self.qroam_clean.num_controls
         return {Toffoli(): n_toffoli}
 
     def adjoint(self) -> 'QROAMClean':
@@ -283,9 +283,9 @@ class QROAMCleanAdjointWrapper(Bloq):
         if reg is None:
             return Text('QROAM').adjoint()
         name = reg.name
-        if name == 'selection':
+        if name.startswith('selection'):
             return TextBox('In')
-        elif 'target' in name:
+        elif 'target' in name and 'junk' not in name:
             trg_indx = int(name.replace('target', '').replace('_', ''))
             # match the sel index
             subscript = chr(ord('a') + trg_indx)
@@ -298,6 +298,9 @@ class QROAMCleanAdjointWrapper(Bloq):
         elif name == 'control':
             return Circle()
         raise ValueError(f'Unknown register name {name}')
+
+    def __str__(self):
+        return 'QROAMCleanAdjoint'
 
 
 @attrs.frozen
@@ -328,18 +331,19 @@ class QROAMClean(SelectSwapQROM):
     upon the target bitsize of elements to be loaded.
 
     Registers:
-        - control_registers: If control is specified, a THRU register to denote the control qubits.
+        control_registers: If control is specified, a THRU register to denote the control qubits.
             Empty by default for uncontrolled version of the Bloq.
-        - selection_registers: $N$ THRU registers, each with shape (), to load $N$ dimensional
+        selection_registers: $N$ THRU registers, each with shape (), to load $N$ dimensional
             classical datasets.
-        - target_registers: $M$ RIGHT registers to load $M$ different classical datasets. Each target
+        target_registers: $M$ RIGHT registers to load $M$ different classical datasets. Each target
             register is of bitsize $b$ and shape described by a tuple of length $N$.
-        - junk_registers: $K - 1$ RIGHT registers, each of bitsize $b$ used to load batches of size $K$
+        junk_registers: $K - 1$ RIGHT registers, each of bitsize $b$ used to load batches of size $K$
 
     References:
         [Qubitization of Arbitrary Basis Quantum Chemistry Leveraging Sparsity and Low Rank Factorization](https://arxiv.org/abs/1902.02134).
-            Berry et. al. (2019). Appendix A. and B.
+        Berry et al. (2019). Appendix A. and B.
     """
+
     log_block_sizes: Tuple[SymbolicInt, ...] = attrs.field(
         converter=lambda x: tuple(x.tolist() if isinstance(x, np.ndarray) else x)
     )
@@ -450,6 +454,15 @@ class QROAMClean(SelectSwapQROM):
                 ret[swz] += 1
         return ret
 
+    def my_static_costs(self, cost_key: "CostKey"):
+        from qualtran.resource_counting import get_cost_value, QubitCount
+
+        if isinstance(cost_key, QubitCount):
+            qrom_costs = get_cost_value(self.qrom_bloq, QubitCount())
+            return qrom_costs + sum(self.log_block_sizes)
+
+        return NotImplemented
+
     def _build_composite_bloq_with_swz_clean(
         self,
         bb: 'BloqBuilder',
@@ -514,7 +527,7 @@ class QROAMClean(SelectSwapQROM):
         if reg is None:
             return Text('QROAM')
         name = reg.name
-        if name == 'selection':
+        if name.startswith('selection'):
             return TextBox('In')
         elif 'target' in name and 'junk' not in name:
             trg_indx = int(name.replace('target', '').replace('_', ''))

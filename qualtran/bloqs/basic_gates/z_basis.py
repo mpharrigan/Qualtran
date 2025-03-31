@@ -41,12 +41,14 @@ from qualtran import (
     SoquetT,
 )
 from qualtran.bloqs.bookkeeping import ArbitraryClifford
-from qualtran.cirq_interop.t_complexity_protocol import TComplexity
 from qualtran.drawing import Circle, directional_text_box, Text, TextBox, WireSymbol
+from qualtran.symbolics import SymbolicInt
 
 if TYPE_CHECKING:
     import cirq
     import quimb.tensor as qtn
+    from pennylane.operation import Operation
+    from pennylane.wires import Wires
 
     from qualtran.cirq_interop import CirqQuregT
     from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
@@ -277,8 +279,10 @@ class ZGate(Bloq):
         (q,) = q
         return cirq.Z(q), {'q': np.asarray([q])}
 
-    def _t_complexity_(self) -> 'TComplexity':
-        return TComplexity(clifford=1)
+    def as_pl_op(self, wires: 'Wires') -> 'Operation':
+        import pennylane as qml
+
+        return qml.Z(wires=wires)
 
     def wire_symbol(
         self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()
@@ -336,12 +340,24 @@ class CZ(Bloq):
         (q2,) = q2
         return cirq.CZ(q1, q2), {'q1': np.array([q1]), 'q2': np.array([q2])}
 
+    def as_pl_op(self, wires: 'Wires') -> 'Operation':
+        import pennylane as qml
+
+        return qml.CZ(wires=wires)
+
     def wire_symbol(self, reg: Optional[Register], idx: Tuple[int, ...] = tuple()) -> 'WireSymbol':
         if reg is None:
             return Text('')
         if reg.name == 'q1' or reg.name == 'q2':
             return Circle()
         raise ValueError(f'Unknown wire symbol register name: {reg.name}')
+
+    def get_ctrl_system(self, ctrl_spec: 'CtrlSpec') -> Tuple['Bloq', 'AddControlledT']:
+        from qualtran.bloqs.mcmt.specialized_ctrl import get_ctrl_system_1bit_cv_from_bloqs
+
+        return get_ctrl_system_1bit_cv_from_bloqs(
+            self, ctrl_spec, current_ctrl_bit=1, bloq_with_ctrl=self, ctrl_reg_name='q1'
+        )
 
 
 @bloq_example
@@ -457,7 +473,7 @@ class IntState(_IntVector):
         val: The register of size `bitsize` which initializes the value `val`.
     """
 
-    def __init__(self, val: Union[int, sympy.Expr], bitsize: Union[int, sympy.Expr]):
+    def __init__(self, val: SymbolicInt, bitsize: SymbolicInt):
         self.__attrs_init__(val=val, bitsize=bitsize, state=True)
 
 
@@ -482,7 +498,7 @@ class IntEffect(_IntVector):
         val: The register of size `bitsize` which de-allocates the value `val`.
     """
 
-    def __init__(self, val: int, bitsize: int):
+    def __init__(self, val: SymbolicInt, bitsize: SymbolicInt):
         self.__attrs_init__(val=val, bitsize=bitsize, state=False)
 
 

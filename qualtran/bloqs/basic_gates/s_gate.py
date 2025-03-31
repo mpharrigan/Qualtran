@@ -20,12 +20,13 @@ import numpy as np
 from attrs import frozen
 
 from qualtran import Bloq, bloq_example, BloqDocSpec, ConnectionT, Register, Signature
-from qualtran.cirq_interop.t_complexity_protocol import TComplexity
 from qualtran.drawing import Text, TextBox, WireSymbol
 
 if TYPE_CHECKING:
     import cirq
     import quimb.tensor as qtn
+    from pennylane.operation import Operation
+    from pennylane.wires import Wires
 
     from qualtran.cirq_interop import CirqQuregT
 
@@ -50,14 +51,12 @@ class SGate(Bloq):
     Registers:
         q: The qubit
     """
+
     is_adjoint: bool = False
 
     @cached_property
     def signature(self) -> 'Signature':
         return Signature.build(q=1)
-
-    def _t_complexity_(self) -> 'TComplexity':
-        return TComplexity(clifford=1)
 
     def my_tensors(
         self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
@@ -77,6 +76,11 @@ class SGate(Bloq):
         (q,) = q
         p = -1 if self.is_adjoint else 1
         return cirq.S(q) ** p, {'q': np.array([q])}
+
+    def as_pl_op(self, wires: 'Wires') -> 'Operation':
+        import pennylane as qml
+
+        return qml.adjoint(qml.S(wires=wires)) if self.is_adjoint else qml.S(wires=wires)
 
     def __str__(self) -> str:
         maybe_dag = '†' if self.is_adjoint else ''

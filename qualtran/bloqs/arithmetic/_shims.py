@@ -14,7 +14,7 @@
 """This module has a selection of minimally-implemented modular arithmetic primitives.
 
 These bloqs serve as the callees in the call graphs of the algorithms found
-in `qualtran.bloqs.factoring` and `qualtran.bloqs.mod_arithmetic`. They are place-holders,
+in `qualtran.bloqs.cryptography` and `qualtran.bloqs.mod_arithmetic`. They are place-holders,
 so we don't have undefined symbols and can still merge the high-level algorithms. These shims
 will be fleshed out and moved to their final organizational location soon (written: 2024-05-06).
 """
@@ -22,8 +22,12 @@ from functools import cached_property
 
 from attrs import frozen
 
-from qualtran import Bloq, QBit, QUInt, Register, Signature
+from qualtran import Bloq, QBit, QMontgomeryUInt, QUInt, Register, Signature
+from qualtran.bloqs.arithmetic.bitwise import BitwiseNot
+from qualtran.bloqs.arithmetic.controlled_addition import CAdd
 from qualtran.bloqs.basic_gates import Toffoli
+from qualtran.bloqs.basic_gates.swap import TwoBitCSwap
+from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
 from qualtran.resource_counting import BloqCountDictT, CostKey, QubitCount, SympySymbolAllocator
 
 
@@ -43,6 +47,20 @@ class MultiCToffoli(Bloq):
         if cost_key == QubitCount():
             return self.n + 1
         return NotImplemented
+
+
+@frozen
+class CSub(Bloq):
+    n: int
+
+    @cached_property
+    def signature(self) -> 'Signature':
+        return Signature(
+            [Register('ctrl', QBit()), Register('x', QUInt(self.n)), Register('y', QUInt(self.n))]
+        )
+
+    def build_call_graph(self, ssa: SympySymbolAllocator) -> BloqCountDictT:
+        return {CAdd(QMontgomeryUInt(self.n)): 1, BitwiseNot(QMontgomeryUInt(self.n)): 3}
 
 
 @frozen
@@ -70,7 +88,4 @@ class CHalf(Bloq):
         return Signature([Register('ctrl', QBit()), Register('x', QUInt(self.n))])
 
     def build_call_graph(self, ssa: SympySymbolAllocator) -> BloqCountDictT:
-        # It's unclear what this operation is (as part of the ModInv circuit).
-        # If we assume it's a modular halving, then we can just run `ModDbl`
-        # backwards, and the cost is the same.
-        return {(Toffoli(), 2 * self.n)}
+        return {TwoBitCSwap(): self.n}

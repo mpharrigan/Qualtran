@@ -32,13 +32,14 @@ from qualtran import (
     Signature,
     SoquetT,
 )
-from qualtran.cirq_interop.t_complexity_protocol import TComplexity
 from qualtran.drawing import Text, TextBox, WireSymbol
 from qualtran.symbolics import is_symbolic, SymbolicInt
 
 if TYPE_CHECKING:
     import cirq
     import quimb.tensor as qtn
+    from pennylane.operation import Operation
+    from pennylane.wires import Wires
 
     from qualtran.cirq_interop import CirqQuregT
     from qualtran.simulation.classical_sim import ClassicalValT
@@ -54,6 +55,7 @@ class Identity(Bloq):
     Registers:
         q: register of `n` qubits
     """
+
     bitsize: SymbolicInt = 1
 
     @cached_property
@@ -88,8 +90,10 @@ class Identity(Bloq):
 
         return cirq.IdentityGate(self.bitsize).on(*q), {'q': q}
 
-    def _t_complexity_(self):
-        return TComplexity()
+    def as_pl_op(self, wires: 'Wires') -> 'Operation':
+        import pennylane as qml
+
+        return qml.Identity(wires=wires)
 
     def wire_symbol(self, reg: Optional[Register], idx: Tuple[int, ...] = tuple()) -> 'WireSymbol':
         if reg is None:

@@ -36,6 +36,8 @@ from qualtran.symbolics import is_symbolic, ssum, SymbolicInt
 
 if TYPE_CHECKING:
     import quimb.tensor as qtn
+    from pennylane.operation import Operation
+    from pennylane.wires import Wires
 
     from qualtran.cirq_interop import CirqQuregT
     from qualtran.simulation.classical_sim import ClassicalValT
@@ -100,6 +102,9 @@ class Partition(_BookkeepingBloq):
         else:
             return None, {'x': np.concatenate([v.ravel() for _, v in cirq_quregs.items()])}
 
+    def as_pl_op(self, wires: 'Wires') -> 'Operation':
+        return None
+
     def my_tensors(
         self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
     ) -> List['qtn.Tensor']:
@@ -145,7 +150,7 @@ class Partition(_BookkeepingBloq):
     def _classical_unpartition_to_bits(self, **vals: 'ClassicalValT') -> NDArray[np.uint8]:
         out_vals: list[NDArray[np.uint8]] = []
         for reg in self.regs:
-            reg_val = np.asarray(vals[reg.name])
+            reg_val = np.asanyarray(vals[reg.name])
             bitstrings = reg.dtype.to_bits_array(reg_val.ravel())
             out_vals.append(bitstrings.ravel())
         return np.concatenate(out_vals)
