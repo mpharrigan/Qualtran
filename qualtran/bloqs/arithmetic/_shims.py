@@ -27,7 +27,6 @@ from qualtran.bloqs.arithmetic.bitwise import BitwiseNot
 from qualtran.bloqs.arithmetic.controlled_addition import CAdd
 from qualtran.bloqs.basic_gates import Toffoli
 from qualtran.bloqs.basic_gates.swap import TwoBitCSwap
-from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
 from qualtran.resource_counting import BloqCountDictT, CostKey, QubitCount, SympySymbolAllocator
 
 

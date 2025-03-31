@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from functools import cached_property
-from typing import Dict, Optional, Tuple, Sequence
+from typing import Dict, Optional, Sequence, Tuple
 
 import attrs
 import numpy as np
@@ -35,7 +35,7 @@ from qualtran import (
 from qualtran.bloqs.basic_gates._shims import Measure
 from qualtran.bloqs.qft import QFTTextBook
 from qualtran.drawing import RarrowTextBox, Text, WireSymbol
-from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator, QubitCount
+from qualtran.resource_counting import BloqCountDictT, QubitCount, SympySymbolAllocator
 from qualtran.symbolics.types import SymbolicInt
 
 

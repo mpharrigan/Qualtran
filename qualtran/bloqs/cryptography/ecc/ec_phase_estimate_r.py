@@ -11,9 +11,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
 import functools
 from functools import cached_property
-from typing import Dict, Set, Union
+from typing import Dict, Union
 
 import numpy as np
 import sympy
@@ -24,7 +25,6 @@ from qualtran import (
     bloq_example,
     BloqBuilder,
     BloqDocSpec,
-    DecomposeNotImplementedError,
     DecomposeTypeError,
     QUInt,
     Register,
@@ -36,9 +36,9 @@ from qualtran.bloqs.basic_gates import PlusState
 from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
 from qualtran.symbolics.types import SymbolicInt
 
+from .._factoring_shims import MeasureQFT
 from .ec_add_r import ECAddR, ECWindowAddR
 from .ec_point import ECPoint
-from .._factoring_shims import MeasureQFT
 
 
 @frozen
@@ -55,14 +55,12 @@ class ECPhaseEstimateR(Bloq):
     Args:
         n: The bitsize of the elliptic curve points' x and y registers.
         point: The elliptic curve point to phase estimate against.
-        window_size: If non-zero, use windowed elliptic curve point addition.
         add_window_size: The number of bits in the ECAdd window.
         mul_window_size: The number of bits in the modular multiplication window.
     """
 
     n: 'SymbolicInt'
     point: ECPoint
-    window_size: int = 0
     add_window_size: 'SymbolicInt' = 1
     mul_window_size: 'SymbolicInt' = 1
 
@@ -71,17 +69,23 @@ class ECPhaseEstimateR(Bloq):
         return Signature([Register('x', QUInt(self.n)), Register('y', QUInt(self.n))])
 
     @property
-    def ec_add(self) -> Union[ECAddR, ECWindowAddR]:
-        if self.window_size == 0:
+    def ec_add(self) -> Union[functools.partial[ECAddR], functools.partial[ECWindowAddR]]:
+        if self.add_window_size == 1:
             return functools.partial(ECAddR, n=self.n)
-        return functools.partial(ECWindowAddR, n=self.n, window_size=self.window_size)
+        return functools.partial(
+            ECWindowAddR,
+            n=self.n,
+            add_window_size=self.add_window_size,
+            mul_window_size=self.mul_window_size,
+        )
+
+    @property
+    def num_windows(self) -> int:
+        return self.n // self.add_window_size
 
     def build_composite_bloq(self, bb: 'BloqBuilder', x: Soquet, y: Soquet) -> Dict[str, 'SoquetT']:
         if isinstance(self.n, sympy.Expr):
             raise DecomposeTypeError("Cannot decompose symbolic `n`.")
-        if self.window_size != 0:
-            raise DecomposeNotImplementedError("We don't support a windowed addition circuit yet.")
-
         ctrl = [bb.add(PlusState()) for _ in range(self.n)]
 
         if self.add_window_size == 1:
@@ -101,11 +105,6 @@ class ECPhaseEstimateR(Bloq):
         bb.add(MeasureQFT(n=self.n), x=ctrl)
         return {'x': x, 'y': y}
 
-    def build_call_graph(self, ssa: 'SympySymbolAllocator') -> Set['BloqCountT']:
-        return {
-            (self.ec_add(R=self.point), self.n / (2**self.window_size)),
-            (MeasureQFT(n=self.n), 1),
-        }
     def build_call_graph(self, ssa: 'SympySymbolAllocator') -> 'BloqCountDictT':
         return {self.ec_add(R=self.point): self.num_windows, MeasureQFT(n=self.n): 1}
 

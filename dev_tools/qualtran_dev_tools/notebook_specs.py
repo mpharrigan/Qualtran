@@ -29,8 +29,6 @@ generate the static exports for the Qualtran web UI.
 
 from typing import List
 
-from .git_tools import get_git_root
-
 import qualtran.bloqs.arithmetic.addition
 import qualtran.bloqs.arithmetic.bitwise
 import qualtran.bloqs.arithmetic.comparison
@@ -133,6 +131,7 @@ import qualtran.bloqs.swap_network.cswap_approx
 import qualtran.bloqs.swap_network.multiplexed_cswap
 import qualtran.bloqs.swap_network.swap_with_zero
 
+from .git_tools import get_git_root
 from .jupyter_autogen import NotebookSpecV2
 
 GIT_ROOT = get_git_root()
