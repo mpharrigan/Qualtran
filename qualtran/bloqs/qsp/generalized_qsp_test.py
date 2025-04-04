@@ -20,7 +20,7 @@ import pytest
 import sympy
 from attrs import define
 
-from qualtran import Bloq, bloq_example, Controlled, CtrlSpec, GateWithRegisters
+from qualtran import Bloq, bloq_example, Controlled, CtrlSpec
 from qualtran.bloqs.basic_gates.su2_rotation import SU2RotationGate
 from qualtran.bloqs.chemistry.ising.walk_operator import get_walk_operator_for_1d_ising_model
 from qualtran.bloqs.for_testing.atom import TestGWRAtom
@@ -74,7 +74,7 @@ def test_real_polynomial_has_real_complementary_polynomial(degree: int):
 
 
 def verify_generalized_qsp(
-    U: GateWithRegisters,
+    U: 'Bloq',
     P: Sequence[complex],
     Q: Optional[Sequence[complex]] = None,
     *,

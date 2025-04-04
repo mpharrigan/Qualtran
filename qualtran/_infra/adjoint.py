@@ -18,8 +18,8 @@ from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 
 from attrs import frozen
 
+from .bloq import Bloq
 from .composite_bloq import _binst_to_cxns, _cxns_to_soq_dict, _map_soqs, _reg_to_soq, BloqBuilder
-from .gate_with_registers import GateWithRegisters
 from .quantum_graph import LeftDangle, RightDangle
 from .registers import Signature
 
@@ -87,7 +87,7 @@ def _adjoint_cbloq(cbloq: 'CompositeBloq') -> 'CompositeBloq':
 
 
 @frozen
-class Adjoint(GateWithRegisters):
+class Adjoint(Bloq):
     """The standard adjoint of `subbloq`.
 
     This metabloq generally delegates all of its protocols (with modifications, read on) to

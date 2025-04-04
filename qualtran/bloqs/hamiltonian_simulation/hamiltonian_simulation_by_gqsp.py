@@ -220,6 +220,18 @@ def _symbolic_hamsim_by_gqsp() -> HamiltonianSimulationByGQSP:
     return symbolic_hamsim_by_gqsp
 
 
+@bloq_example
+def _random_walk_evolution_by_gqsp() -> HamiltonianSimulationByGQSP:
+    from qualtran.bloqs.for_testing.random_select_and_prepare import (
+        random_qubitization_walk_operator,
+    )
+
+    rs = np.random.RandomState(42)
+    W, H = random_qubitization_walk_operator(select_bitsize=2, target_bitsize=2, random_state=rs)
+    random_walk_evolution_by_gqsp = HamiltonianSimulationByGQSP(W, t=2, precision=1e-7)
+    return random_walk_evolution_by_gqsp
+
+
 _Hamiltonian_Simulation_by_GQSP_DOC = BloqDocSpec(
     bloq_cls=HamiltonianSimulationByGQSP,
     import_line='from qualtran.bloqs.hamiltonian_simulation.hamiltonian_simulation_by_gqsp import HamiltonianSimulationByGQSP',

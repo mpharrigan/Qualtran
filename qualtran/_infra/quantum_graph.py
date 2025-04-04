@@ -48,6 +48,9 @@ class BloqInstance:
         """
         return isinstance(self.bloq, t)
 
+    def __hash__(self):
+        return hash(self.i)
+
 
 class DanglingT:
     """The type of the singleton objects `LeftDangle` and `RightDangle`.
@@ -119,6 +122,15 @@ class Soquet:
 
     def __str__(self) -> str:
         return f'{self.binst}.{self.pretty()}'
+
+    def __hash__(self):
+        return hash(
+            (
+                self.binst.i if isinstance(self.binst, BloqInstance) else self.binst,
+                self.reg.name,
+                self.idx,
+            )
+        )
 
 
 LeftDangle = DanglingT("LeftDangle")

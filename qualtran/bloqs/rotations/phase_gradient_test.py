@@ -31,21 +31,22 @@ from qualtran.testing import assert_valid_bloq_decomposition
 
 @pytest.mark.parametrize('n', [6, 7, 8])
 def test_phase_gradient_state(n: int):
-    gate = PhaseGradientState(n, eps=0)
-    assert_valid_bloq_decomposition(gate)
-    assert_valid_bloq_decomposition(gate.adjoint())
+    bloq = PhaseGradientState(n, eps=0)
+    assert_valid_bloq_decomposition(bloq)
+    assert_valid_bloq_decomposition(bloq.adjoint())
 
     q = cirq.LineQubit.range(n)
     state_prep_cirq_circuit = cirq.Circuit(
         cirq.H.on_each(*q), cirq.PhaseGradientGate(num_qubits=n, exponent=-1).on(*q)
     )
-    np.testing.assert_allclose(cirq.unitary(gate), cirq.unitary(state_prep_cirq_circuit))
+    # Note: bloq has RIGHT registers; select |0000> index of cirq unitary
+    np.testing.assert_allclose(bloq.tensor_contract(), cirq.unitary(state_prep_cirq_circuit)[:, 0])
     np.testing.assert_allclose(
-        cirq.unitary(gate.adjoint()), cirq.unitary(cirq.inverse(state_prep_cirq_circuit))
+        bloq.adjoint().tensor_contract(), cirq.unitary(cirq.inverse(state_prep_cirq_circuit))[0, :]
     )
-    assert gate.t_complexity().t == 1  # one of the rotations is a T gate
-    assert gate.t_complexity().rotations == n - 3
-    assert gate.t_complexity().clifford == n + 2  # two of the rotations are clifford
+    assert bloq.t_complexity().t == 1  # one of the rotations is a T gate
+    assert bloq.t_complexity().rotations == n - 3
+    assert bloq.t_complexity().clifford == n + 2  # two of the rotations are clifford
 
 
 @pytest.mark.parametrize('n', [6, 7, 8])

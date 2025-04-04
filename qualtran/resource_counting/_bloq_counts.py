@@ -21,6 +21,7 @@ import networkx as nx
 import sympy
 from attrs import field, frozen
 
+from qualtran import Bloq, DecomposeNotImplementedError, DecomposeTypeError
 from qualtran.symbolics import is_zero, SymbolicInt
 
 from ._call_graph import get_bloq_callee_counts
@@ -33,7 +34,6 @@ from .classify_bloqs import (
 )
 
 if TYPE_CHECKING:
-    from qualtran import Bloq
     from qualtran.cirq_interop.t_complexity_protocol import TComplexity
 
 logger = logging.getLogger(__name__)
@@ -120,6 +120,33 @@ class BloqCount(CostKey[BloqCountDict]):
 
     def __str__(self):
         return f'{self.gateset_name} counts'
+
+
+@frozen
+class AtomicBloqCount(CostKey[int]):
+    """A cost which is the total number of atomic bloqs in the fully-flattened circuit.
+
+    The cost value type for this cost is the simple integer count.
+    """
+
+    def compute(self, bloq: 'Bloq', get_callee_cost: Callable[['Bloq'], BloqCountDict]) -> int:
+
+        try:
+            callees = get_bloq_callee_counts(bloq, ignore_decomp_failure=False)
+        except (DecomposeTypeError, DecomposeNotImplementedError):
+            logger.info("Computing %s for %s: atomic bloq", self, bloq)
+            return 1
+
+        total = 0
+        logger.info("Computing %s for %s from %d callee(s)", self, bloq, len(callees))
+        for callee, n_times_called in callees:
+            callee_cost = get_callee_cost(callee)
+            total += n_times_called * cast(int, callee_cost)
+
+        return total
+
+    def zero(self) -> int:
+        return 0
 
 
 @frozen(kw_only=True)
@@ -218,6 +245,18 @@ class GateCounts:
         if not is_zero(self.rotation):
             raise ValueError(f"{self} contains rotations.")
         return self.toffoli + self.cswap + self.and_bloq
+
+    def total_qec_gates(self) -> int:
+        """The number of atomic gates considered here."""
+        return (
+            self.t
+            + self.toffoli
+            + self.cswap
+            + self.and_bloq
+            + self.clifford
+            + self.rotation
+            + self.measurement
+        )
 
     def to_legacy_t_complexity(
         self,

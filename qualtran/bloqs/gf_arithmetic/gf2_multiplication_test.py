@@ -221,7 +221,7 @@ def test_binary_mult_classical_action(n):
     qlt_testing.assert_consistent_classical_action(blq, f=fg_polys, g=fg_polys, h=h_polys)
 
 
-# @pytest.mark.slow
+@pytest.mark.slow
 @pytest.mark.parametrize('n', range(4, 7))
 def test_binary_mult_classical_action_slow(n):
     blq = BinaryPolynomialMultiplication(n)

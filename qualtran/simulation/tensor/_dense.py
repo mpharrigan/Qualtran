@@ -120,7 +120,7 @@ def get_right_and_left_inds(tn: 'qtn.TensorNetwork', signature: Signature) -> Li
 def quimb_to_dense(tn: 'qtn.TensorNetwork', signature: Signature) -> NDArray:
     """Contract a quimb tensor network `tn` to a dense matrix consistent with `signature`."""
     inds = get_right_and_left_inds(tn, signature)
-    if tn.contraction_width() > 8:
+    if tn.contraction_width() > 18:
         tn.full_simplify(inplace=True)
 
     if inds:

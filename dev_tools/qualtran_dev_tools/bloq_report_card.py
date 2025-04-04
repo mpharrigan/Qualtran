@@ -82,7 +82,7 @@ def record_for_bloq_example(be: BloqExample) -> Dict[str, Any]:
     start = time.perf_counter()
     record = {
         'bloq_cls': be.bloq_cls.__name__,
-        'package': _get_package(be.bloq_cls),
+        'package': be.package_name,
         'name': be.name,
         'make': check_bloq_example_make(be)[0],
         'decomp': check_bloq_example_decompose(be)[0],
@@ -111,8 +111,12 @@ def get_bloq_report_card(
     if bexamples is None:
         bexamples = get_bloq_examples()
         # Default exclusions: pass explicit bexamples to override.
-        # qubitization_qpi_hubbard_model_xxx -- too slow
-        skips = ['qubitization_qpe_hubbard_model_small', 'qubitization_qpe_hubbard_model_large']
+        # qubitization_qpe_xxx -- too slow
+        skips = [
+            #     'qubitization_qpe_hubbard_model_small',
+            #     'qubitization_qpe_hubbard_model_large',
+            'qubitization_qpe_sparse_chem'
+        ]
         bexamples = [bex for bex in bexamples if bex.name not in skips]
 
     records: List[Dict[str, Any]] = []

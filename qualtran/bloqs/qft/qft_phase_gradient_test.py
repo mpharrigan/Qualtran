@@ -53,8 +53,8 @@ def test_qft_with_phase_gradient(n: int, without_reverse: bool):
     qft_bloq = TestQFTWithPhaseGradient(n, not without_reverse)
     qft_cirq = cirq.QuantumFourierTransformGate(n, without_reverse=without_reverse)
 
-    np.testing.assert_allclose(cirq.unitary(qft_bloq), cirq.unitary(qft_cirq))
-    np.testing.assert_allclose(cirq.unitary(qft_bloq**-1), cirq.unitary(qft_cirq**-1))
+    np.testing.assert_allclose(qft_bloq.tensor_contract(), cirq.unitary(qft_cirq))
+    np.testing.assert_allclose((qft_bloq**-1).tensor_contract(), cirq.unitary(qft_cirq**-1))
 
     assert_valid_bloq_decomposition(qft_bloq)
 

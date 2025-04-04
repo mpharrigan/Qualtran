@@ -46,7 +46,7 @@ def get_all_call_graph(bes: Iterable[BloqExample]):
         generalize_cvs,
         generalize_rotation_angle,
         ignore_alloc_free,
-        ignore_cliffords,
+        # ignore_cliffords,
     )
 
     def keep(b: Bloq) -> bool:

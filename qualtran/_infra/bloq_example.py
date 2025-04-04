@@ -54,6 +54,15 @@ class BloqExample(Generic[_BloqType]):
         """Make the bloq."""
         return self._func()
 
+    @property
+    def package_name(self) -> str:
+        return '.'.join(self.bloq_cls.__module__.split('.')[:-1])
+
+    @property
+    def qualified_cls_name(self) -> str:
+        cls_name = self.bloq_cls.__name__
+        return f'{self.package_name}.{cls_name}'
+
     def __call__(self) -> _BloqType:
         """This class is callable: it will make the bloq.
 

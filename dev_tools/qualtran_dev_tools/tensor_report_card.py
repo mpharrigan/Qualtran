@@ -11,14 +11,16 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
 import multiprocessing.connection
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, TYPE_CHECKING
 
+import attrs
 from attrs import define
 
-from qualtran import Bloq
-from qualtran.simulation.tensor import cbloq_to_quimb
+if TYPE_CHECKING:
+    from qualtran import Bloq
 
 
 @define
@@ -29,6 +31,7 @@ class _Pending:
     recv: multiprocessing.connection.Connection
     start_time: float
     kwargs: Dict[str, Any]
+    task_name: str
 
 
 class ExecuteWithTimeout:
@@ -38,19 +41,25 @@ class ExecuteWithTimeout:
     primitives in Python won't actually terminate the process. This one does.
     """
 
-    def __init__(self, timeout: float, max_workers: int):
+    def __init__(
+        self, timeout: float, max_workers: int, *, sigterm_to_sigkill_buffer_seconds: float = 0.5
+    ):
         self.timeout = timeout
         self.max_workers = max_workers
+        self.sigterm_to_sigkill_buffer_seconds = sigterm_to_sigkill_buffer_seconds
 
-        self.queued: List[Tuple[Callable, Dict[str, Any]]] = []
+        self.queued: List[Tuple[Callable, Dict[str, Any], str]] = []
         self.pending: List[_Pending] = []
+        self.terminated: List[_Pending] = []
 
     @property
     def work_to_be_done(self) -> int:
         """The number of tasks currently executing or queued."""
         return len(self.queued) + len(self.pending)
 
-    def submit(self, func: Callable, kwargs: Dict[str, Any]) -> None:
+    def submit(
+        self, func: Callable, kwargs: Dict[str, Any], task_name: Optional[str] = None
+    ) -> None:
         """Add a task to the queue.
 
         `func` must be a callable that can accept `kwargs` in addition to
@@ -58,19 +67,22 @@ class ExecuteWithTimeout:
         the sending-half of a `mp.Pipe`. The callable must call `cxn.send(...)`
         to return a result.
         """
-        self.queued.append((func, kwargs))
+        if task_name is None:
+            task_name = str(kwargs)
+        self.queued.append((func, kwargs, task_name))
 
     def _submit_from_queue(self):
         # helper method that takes an item from the queue, launches a process,
         # and records it in the `pending` attribute. This must only be called
         # if we're allowed to spawn a new process.
-        func, kwargs = self.queued.pop(0)
+        func, kwargs, task_name = self.queued.pop(0)
         recv, send = multiprocessing.Pipe(duplex=False)
-        kwargs['cxn'] = send
-        p = multiprocessing.Process(target=func, kwargs=kwargs)
+        p = multiprocessing.Process(target=func, kwargs=kwargs | {'cxn': send})
         start_time = time.time()
         p.start()
-        self.pending.append(_Pending(p=p, recv=recv, start_time=start_time, kwargs=kwargs))
+        self.pending.append(
+            _Pending(p=p, recv=recv, start_time=start_time, kwargs=kwargs, task_name=task_name)
+        )
 
     def _scan_pendings(self) -> Optional[_Pending]:
         # helper method that goes through the currently pending tasks, terminates the ones
@@ -88,9 +100,36 @@ class ExecuteWithTimeout:
             if time.time() - pen.start_time > self.timeout:
                 pen.p.terminate()
                 self.pending.pop(i)
+                self.terminated.append(attrs.evolve(pen, start_time=time.time()))
                 return pen
 
         return None
+
+    def _scan_terminated(self):
+        # Go through terminated processes and make sure they actually exit.
+        filtered_terminated = []
+        for i in range(len(self.terminated)):
+            ter = self.terminated[i]
+            if not ter.p.is_alive():
+                ter.p.close()
+                continue
+
+            check_time = time.time()
+            if (check_time - ter.start_time) > (self.sigterm_to_sigkill_buffer_seconds):
+                print(
+                    f"{ter.task_name} did not respect SIGTERM after {check_time-ter.start_time}s, calling SIGKILL",
+                    flush=True,
+                )
+                ter.p.kill()
+                ter.p.join()
+                ter.p.close()
+                continue
+
+            filtered_terminated.append(ter)
+        self.terminated = filtered_terminated
+
+    def n_ready_workers(self) -> int:
+        return self.max_workers - len(self.pending) - len(self.terminated)
 
     def next_result(self) -> Tuple[Dict[str, Any], Optional[Any]]:
         """Get the next available result.
@@ -104,13 +143,15 @@ class ExecuteWithTimeout:
                 sent through the multiprocessing pipe as the result. Otherwise, the result
                 is None.
         """
-        while len(self.queued) > 0 and len(self.pending) < self.max_workers:
+        while len(self.queued) > 0 and self.n_ready_workers() > 0:
             self._submit_from_queue()
 
         while True:
+            self._scan_terminated()
             finished = self._scan_pendings()
             if finished is not None:
                 break
+            time.sleep(0.01)
 
         if finished.p.exitcode == 0:
             result = finished.recv.recv()
@@ -119,24 +160,36 @@ class ExecuteWithTimeout:
 
         finished.recv.close()
 
-        while len(self.queued) > 0 and len(self.pending) < self.max_workers:
+        while len(self.queued) > 0 and self.n_ready_workers() > 0:
             self._submit_from_queue()
 
         return (finished.kwargs, result)
 
 
-def report_on_tensors(name: str, cls_name: str, bloq: Bloq, cxn) -> None:
+def report_on_tensors(name: str, cls_name: str, bloq: 'Bloq', cxn) -> None:
     """Get timing information for tensor functionality.
 
     This should be used with `ExecuteWithTimeout`. The resultant
     record dictionary is sent over `cxn`.
     """
+    from qualtran.resource_counting import AtomicBloqCount, get_cost_value
+
     record: Dict[str, Any] = {'name': name, 'cls': cls_name}
 
     try:
         start = time.perf_counter()
+        gc = get_cost_value(bloq, AtomicBloqCount())
+        record['gates'] = gc
+        record['gc_dur'] = time.perf_counter() - start
+
+        start = time.perf_counter()
         flat = bloq.as_composite_bloq().flatten()
         record['flat_dur'] = time.perf_counter() - start
+        record['flat_gc'] = len(flat.bloq_instances)
+
+        # importing quimb is slow, so do it after flattening; but
+        # don't include it in our timing info.
+        from qualtran.simulation.tensor import cbloq_to_quimb
 
         start = time.perf_counter()
         tn = cbloq_to_quimb(flat)

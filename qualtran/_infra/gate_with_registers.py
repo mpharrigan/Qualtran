@@ -200,7 +200,7 @@ def _get_cirq_cv(
     return control_values
 
 
-class GateWithRegisters(Bloq, cirq.Gate, metaclass=abc.ABCMeta):
+class GateWithRegisters(Bloq, cirq.ops.raw_types.Gate, metaclass=abc.ABCMeta):
     """`cirq.Gate`s extension with support for composite gates acting on multiple qubit registers.
 
     Though Cirq was nominally designed for circuit construction for near-term devices the core

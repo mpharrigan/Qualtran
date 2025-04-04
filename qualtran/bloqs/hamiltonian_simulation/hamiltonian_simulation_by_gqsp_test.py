@@ -12,7 +12,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import cirq
 import numpy as np
 import pytest
 import scipy
@@ -32,13 +31,18 @@ from qualtran.bloqs.qsp.generalized_qsp_test import (
     verify_generalized_qsp,
 )
 from qualtran.bloqs.qubitization.qubitization_walk_operator import QubitizationWalkOperator
-from qualtran.cirq_interop import BloqAsCirqGate
 from qualtran.resource_counting import big_O, get_cost_value, QECGatesCost, QubitCount
+from qualtran.serialization.bloq import bloqs_to_proto
 from qualtran.symbolics import Shaped
 
 
 def test_examples(bloq_autotester):
     bloq_autotester(_hubbard_time_evolution_by_gqsp)
+
+
+def test_whatever():
+    b = _hubbard_time_evolution_by_gqsp()
+    bloqs_to_proto(b)
 
 
 def test_symbolic_examples(bloq_autotester):
@@ -81,7 +85,8 @@ def verify_hamiltonian_simulation_by_gqsp(
     W_e_iHt = HamiltonianSimulationByGQSP(W, t=t, precision=precision)
     # TODO This cirq.unitary call is 4-5x faster than tensor_contract.
     #      https://github.com/quantumlib/Qualtran/issues/1336
-    result_unitary = cirq.unitary(BloqAsCirqGate(W_e_iHt))
+    # result_unitary = cirq.unitary(BloqAsCirqGate(W_e_iHt))
+    result_unitary = W_e_iHt.tensor_contract()
 
     expected_top_left = scipy.linalg.expm(-1j * H * t)
     actual_top_left = result_unitary[:N, :N]
@@ -95,6 +100,8 @@ def verify_hamiltonian_simulation_by_gqsp(
 def test_hamiltonian_simulation_by_gqsp(
     select_bitsize: int, target_bitsize: int, t: float, precision: float
 ):
+    # This tests a family of HamiltonianSimulationByGQSP bloqs; the representative bloq_example
+    # is random_walk_evolution_by_gqsp.
     random_state = np.random.RandomState(42)
 
     for _ in range(5):
