@@ -185,8 +185,15 @@ def bloqs_to_proto(
 
     A `BloqLibrary` contains multiple bloqs and their hierarchical decompositions. Since
     decompositions can use bloq objects that are not explicitly listed in the `bloqs` argument to
-    this function, this routine will recursively add any bloq objects encountered in decompositions
-    to the bloq library.
+    this function, this routine will recursively (up to `max_depth`) add any bloq objects
+    encountered in decompositions to the bloq library.
+
+    For bloqs within `max_depth` decompositions of the bloqs passed explicitly to this function,
+    we perform a full serialization: each bloq is serialized with its decomposition and resource
+    costs. For bloqs encountered only through references from full decompositions, or through
+    bloqs included as compiled-time classical parameters to bloqs; we perform a "shallow"
+    serialization where only the bloq, its signature, and its attributes are included in the
+    BloqLibrary.
     """
 
     # The bloq library uses a unique integer index as a simple address for each bloq object.
@@ -195,7 +202,7 @@ def bloqs_to_proto(
     # `True` for bloqs that need to be referred to but do not need a full serialization.
     bloq_to_id_ext: Dict[Bloq, Tuple[int, bool]] = {}
     for bloq in bloqs:
-        _assign_bloq_an_id(bloq, bloq_to_id_ext)
+        _assign_bloq_an_id(bloq, bloq_to_id_ext, shallow=True)
         _search_for_subbloqs(bloq, bloq_to_id_ext, pred, max_depth)
 
     bloq_to_id = {bloq: bloq_id for bloq, (bloq_id, shallow) in bloq_to_id_ext.items()}
@@ -328,14 +335,16 @@ def _search_for_subbloqs(
     `pred` is not used when querying the call graph  nor when inspecting the bloq's attributes.
     """
 
-    assert bloq in bloq_to_id
     if max_depth > 0:
+        # Ensure full serialization of this bloq
+        _assign_bloq_an_id(bloq, bloq_to_id, shallow=False)
+
         # Search the bloq's decomposition
         try:
             cbloq = bloq if isinstance(bloq, CompositeBloq) else bloq.decompose_bloq()
             for binst in _cbloq_ordered_bloq_instances(cbloq):
                 subbloq = binst.bloq
-                _assign_bloq_an_id(subbloq, bloq_to_id)
+                _assign_bloq_an_id(subbloq, bloq_to_id, shallow=True)
                 if pred(binst):
                     _search_for_subbloqs(subbloq, bloq_to_id, pred, max_depth - 1)
                 else:
@@ -347,7 +356,7 @@ def _search_for_subbloqs(
         # Search the bloq's call graph
         try:
             for subbloq, _ in bloq.bloq_counts().items():
-                _assign_bloq_an_id(subbloq, bloq_to_id)
+                _assign_bloq_an_id(subbloq, bloq_to_id, shallow=True)
                 _search_for_subbloqs(subbloq, bloq_to_id, pred, 0)
         except NotImplementedError:
             # No call graph, nothing to recurse on.
