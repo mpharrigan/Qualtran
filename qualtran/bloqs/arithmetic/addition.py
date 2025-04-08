@@ -404,7 +404,7 @@ class AddK(Bloq):
     Args:
         dtype: data type of the input register `x`
         k: The classical integer value to be added to x.
-        is_controlled: if True, construct a singly-controlled bloq.
+        is_controlled: if set to `True`, build the single-bit controlled version.
 
     Registers:
         x: register of type `self.dtype`

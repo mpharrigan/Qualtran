@@ -68,8 +68,8 @@ class TwoBitSwap(Bloq):
     This is a Clifford operation.
 
     Registers:
-        x: the first bit
-        y: the second bit
+        x (QBit): the first bit
+        y (QBit): the second bit
     """
 
     @cached_property
@@ -121,6 +121,11 @@ class TwoBitSwap(Bloq):
             bloq_with_ctrl=TwoBitCSwap(),
             ctrl_reg_name='ctrl',
         )
+
+    def wire_symbol(self, reg: Optional['Register'], idx: Tuple[int, ...] = ()) -> 'WireSymbol':
+        if reg is None:
+            return Text('')
+        return TextBox('×')
 
 
 @bloq_example
