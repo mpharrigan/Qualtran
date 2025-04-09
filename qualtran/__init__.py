@@ -65,6 +65,7 @@ from ._infra.data_types import (
     QFxp,
     QMontgomeryUInt,
     QGF,
+    QGFPoly,
     QDTypeCheckingSeverity,
     check_dtypes_consistent,
 )
