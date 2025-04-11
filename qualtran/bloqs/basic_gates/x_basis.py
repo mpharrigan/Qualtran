@@ -280,6 +280,9 @@ class XGate(Bloq):
 
         return ModPlus()
 
+    def __str__(self):
+        return 'X'
+
 
 @frozen
 class MeasX(Bloq):
