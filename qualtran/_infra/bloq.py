@@ -105,8 +105,8 @@ class Bloq(metaclass=abc.ABCMeta):
     The other important `Bloq` subclass is `CompositeBloq`, which is a container type for a
     collection of sub-bloqs.
 
-    There is only one mandatory method you must implement to have a well-formed `Bloq`,
-    namely `Bloq.registers`. There are many other methods you can optionally implement to
+    There is only one mandatory method you must implement to have a valid `Bloq`,
+    namely `Bloq.signature`. There are many other methods you can optionally implement to
     encode more information about the bloq.
     """
 

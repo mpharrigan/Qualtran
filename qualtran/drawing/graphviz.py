@@ -404,6 +404,7 @@ class PrettyGraphDrawer(GraphDrawer):
 
 
 class TypedGraphDrawer(PrettyGraphDrawer):
+    """A graph drawer where edges are annotated by data type."""
     @staticmethod
     def _fmt_dtype(dtype: QCDType):
         return str(dtype)

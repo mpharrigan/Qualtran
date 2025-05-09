@@ -665,9 +665,9 @@ class Controlled(_ControlledBase):
 def make_ctrl_system_with_correct_metabloq(
     bloq: 'Bloq', ctrl_spec: 'CtrlSpec'
 ) -> Tuple['_ControlledBase', 'AddControlledT']:
-    """The default fallback for `Bloq.make_ctrl_system.
+    """The default fallback for `Bloq.make_ctrl_system`.
 
-    This intelligently selects the correct implemetation of `_ControlledBase` based
+    This intelligently selects the correct implementation of `_ControlledBase` based
     on the control spec.
 
      - A 1-qubit, positive control (i.e. `CtrlSpec()`) uses `Controlled`, which uses a

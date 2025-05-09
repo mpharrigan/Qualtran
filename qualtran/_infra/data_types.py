@@ -33,6 +33,8 @@ class QCDType(metaclass=abc.ABCMeta):
 
     @property
     def num_bits(self) -> int:
+        """Number of bits (quantum and classical) required to represent a single instance of
+        this data type."""
         return self.num_qubits + self.num_cbits
 
     @property
