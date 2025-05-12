@@ -215,31 +215,39 @@ class CompositeBloq(Bloq):
     def on_classical_vals(
         self, **vals: Union[sympy.Symbol, 'ClassicalValT']
     ) -> Dict[str, 'ClassicalValT']:
-        """Support classical data by recursing into the composite bloq."""
+        """`CompositeBloq` implementation of `Bloq.on_classical_vals`.
+
+        This override determines the classical action of this composite bloq by correctly
+        composing the classical action of the subbloqs.
+        """
         from qualtran.simulation.classical_sim import call_cbloq_classically
 
         out_vals, _ = call_cbloq_classically(self.signature, vals, self._binst_graph)
         return out_vals
 
-    def call_classically(self, **vals: 'ClassicalValT') -> Tuple['ClassicalValT', ...]:
-        """Support classical data by recursing into the composite bloq."""
-        from qualtran.simulation.classical_sim import call_cbloq_classically
-
-        out_vals, _ = call_cbloq_classically(self.signature, vals, self._binst_graph)
-        return tuple(out_vals[reg.name] for reg in self.signature.rights())
-
     def as_composite_bloq(self) -> 'CompositeBloq':
-        """This override just returns the present composite bloq."""
+        """Returns this composite bloq unmodified.
+
+        This overrides `Bloq.as_composite_bloq`."""
         return self
 
     def decompose_bloq(self) -> 'CompositeBloq':
+        """Raise an error if this method is called.
+
+        This overrides `Bloq.decompose_bloq` to unconditionally raise an exception:
+        decomposing a CompositeBloq is ill-defined. Depending on your intentions, you can
+        just use the composite bloq in place or use something like `.flatten()`.
+        """
         raise ValueError(
             "Calling `decompose_bloq` on a CompositeBloq is ill-defined. "
             "Consider using the composite bloq directly or using `.flatten()`."
         )
 
     def build_call_graph(self, ssa: Optional['SympySymbolAllocator']) -> 'BloqCountDictT':
-        """Return the bloq counts by counting up all the subbloqs."""
+        """`CompositeBloq` implementation of `Bloq.build_call_graph`.
+
+        Build this composite bloq's call graph by counting up all the subbloqs.
+        """
         from qualtran.resource_counting import build_cbloq_call_graph
 
         return build_cbloq_call_graph(self)
@@ -795,25 +803,65 @@ def _map_soqs(
 
 
 class BloqBuilder:
-    """A builder class for constructing a `CompositeBloq`.
+    """A builder class for composing bloqs.
 
-    Users may instantiate this class directly or use its methods by
-    overriding `Bloq.build_composite_bloq`.
+    In Qualtran, we write quantum programs by composing subroutines and gates. A bloq builder
+    object (`bb`) lets you write these compositions as a series of quantum function calls with
+    `bb.add(...)`.
 
-    When overriding `build_composite_bloq`, the Bloq class will ensure that the bloq under
-    construction has the correct registers: namely, those of the decomposed bloq and parent
-    bloq are the same. This affords some additional error checking.
-    Initial soquets are passed as **kwargs (by register name) to the `build_composite_bloq` method.
+    ```python
+    q0, q1 = bb.add(CNOT(), ctrl=q0, target=q1)
+    q1, out = bb.add(CNOT(), ctrl=q1, target=q2)
+    ```
 
-    When using this class directly, you must call `add_register` to set up the composite bloq's
-    registers. When adding a LEFT or THRU register, the method will return soquets to be
-    used when adding more bloqs. Adding a THRU or RIGHT register can enable more checks during
-    `finalize()`.
+    In this example, we "call" the `CNOT()` subroutine on various *quantum variables* `q0`, `q1`,
+    and `q2`. Each call "returns" the resultant quantum variables.
+
+    How you set up your bloq builder and quantum variables depends on the way you're using
+    `BloqBuilder`.
+
+    ### Usage in `build_composite_bloq`
+    If you are authoring a bloq by creating a subclass of `qualtran.Bloq` and overriding
+    the `build_composite_bloq` method, a `BloqBuilder` will be provided as the first argument
+    to the method, and quantum variables will be provided as the following keyword arguments
+    according to your bloq's `signature`. You can immediately start using `bb.add(...)` to
+    call subbloqs.
+
+    ```python
+    class MyBloq(Bloq):
+      @property
+      def signature(self):
+        return Signature.build(q0=1, q1=1)
+
+      def build_composite_bloq(self, bb: BloqBuilder, q0, q1):
+        # .. bb.add(subbloq, x=q0, ...)
+        return {'q0': q0_out, 'q1': q1_out}
+    ```
+
+    At the end of the `build_composite_bloq` method, you're expected to return a dictionary
+    mapping right (output) register names to the final quantum variables in accordance
+    with your bloq's `signature`.
+
+    ### Standalone usage
+    You can use `BloqBuilder` to construct a standalone `CompositeBloq`. In this case,
+    you must call `add_register` or its variants to configure the composition's signature as
+    well as initialize quantum variables.
+
+    ```python
+    bb = BloqBuilder()
+    q0 = bb.add_register('q0', 1)
+    q1 = bb.add_register('q1', 1)
+    # .. bb.add(subbloq, x=q0, ...)
+    cbloq = bb.finalize(q0=q0_out, q1=q1_out)
+    ```
+
+    You must also use the `finalize` method to freeze the composition into a `CompositeBloq`.
 
     Args:
         add_registers_allowed: Whether we allow the addition of registers during bloq building.
-        This affords some additional error checking if set to `False` but you must specify
-        all registers ahead-of-time.
+            This is typically required to be True when using `BloqBuilder` in standalone mode, but
+            gives up some error checking. This is set to False if `BloqBuilder` was constructed
+            by the framework or by the `BloqBuilder.from_signature(s)` factory method.
     """
 
     def __init__(self, add_registers_allowed: bool = True):
@@ -847,8 +895,8 @@ class BloqBuilder:
 
         Returns:
             If `reg` is a LEFT or THRU register, return the soquet(s) corresponding to the
-            initial, left-dangling soquets for the register. Otherwise, this is a RIGHT register
-            and will be used for error checking in `finalize()` and nothing is returned.
+                initial, left-dangling soquets for the register. Otherwise, this is a RIGHT register
+                and will be used for error checking in `finalize()` and nothing is returned.
         """
         from qualtran.symbolics import is_symbolic
 
@@ -1077,8 +1125,11 @@ class BloqBuilder:
         This method will raise a `BloqError` if the addition is invalid. Soquets must be
         used exactly once and soquets must match the `Register` specifications of the bloq.
 
-        See also `add_t` or `add_d` for versions of this function that return output soquets
-        in a structured way that may be more appropriate for programmatic adding of bloqs.
+        See Also:
+            - `add_t` will always return a tuple of `SoquetT`, including cases where there
+              is only one return value.
+            - `add_d` will return a dictionary mapping right register name to `SoquetT`.
+            - `add_from` adds the contents of a bloq composition at once.
 
         Args:
             bloq: The bloq representing the operation to add.
@@ -1087,12 +1138,12 @@ class BloqBuilder:
                 operation.
 
         Returns:
-            A `Soquet` or an array thereof for each right (output) register ordered according to
-                `bloq.signature`. If `bloq` has no right registers, this will return `None`;
-                If there is one right register, we return one `SoquetT`; If there are multiple
-                right registers we return a tuple of `SoquetT` that can be unpacked with tuple
-                unpacking. In this final case, the ordering is according to `bloq.signature`
-                and irrespective of the order of `**in_soqs`.
+            out_soq(s): A `Soquet` or an array thereof for each right (output) register ordered
+                according to `bloq.signature`. If `bloq` has no right registers, this will
+                return `None`. If there is one right register, we return one `SoquetT`.
+                If there are multiple right registers we return a tuple of `SoquetT` that can
+                be unpacked with tuple unpacking. In this final case, the ordering is according
+                to `bloq.signature` and irrespective of the order of `**in_soqs`.
         """
         outs = self.add_t(bloq, **in_soqs)
         if len(outs) == 0:
@@ -1126,15 +1177,23 @@ class BloqBuilder:
         )
 
     def add_from(self, bloq: Bloq, **in_soqs: SoquetInT) -> Tuple[SoquetT, ...]:
-        """Add all the sub-bloqs from `bloq` to the composite bloq under construction.
+        """Add all the sub-bloqs from `bloq` to the compute graph.
+
+        This is useful for adding multiple bloq instances at once in a "flat" or "unrolled" way.
+        If this method is called on a composite bloq, each subbloq will be added to the current
+        compute graph. If this method is called on an ordinary bloq object, we will first decompose
+        the bloq and add each of its subbloqs.
 
         Args:
             bloq: Where to add from. If this is a composite bloq, use its contents directly.
                 Otherwise, we call `decompose_bloq()` first.
-            in_soqs: Input soquets for `bloq`; used to connect its left-dangling soquets.
+            **in_soqs: Keyword arguments mapping the bloq's register names to input
+                `Soquet`s or an array thereof.
 
         Returns:
-            The output soquets from `cbloq`.
+            out_soqs: A `SoquetT` for each right (output) register ordered
+                according to `bloq.signature`. The ordering is according
+                to `bloq.signature` and irrespective of the order of `**in_soqs`.
         """
         if isinstance(bloq, CompositeBloq):
             cbloq = bloq

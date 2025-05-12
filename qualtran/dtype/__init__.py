@@ -1,21 +1,20 @@
 """Data type objects for your quantum programs."""
 
-
 from qualtran._infra.data_types import (
-    QCDType,
+    BQUInt,
+    CBit,
     CDType,
-    QDType,
     QAny,
     QBit,
-    CBit,
-    QInt,
-    QIntOnesComp,
-    QUInt,
-    BQUInt,
+    QCDType,
+    QDType,
     QFxp,
-    QMontgomeryUInt,
     QGF,
     QGFPoly,
+    QInt,
+    QIntOnesComp,
+    QMontgomeryUInt,
+    QUInt,
 )
 
 __all__ = [
@@ -34,4 +33,3 @@ __all__ = [
     'QGF',
     'QGFPoly',
 ]
-

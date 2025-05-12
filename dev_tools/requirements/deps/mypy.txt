@@ -6,3 +6,6 @@ mypy-protobuf
 # including ones seemingly unrelated to sympy
 # https://github.com/quantumlib/Qualtran/pull/1167
 sympy<1.13
+
+# qualtran_dev_tools/reference_docs.py
+types-PyYAML

@@ -93,14 +93,16 @@ class Bloq(metaclass=abc.ABCMeta):
     """Bloq is the primary abstract base class for all operations.
 
     Bloqs let you represent high-level quantum programs and subroutines as a hierarchical
-    collection of Python objects. The main interface is this abstract base class.
+    collection of Python objects. The main interface is specified by this abstract base class.
 
     There are two important flavors of implementations of the `Bloq` interface. The first flavor
     consists of bloqs implemented by you, the user-developer to express quantum operations of
     interest. For example:
 
-    >>> class ShorsAlgorithm(Bloq):
-    >>>     ...
+    ```python
+    class ShorsAlgorithm(Bloq):
+        ...
+    ```
 
     The other important `Bloq` subclass is `CompositeBloq`, which is a container type for a
     collection of sub-bloqs.
@@ -137,7 +139,7 @@ class Bloq(metaclass=abc.ABCMeta):
 
         Returns:
             The soquets corresponding to the outputs of the Bloq (keyed by name) or
-            `NotImplemented` if there is no decomposition.
+                `NotImplemented` if there is no decomposition.
         """
         raise DecomposeNotImplementedError(f"{self} does not declare a decomposition.")
 
@@ -149,7 +151,6 @@ class Bloq(metaclass=abc.ABCMeta):
         which provides helpful arguments for implementers.
 
         Returns:
-            A CompositeBloq containing the decomposition of this Bloq.
 
         Raises:
             NotImplementedError: If there is no decomposition defined; namely: if
@@ -234,7 +235,7 @@ class Bloq(metaclass=abc.ABCMeta):
 
         Returns:
             A tuple of output classical values ordered according to this bloqs right (or thru)
-            registers.
+                registers.
         """
         res = self.as_composite_bloq().on_classical_vals(**vals)
         return tuple(res[reg.name] for reg in self.signature.rights())
@@ -508,11 +509,17 @@ class Bloq(metaclass=abc.ABCMeta):
         using `cirq.Gate.on(...)`, `Bloq.on(...)`, `GateWithRegisters.on_registers(...)`, or
         `Bloq.on_registers(...)`.
 
+        Args:
+            qubits: The `cirq.Qid` qubits to use for the operation.
+
+        Returns:
+            op: A `cirq.Operation` of this bloq operating on `qubits`.
+
         See Also:
-            `Bloq.on_registers`: Provides the same functionality, but with named registers
-                instead of a flat list of qubits.
-            `decompose_from_cirq_style_method`: More details on how to write a cirq-style
-                decomposition.
+            - `Bloq.on_registers`: Provides the same functionality, but with named registers
+              instead of a flat list of qubits.
+            - `decompose_from_cirq_style_method`: More details on how to write a cirq-style
+              decomposition.
         """
         import cirq
 
@@ -533,10 +540,10 @@ class Bloq(metaclass=abc.ABCMeta):
             **qubit_regs: A mapping of register name to the qubits comprising that register.
 
         See Also:
-            `Bloq.on`: Provides the same functionality, but with a flat list of qubits.
-                instead of named registers.
-            `decompose_from_cirq_style_method`: More details on how to write a cirq-style
-                decomposition.
+            - `Bloq.on`: Provides the same functionality, but with a flat list of qubits.
+              instead of named registers.
+            - `decompose_from_cirq_style_method`: More details on how to write a cirq-style
+              decomposition.
         """
         from qualtran._infra.gate_with_registers import merge_qubits
 

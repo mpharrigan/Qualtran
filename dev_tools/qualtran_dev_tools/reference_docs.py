@@ -15,7 +15,7 @@
 import re
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Iterable, List, Type, Optional
+from typing import Dict, Iterable, List, Optional, Type
 
 import jinja2
 import tensorflow_docs.api_generator.parser
@@ -33,8 +33,10 @@ from tensorflow_docs.api_generator.pretty_docs import (
     TypeAliasPageBuilder,
     TypeAliasPageInfo,
 )
-from tensorflow_docs.api_generator.pretty_docs.base_page import MemberInfo, \
-    build_collapsable_aliases
+from tensorflow_docs.api_generator.pretty_docs.base_page import (
+    build_collapsable_aliases,
+    MemberInfo,
+)
 from tensorflow_docs.api_generator.pretty_docs.class_page import Methods
 from tensorflow_docs.api_generator.public_api import local_definitions_filter
 from tensorflow_docs.api_generator.toc import FlatModulesTocBuilder, Section
@@ -67,6 +69,7 @@ def filter_type_aliases_in_the_wrong_place(path, parent, children):
         ret.append((name, obj))
 
     return ret
+
 
 def local_definitions_filter_with_exceptions(path, parent, children):
     if path[:2] == ('qualtran', 'dtype'):
@@ -248,8 +251,10 @@ class MyDocGeneratorVisitor(DocGeneratorVisitor):
             ('qualtran', 'simulation', 'classical_sim'),
         ]
         for pm in priority_modules:
-            if path[:len(pm)] == pm: return -1
+            if path[: len(pm)] == pm:
+                return -1
         return len(path)
+
 
 def generate_ref_docs(reporoot: Path):
     """Use `tensorflow_docs` to generate markdown reference docs."""
@@ -260,9 +265,9 @@ def generate_ref_docs(reporoot: Path):
 
     import qualtran
     from qualtran import (
-        dtype,
         cirq_interop,
         drawing,
+        dtype,
         linalg,
         resource_counting,
         serialization,
@@ -302,11 +307,9 @@ def generate_ref_docs(reporoot: Path):
         page_builder_classes=_MY_PAGE_BUILDERS,
         gen_redirects=False,
         api_cache=False,
-        site_path=''
+        site_path='',
     )
     doc_generator.build(output_dir=output_dir)
-
-
 
 
 def fixup_suffix(content: str) -> str:
@@ -400,6 +403,7 @@ def apply_fixups(reporoot: Path):
         with path.open('w') as f:
             f.write(content)
 
+
 def _write_toc_links(f, title, section):
     subsections = []
     for entry in section:
@@ -408,7 +412,7 @@ def _write_toc_links(f, title, section):
         elif 'section' in entry:
             if len(entry["section"]) == 1:
                 # A module whose elements are all re-exported up the tree. Don't actually nest.
-                subentry, = entry["section"]
+                (subentry,) = entry["section"]
                 assert subentry["title"] == "Overview", subentry
                 f.write(f'   {subentry["path"].lstrip("/")}\n')
             else:
@@ -437,7 +441,7 @@ def write_ref_toc(f, toc):
     ]
 
     sections = list(toc.items())
-    while len(sections)>0:
+    while len(sections) > 0:
         # Search for the sections we want to include first.
         if defined_order:
             for i, (title, _) in enumerate(sections):
@@ -449,7 +453,6 @@ def write_ref_toc(f, toc):
         else:
             i = 0
 
-
         # Write the section, add in any new sections we found to our stack.
         title, section = sections.pop(i)
         f.write('\n'.join(['.. toctree::', '   :hidden:', f'   :caption: {title}', '', '']))
@@ -457,11 +460,12 @@ def write_ref_toc(f, toc):
         sections = subsections + sections
         f.write('\n')
 
+
 def generate_ref_toc(reporoot: Path):
     """Generate a sphinx-style table of contents (TOC) from generated markdown files."""
     output_dir = reporoot / 'docs/reference'
 
-    with (output_dir/'qualtran/_toc.yaml').open() as f:
+    with (output_dir / 'qualtran/_toc.yaml').open() as f:
         toc = yaml.safe_load(f)['toc']
 
     toc = {entry['title']: entry['section'] for entry in toc}

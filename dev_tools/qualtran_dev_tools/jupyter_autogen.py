@@ -16,6 +16,7 @@
 
 import abc
 import inspect
+import io
 import re
 import textwrap
 from pathlib import Path
@@ -309,66 +310,39 @@ def _init_notebook(
     return nb, nb_path
 
 
-import io
-import os
-from pathlib import Path
-import sys  # For sys.stderr
+class WriteIfDifferent:
+    """A file-like object that only writes to disk if the new content
+    differs from the existing content.
 
-
-class WriteOnChange:
-    """
-    A file-like object adapter that only writes to disk if the new content
-    differs from the existing content. Mimics a file opened in text write mode.
-
-    This adapter is useful for scenarios where a function writes to a file,
-    and you want to avoid unnecessary disk I/O if the content hasn't changed,
-    for example, to prevent triggering file watchers or changing modification times.
+    Args:
+        path: The path to write, which may already exist.
     """
 
     def __init__(self, path: Path):
-        """
-        Initializes the ConditionalFileWriter.
-
-        Args:
-            path (str or Path): The path to the file.
-            mode (str): The file mode. Only 'w' (text write) or 'wt' (text write)
-                        are currently supported.
-            encoding (str, optional): The encoding to use for the file.
-                                      Defaults to `locale.getpreferredencoding(False)`.
-            errors (str, optional): Specifies how encoding/decoding errors are handled.
-                                    Defaults to 'strict'.
-            newline (str, optional): Controls universal newlines mode.
-                                     Can be None, '', '\n', '\r', or '\r\n'.
-                                     Defaults to None (universal newlines, translates
-                                     '\n' to `os.linesep` on write).
-        """
         self.path = path
         self._buffer = io.StringIO()
 
     def write(self, s: str):
-        """Writes a string to the internal buffer."""
         return self._buffer.write(s)
 
     def writelines(self, lines):
-        """Writes a list of strings to the internal buffer."""
         for line in lines:
-            # self.write will perform type checking for each 'line'
             self.write(line)
 
     def flush(self):
-        """Flushes the internal buffer. For StringIO, this is a no-op but included for compatibility."""
         self._buffer.flush()
 
     def close(self):
-        """
-        Closes the adapter. This triggers the comparison of buffered content
+        """Closes the adapter.
+
+        This triggers the comparison of buffered content
         with the disk file's content and writes to disk only if different.
         """
         new_content = self._buffer.getvalue()
-        self._buffer.close()  # Release memory from StringIO
+        self._buffer.close()
 
         existing_content = None
-        if self.path.is_file():  # Check if it's a file and exists
+        if self.path.is_file():
             with self.path.open('r') as f_read:
                 existing_content = f_read.read()
             if new_content == existing_content:
@@ -382,10 +356,9 @@ class WriteOnChange:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # Ensure close is called even if an exception occurred within the `with` block.
         self.close()
         # Do not suppress exceptions from the 'with' block body.
-        return False  # Returning False re-raises any exception that occurred in the 'with' block.
+        return False
 
     @property
     def closed(self):
@@ -401,14 +374,6 @@ class WriteOnChange:
 
     def seekable(self):
         """Returns False, as this adapter is not seekable like a disk file opened in 'w' mode."""
-        return False
-
-    def fileno(self):
-        """Raises io.UnsupportedOperation as it doesn't have a real file descriptor."""
-        raise io.UnsupportedOperation("ConditionalFileWriter does not have a file descriptor.")
-
-    def isatty(self):
-        """Returns False, as it's not connected to a TTY device."""
         return False
 
     def tell(self):
@@ -462,6 +427,5 @@ def render_notebook(nbspec: NotebookSpecV2) -> None:
         nb.cells.append(new_nbnode)
 
     # 5. Write the notebook.
-    with WriteOnChange(nb_path) as woc:
+    with WriteIfDifferent(nb_path) as woc:
         nbformat.write(nb, woc)
-
