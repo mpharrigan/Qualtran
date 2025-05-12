@@ -141,8 +141,16 @@ class Xor(Bloq):
     def signature(self) -> Signature:
         return Signature.build_from_dtypes(x=self.dtype, y=self.dtype)
 
-    def adjoint(self) -> 'Xor':
-        return self
+    @classmethod
+    def from_soqs(cls, x: Soquet, y: Soquet) -> 'Xor':
+        xdtype = x.reg.dtype
+        ydtype = y.reg.dtype
+        if not xdtype == ydtype:
+            raise ValueError(
+                f"Cannot determine the dtype for Xor from soquets of type {xdtype} and {ydtype}"
+            )
+        assert isinstance(xdtype, QDType), xdtype
+        return cls(dtype=xdtype)
 
     def build_composite_bloq(self, bb: BloqBuilder, x: Soquet, y: Soquet) -> dict[str, SoquetT]:
         if not isinstance(self.dtype.num_qubits, int):
@@ -158,6 +166,9 @@ class Xor(Bloq):
 
     def build_call_graph(self, ssa: 'SympySymbolAllocator') -> 'BloqCountDictT':
         return {CNOT(): self.dtype.num_qubits}
+
+    def adjoint(self) -> 'Xor':
+        return self
 
     def on_classical_vals(
         self, x: 'ClassicalValT', y: 'ClassicalValT'

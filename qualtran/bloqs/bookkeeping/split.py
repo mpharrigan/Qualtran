@@ -32,6 +32,7 @@ from qualtran import (
     Register,
     Side,
     Signature,
+    Soquet,
 )
 from qualtran.bloqs.bookkeeping._bookkeeping_bloq import _BookkeepingBloq
 from qualtran.drawing import directional_text_box, Text, WireSymbol
@@ -76,6 +77,11 @@ class Split(_BookkeepingBloq):
     def _validate_dtype(self, attribute, value):
         if value.is_symbolic():
             raise ValueError(f"{self} cannot have a symbolic data type.")
+
+    @classmethod
+    def from_soqs(cls, *, reg: Soquet):
+        assert isinstance(reg.reg.dtype, QDType), reg.reg.dtype
+        return cls(reg.reg.dtype)
 
     def decompose_bloq(self) -> 'CompositeBloq':
         raise DecomposeTypeError(f'{self} is atomic')

@@ -29,6 +29,7 @@ from typing import (
     Sequence,
     Set,
     Tuple,
+    Type,
     TYPE_CHECKING,
     TypeVar,
     Union,
@@ -1222,6 +1223,13 @@ class BloqBuilder:
         return CompositeBloq(
             connections=self._cxns, signature=signature, bloq_instances=self._binsts
         )
+
+    def cfg(self, bloq_cls: Type['Bloq']):
+        def call(*args, **kwargs):
+            bloq = bloq_cls.from_soqs(*args, **kwargs)
+            return self.add(bloq, **kwargs)
+
+        return call
 
     def allocate(
         self, n: Union[int, sympy.Expr] = 1, dtype: Optional[QDType] = None, dirty: bool = False
