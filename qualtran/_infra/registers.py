@@ -39,8 +39,13 @@ class Side(enum.Flag):
     """
 
     LEFT = enum.auto()
+    """The register is *only* an input."""
+
     RIGHT = enum.auto()
+    """The register is *only* an output."""
+
     THRU = LEFT | RIGHT
+    """The register is input/output."""
 
 
 @frozen

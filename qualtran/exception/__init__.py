@@ -1,4 +1,4 @@
-#  Copyright 2023 Google LLC
+#  Copyright 2024 Google LLC
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -12,4 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""The standard library of quantum subroutines."""
+"""Qualtran exceptions that may be raised by the framework."""
+
+from qualtran._infra.bloq import DecomposeTypeError, DecomposeNotImplementedError
+from qualtran._infra.composite_bloq import BloqError, DidNotFlattenAnythingError
+
+__all__ = ['DecomposeTypeError', 'DecomposeNotImplementedError', 'BloqError', 'DidNotFlattenAnythingError']

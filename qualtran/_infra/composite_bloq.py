@@ -87,7 +87,7 @@ def _to_set(x: Iterable[BloqInstance]) -> FrozenSet[BloqInstance]:
 
 @attrs.frozen
 class CompositeBloq(Bloq):
-    """A bloq defined by a collection of sub-bloqs and dataflows between them
+    """A bloq defined by a collection of sub-bloqs and dataflows between them.
 
     CompositeBloq represents a quantum subroutine as a dataflow compute graph. The
     specific native representation is a list of `Connection` objects (i.e. a list of

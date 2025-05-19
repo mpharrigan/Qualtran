@@ -42,7 +42,38 @@ del _griffe.agents.visitor.stdlib_decorators['functools.cached_property']
 PARSER = 'google'
 
 
-def write_docstring_parts(f, parts: List[DocstringSection]):
+class LinkingWriter:
+    def __init__(self, f):
+        self._f = f
+        self._linked = set()
+        ...
+
+    def repl(self, ma: re.Match):
+        l = ma.group(1)
+        self._linked.add(l)
+        return f'[`{l}`]'
+
+    def linkify(self, s: str):
+        return re.sub(r'`(qualtran\.[\w\.]+)`', self.repl, s)
+
+    def write(self, s: str):
+        self._f.write(self.linkify(s))
+
+    def write_nl(self, s: str):
+        self._f.write(s)
+
+    def write_link_targets(self):
+        self._f.write('\n')
+        for href in self._linked:
+            # TODO: pref_path to rel_path
+            # TODO: rename pref_path to pref_dotname or something
+            trg_segments = href.split('.')
+            trg = '/'.join(trg_segments[:-1]) + f'/{trg_segments[-1]}.md'
+            self._f.write(f'[`{href}`]: {trg}\n')
+
+
+def write_docstring_parts(f, parts: List[DocstringSection], level: int):
+    lvl = '#' * level
     for part in parts:
         if part.kind is DocstringSectionKind.text:
             f.write(part.value.strip())
@@ -50,7 +81,7 @@ def write_docstring_parts(f, parts: List[DocstringSection]):
 
         elif part.kind is DocstringSectionKind.parameters:
             part = cast(DocstringSectionParameters, part)
-            f.write('### Args\n')
+            f.write(f'###{lvl} Args\n')
             for param in part.value:
                 # f.write(f'{param.name=} {param.value=} {param.annotation=} {param.description=}')
                 if param.annotation:
@@ -62,7 +93,7 @@ def write_docstring_parts(f, parts: List[DocstringSection]):
 
         elif part.kind is DocstringSectionKind.returns:
             part = cast(DocstringSectionReturns, part)
-            f.write('### Returns\n')
+            f.write(f'###{lvl} Returns\n')
 
             # One, unnamed return value
             if len(part.value) == 1 and not part.value[0].name:
@@ -84,13 +115,15 @@ def write_docstring_parts(f, parts: List[DocstringSection]):
             part = cast(DocstringSectionAdmonition, part)
             part = part.value
             if part.kind == 'see-also':
-                f.write('### See Also\n')
+                f.write(f'###{lvl} See Also\n')
                 f.write(part.description)
                 f.write('\n\n')
             else:
                 warnings.warn(f"Unknown admonition type {part.kind}")
 
         else:
+            f.write(str(part))
+            f.write('\n')
             warnings.warn(f"Unknown docstring {part}")
     f.write('\n\n')
 
@@ -210,7 +243,20 @@ def write_method_signature(f, obj, obj2: griffe.Function):
     return write_generic_method_signature(f, obj, obj2)
 
 
-def _get_writers_for_split_docstring(obj: griffe.Object):
+def _get_first_line(obj):
+    if obj.docstring is None:
+        return ''
+    dp0, *dparts = obj.docstring.parse(PARSER)
+    if dp0.kind is DocstringSectionKind.text:
+        first_line, *other_lines = re.split(r'\n{2,}', dp0.value, flags=re.MULTILINE)
+        return first_line
+
+    else:
+        warnings.warn(f"Unknown first part in {obj}")
+        return ''
+
+
+def _get_writers_for_split_docstring(obj: griffe.Object, level=0):
     """Extract the first, summary line of a docstring from an object.
 
     This returns two closures that take an `f` to write to. The first writes the first
@@ -236,12 +282,13 @@ def _get_writers_for_split_docstring(obj: griffe.Object):
 
         dp0 = DocstringSectionText('\n\n'.join(other_lines))
     else:
+        warnings.warn(f"Unknown first part in {obj}")
 
         def first_part(f):
             return
 
     def second_part(f):
-        write_docstring_parts(f, [dp0] + dparts)
+        write_docstring_parts(f, [dp0] + dparts, level=level)
 
     return first_part, second_part
 
@@ -251,7 +298,7 @@ def write_major_class(f, obj: griffe.Class):
     f.write(f"# {obj.name}\n")
 
     # Class docstring
-    d0, drest = _get_writers_for_split_docstring(obj)
+    d0, drest = _get_writers_for_split_docstring(obj, level=0)
     d0(f)
     f.write('## Overview\n')  # Annoyingly have to include an <h2> before <h3> or sphinx freaks out
     drest(f)
@@ -272,7 +319,7 @@ def write_major_class(f, obj: griffe.Class):
         f.write(f'## `{obj2.name}`\n')
 
         # First docstring line
-        d0, drest = _get_writers_for_split_docstring(obj2)
+        d0, drest = _get_writers_for_split_docstring(obj2, level=0)
         d0(f)
 
         # Optional: signature
@@ -283,20 +330,77 @@ def write_major_class(f, obj: griffe.Class):
         drest(f)
 
 
-def render_major_class(base_dir: Path, name: str, obj: griffe.Class | griffe.Alias):
-    segments = obj.path.split('.')
+def write_module(f, obj: griffe.Module, members):
+    # Title
+    f.write(f'# {obj.name}\n\n')
+
+    d0, drest = _get_writers_for_split_docstring(obj, level=0)
+    d0(f)
+    f.write('## Overview\n')  # Annoyingly have to include an <h2> before <h3> or sphinx freaks out
+    drest(f)
+
+    f.write('\n## Modules\n')
+    for obj, pref_path, mytype in members:
+        if mytype != 'module':
+            continue
+
+        summ = _get_first_line(obj)
+        f.write(f'`{pref_path}`: {summ}\n\n')
+
+    f.write('\n## Major Classes\n')
+    for obj, pref_path, mytype in members:
+        if mytype != 'major':
+            continue
+
+        summ = _get_first_line(obj)
+        f.write(f'`{pref_path}`: {summ}\n\n')
+
+    f.write('\n## Other Members\n')
+    for obj, pref_path, mytype in members:
+        if mytype in ['major', 'module']:
+            continue
+
+        d0, drest = _get_writers_for_split_docstring(obj, level=1)
+        f.write_nl(f'### `{pref_path}`\n')
+        d0(f)
+        drest(f)
+
+        submemb: griffe.Object
+        doc_submembers = {(submemb_name, submemb) for submemb_name, submemb in obj.members.items()
+                          if (not submemb.is_special) and submemb.has_docstring}
+        if doc_submembers:
+            f.write('#### Members\n')
+            for submemb_name, submemb in doc_submembers:
+                subdesc = _get_first_line(submemb)
+                f.write_nl(f'`{submemb_name}`\n')
+                f.write(f': {subdesc}\n\n')
+
+        if obj.inherited_members:
+            f.write('**All Members:** ')
+            f.write(
+                ', '.join(f'`{submemb_name}`' for submemb_name, submemb in obj.all_members.items()
+                          if (not submemb.is_special) and submemb.is_public))
+            f.write('\n')
+
+
+def render_major_class(base_dir: Path, pref_path: str, obj: griffe.Class | griffe.Alias):
+    segments = pref_path.split('.')
     out_path = base_dir / '/'.join(segments[:-1]) / f'{segments[-1]}.md'
-    print(f"Writing {name} to {out_path}")
+    print(f"Writing {pref_path} to {out_path}")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open('w') as f:
         write_major_class(f, obj)
 
 
-def render_module(base_dir: Path, name: str, obj: griffe.Module | griffe.Alias):
-    segments = obj.path.split('.')
+def render_module(base_dir: Path, pref_path: str, obj: griffe.Module | griffe.Alias, members):
+    segments = pref_path.split('.')
     out_path = base_dir / '/'.join(segments[:-1]) / f'{segments[-1]}.md'
-    print(f"Writing {name} to {out_path}")
+    print(f"Writing {pref_path} to {out_path}")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open('w') as f:
-        write_module(f, obj)
+        f2 = LinkingWriter(f)
+        write_module(f2, obj, members)
+        f2.write_link_targets()
 
 
 @attrs.frozen
@@ -313,20 +417,36 @@ class Page:
     kind: str = None
     section: str = None
     pref_path: str = None
+    # obj, pref_path, mytype
     members: List[Tuple[griffe.Object, str, str]] = attrs.field(factory=list)
 
 
+MAJOR_CLASSES = [
+    'qualtran.Bloq',
+    'qualtran.CompositeBloq',
+    'qualtran.BloqBuilder',
+    'qualtran.Signature',
+    'qualtran.dtype.QCDType',
+    'qualtran.resource_counting.QECGatesCost',
+    'qualtran.resource_counting.GateCounts',
+    'qualtran.resource_counting.QubitCount',
+    'qualtran.resource_counting.CostKey',
+    'qualtran.resource_counting.SuccessProb',
+    'qualtran.resource_counting.BloqCount',
+    'qualtran.simulation.classical_sim.ClassicalSimState',
+    'qualtran.simulation.classical_sim.PhasedClassicalSimState',
+]
+
+SKIP_MODULES = ['qualtran.conftest', 'qualtran.testing_test',
+                'qualtran.protos', 'qualtran.serialization.resolver_dict',
+                'qualtran.bloqs']
+
+
 def walk_table_of_contents(obj: griffe.Object, toc, mod_pages):
-    if obj.is_module:
+    if obj.is_module and obj.canonical_path not in SKIP_MODULES:
         for name, obj2 in obj.members.items():
             if obj2.kind is Kind.ALIAS:
                 # print(obj2.path)
-                continue
-
-            if obj.canonical_path in ['qualtran.conftest', 'qualtran.testing_test',
-                                      'qualtran.protos', 'qualtran.serialization.resolver_dict',
-                                      'qualtran.bloqs']:
-                # TODO
                 continue
 
             if obj2.canonical_path in toc:
@@ -365,6 +485,9 @@ def walk_table_of_contents(obj: griffe.Object, toc, mod_pages):
         if alias.startswith('qualtran.dtype'):
             # Special case for qualtran.dtype re-exports. Doesn't follow any of the other rules.
             return -1
+        if alias.startswith('qualtran.exception'):
+            # Special case for qualtran.dtype re-exports. Doesn't follow any of the other rules.
+            return -1
 
         alias_container = '.'.join(alias.split('.')[:-1])
         if not defined_container.startswith(alias_container):
@@ -375,29 +498,14 @@ def walk_table_of_contents(obj: griffe.Object, toc, mod_pages):
     pref_path = sorted(all_aliases, key=prefered_path_key)[0]
     pref_parent = '.'.join(pref_path.split('.')[:-1])
 
-    major_classes = ['qualtran.Bloq',
-                     'qualtran.CompositeBloq',
-                     'qualtran.BloqBuilder',
-                     'qualtran.Signature',
-                     'qualtran.resource_counting.QECGatesCost',
-                     'qualtran.resource_counting.GateCounts',
-                     'qualtran.resource_counting.QubitCount',
-                     'qualtran.resource_counting.CostKey',
-                     'qualtran.resource_counting.SuccessProb',
-                     'qualtran.resource_counting.BloqCount',
-                     'qualtran.simulation.classical_sim.ClassicalSimState',
-                     'qualtran.simulation.classical_sim.PhasedClassicalSimState',
-                     ]
-
     if obj.is_module:
+        mod_pages[pref_parent].members.append((obj, pref_path, 'module'))
+
         mod_pages[pref_path].obj = obj
         mod_pages[pref_path].kind = 'module'
         mod_pages[pref_path].pref_path = pref_path
 
-        if pref_path == 'qualtran.dtype':
-            mod_pages[pref_path].section = 'qualtran'
-        else:
-            mod_pages[pref_path].section = '.'.join(pref_path.split('.')[:2])
+        mod_pages[pref_path].section = '.'.join(pref_path.split('.')[:2])
 
         toc[obj.canonical_path] = PageLoc(
             page_name=pref_path,  # .. todo
@@ -405,7 +513,7 @@ def walk_table_of_contents(obj: griffe.Object, toc, mod_pages):
             preferred_name=pref_path,
             other_names=tuple(all_aliases - {pref_path})
         )
-    elif pref_path in major_classes:
+    elif pref_path in MAJOR_CLASSES:
         mod_pages[pref_parent].members.append((obj, pref_path, 'major'))
 
         mod_pages[pref_path].obj = obj
@@ -435,7 +543,6 @@ def make_reference_docs(p: Path):
     loader = GriffeLoader()
     mod = loader.load("qualtran")
 
-    manual = mod['simulation.classical_sim']
     unresolved, _ = loader.resolve_aliases()
     assert len(unresolved) == 0
     assert mod.is_module
@@ -447,7 +554,7 @@ def make_reference_docs(p: Path):
     pages = defaultdict(Page)
     walk_table_of_contents(mod, toc, pages)
 
-    mod_pages = [mp for mp in pages.values() if mp.obj is not None]  # .. todo
+    pages = [p for p in pages.values() if p.obj is not None]  # .. todo
 
     # gtoc = defaultdict(lambda: defaultdict(list))
     # for canon, pg in toc.items():
@@ -464,13 +571,28 @@ def make_reference_docs(p: Path):
         'qualtran.drawing',
         'qualtran.symbolics',
     ]
-    sections = top_sections + sorted(set(mp.section for mp in mod_pages) - set(top_sections))
+    fake_sections = [
+        # Grouped in `qualtran`.
+        'qualtran.dtype',
+        'qualtran.exception',
+    ]
+    sections = top_sections + sorted(
+        set(mp.section for mp in pages) - set(top_sections) - set(fake_sections))
 
     def _pages_sort_key(p: Page):
         path_parts = p.pref_path.split('.')
         return path_parts
 
-    with (out_dir / 'qualtran.md').open('w') as f:
+    def _page_in_section(p: Page, section: str):
+        if p.section == section:
+            return True
+        if section == 'qualtran' and p.section in ['qualtran.dtype', 'qualtran.exception']:
+            # Group
+            return True
+        return False
+
+    with (out_dir / 'toc.md').open('w') as f:
+        print("Writing toc.md ..")
         f.write('# Qualtran\n\n')
 
         for section in sections:
@@ -478,10 +600,10 @@ def make_reference_docs(p: Path):
                 section = 'Base'
             f.write(f'## `{section}`\n\n')
 
-            pages: List[Page] = sorted((p for p in mod_pages if p.section == section),
-                                       key=_pages_sort_key)
+            spages: List[Page] = sorted((p for p in pages if _page_in_section(p, section)),
+                                        key=_pages_sort_key)
 
-            for mp in pages:
+            for mp in spages:
                 if mp.kind == 'module' and len(mp.members) == 0:
                     print(f"Skipping empty module page {mp.pref_path}")
                     continue
@@ -496,15 +618,8 @@ def make_reference_docs(p: Path):
 
             f.write('\n')
 
-    return
-
-    for name, obj in mod.classes.items():
-        # Render major_classes
-        if name in ['Bloq', 'BloqBuilder', 'CompositeBloq', 'Signature', 'Register']:
-            render_major_class(out_dir, name, obj)
-
-        # ... todo .. render the rest of the module
-
-        # ... todo .. recurse
-
-    return
+    for page in pages:
+        if page.pref_path in MAJOR_CLASSES:
+            render_major_class(out_dir, page.pref_path, page.obj)
+        else:
+            render_module(out_dir, page.pref_path, page.obj, page.members)
