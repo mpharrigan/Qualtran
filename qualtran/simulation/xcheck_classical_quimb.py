@@ -16,7 +16,6 @@ from typing import cast, Dict, Iterable, Optional, TYPE_CHECKING
 import numpy as np
 
 from qualtran import Bloq, BloqBuilder, CompositeBloq, Register, Soquet, SoquetT
-from qualtran.bloqs.basic_gates import IntEffect, IntState
 
 if TYPE_CHECKING:
     from qualtran.simulation.classical_sim import ClassicalValT
@@ -26,6 +25,7 @@ def _add_classical_kets(
     bb: BloqBuilder, registers: Iterable[Register], vals: Dict[str, 'ClassicalValT']
 ) -> Dict[str, 'SoquetT']:
     """Use `bb` to add `IntState` for all the `vals`."""
+    from qualtran.bloqs.basic_gates import IntState
     soqs: Dict[str, 'SoquetT'] = {}
     for reg in registers:
         if reg.shape:
@@ -47,6 +47,7 @@ def _add_classical_bras(
     soqs: Dict[str, 'SoquetT'],
 ) -> None:
     """Use `bb` to add `IntEffect` on `soqs` for all the `vals`."""
+    from qualtran.bloqs.basic_gates import IntEffect
     for reg in registers:
         if reg.shape:
             reg_vals = np.asarray(vals[reg.name])
