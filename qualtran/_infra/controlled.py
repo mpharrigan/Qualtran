@@ -699,6 +699,7 @@ def make_ctrl_system_with_correct_metabloq(
     """
     from qualtran.bloqs.mcmt.classically_controlled import ClassicallyControlled
     from qualtran.bloqs.mcmt.controlled_via_and import ControlledViaAnd
+    from qualtran.bloqs.mcmt.classically_controlled import ClassicallyControlled
 
     if ctrl_spec == CtrlSpec():
         return Controlled.make_ctrl_system(bloq, ctrl_spec=ctrl_spec)

@@ -32,11 +32,11 @@ class ClassicallyControlled(HasClassicalBranches, _ControlledBase):  # type: ign
     active_probability: float = 0.5
 
     def __attrs_post_init__(self):
-        for qdtype in self.ctrl_spec.qdtypes:
-            if not isinstance(qdtype, QCDType):
-                raise ValueError(f"Invalid type found in `ctrl_spec`: {qdtype}")
-            if not isinstance(qdtype, CDType):
-                raise ValueError("TODO")
+        for qcdtype in self.ctrl_spec.qdtypes:
+            if not isinstance(qcdtype, QCDType):
+                raise ValueError(f"Invalid type found in `ctrl_spec`: {qcdtype}")
+            if not isinstance(qcdtype, CDType):
+                raise ValueError(f"Invalid type found in `ctrl_spec`: {qcdtype}")
 
     @classmethod
     def make_ctrl_system(

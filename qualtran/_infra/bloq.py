@@ -233,7 +233,8 @@ class Bloq(metaclass=abc.ABCMeta):
         (X, CNOT, Toffoli, ...) and diagonal operations (T, CZ, CCZ, ...).
 
         Bloq authors should override this method. If you are using an instantiated bloq object,
-        call TODO and not this method directly.
+        call `qualtran.simulation.classical_sim.do_phased_classical_simulation` or use
+        `qualtran.simulation.classical_sim.PhasedClassicalSimState`.
 
         If this method is implemented, `on_classical_vals` must also be implemented.
         If `on_classical_vals` is implemented but this method is not implemented, it is assumed
