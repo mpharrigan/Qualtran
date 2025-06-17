@@ -98,16 +98,13 @@ class _GoogleDocstringToMarkdown(GoogleDocstring):
         return ['#### References', '\n'.join(f' - {ref.text}' for ref in my_refs), '']
 
     def _parse_registers_section(self, section: str) -> List[str]:
-        def _template(name, desc_lines, _type):
+        def _template(name, desc_lines):
             desc = ' '.join(desc_lines)
-            if _type:
-                return f' - `{name}` (`{_type}`): {desc}'
-
             return f' - `{name}`: {desc}'
 
         return [
             '#### Registers',
-            *[_template(name, desc, _type) for name, _type, desc in self._consume_fields()],
+            *[_template(name, desc) for name, _type, desc in self._consume_fields()],
             '',
         ]
 

@@ -42,7 +42,6 @@ def _priority(node: 'BloqInstance') -> int:
     signature = node.bloq.signature
     if any(reg.dtype.is_symbolic() for reg in signature):
         return 0
-
     return total_bits(signature.rights()) - total_bits(signature.lefts())
 
 

@@ -697,7 +697,6 @@ def make_ctrl_system_with_correct_metabloq(
      - Classical controls (i.e. `CtrlSpec(...)` with classical data types) uses
        `ClassicallyControlled`.
     """
-    from qualtran.bloqs.mcmt.classically_controlled import ClassicallyControlled
     from qualtran.bloqs.mcmt.controlled_via_and import ControlledViaAnd
     from qualtran.bloqs.mcmt.classically_controlled import ClassicallyControlled
 
