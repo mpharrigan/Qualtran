@@ -25,7 +25,7 @@ $$.
 We first document the SelectOracle and PrepareOracle abstract base bloqs, and then show
 how they can be combined in `QubitizationWalkOperator`.
 """
-
+import abc
 from functools import cached_property
 from typing import Tuple, Union
 
@@ -34,6 +34,7 @@ import cirq
 import numpy as np
 
 from qualtran import (
+    Bloq,
     bloq_example,
     BloqBuilder,
     BloqDocSpec,
@@ -57,40 +58,11 @@ from qualtran.resource_counting.generalizers import (
 from qualtran.symbolics import SymbolicFloat
 
 
-@attrs.frozen(cache_hash=True)
-class QubitizationWalkOperator(GateWithRegisters):
-    r"""Construct a Szegedy Quantum Walk operator using LCU oracles SELECT and PREPARE.
+class QubitizationWalkOperatorBase(GateWithRegisters, metaclass=abc.ABCMeta):
 
-    For a Hamiltonian $H = \sum_l w_l H_l$ (where coefficients $w_l > 0$ and $H_l$ are unitaries),
-    This bloq constructs a Szegedy quantum walk operator $W = R_{L} \cdot \mathrm{SELECT}$,
-    which is a product of two reflections:
-     - $R_L = (2|L\rangle\langle L| - I)$ and
-     - $\mathrm{SELECT}=\sum_l |l\rangle\langle l|H_l$.
-
-    The action of $W$ partitions the Hilbert space into a direct sum of two-dimensional irreducible
-    vector spaces giving it the name "qubitization".
-    For an arbitrary eigenstate $|k\rangle$ of $H$ with eigenvalue $E_k$,
-    the two-dimensional space is spanned by $|L\rangle|k\rangle$ and
-    an orthogonal state $\phi_k$. In this space, $W$ implements a Pauli-Y rotation by an angle of
-    $-2\arccos(E_k / \lambda)$ where $\lambda = \sum_l w_l$. That is,
-    $W = e^{i \arccos(E_k / \lambda) Y}$.
-
-    Thus, the walk operator $W$ encodes the spectrum of $H$ as a function of eigenphases of $W$,
-    specifically $\mathrm{spectrum}(H) = \lambda \cos(\arg(\mathrm{spectrum}(W)))$
-    where $\arg(e^{i\phi}) = \phi$.
-
-    Args:
-        select: The SELECT lcu gate implementing $\mathrm{SELECT}=\sum_{l}|l\rangle\langle l|H_{l}$.
-        prepare: Then PREPARE lcu gate implementing
-            $\mathrm{PREPARE}|0\dots 0\rangle = \sum_l \sqrt{\frac{w_{l}}{\lambda}}
-            |l\rangle = |L\rangle$
-
-    References:
-        [Encoding Electronic Spectra in Quantum Circuits with Linear T Complexity](https://arxiv.org/abs/1805.03662).
-        Babbush et al. (2018). Figure 1.
-    """
-
-    block_encoding: Union[SelectBlockEncoding, LCUBlockEncoding]
+    @property
+    @abc.abstractmethod
+    def block_encoding(self) -> Union[SelectBlockEncoding, LCUBlockEncoding]: ...
 
     @cached_property
     def selection_registers(self) -> Tuple[Register, ...]:
@@ -150,6 +122,42 @@ class QubitizationWalkOperator(GateWithRegisters):
         raise ValueError(
             f"Prepare bloq not implemented or not appropriate for {self.block_encoding}."
         )
+
+
+@attrs.frozen(cache_hash=True)
+class QubitizationWalkOperator(QubitizationWalkOperatorBase):
+    r"""Construct a Szegedy Quantum Walk operator using LCU oracles SELECT and PREPARE.
+
+    For a Hamiltonian $H = \sum_l w_l H_l$ (where coefficients $w_l > 0$ and $H_l$ are unitaries),
+    This bloq constructs a Szegedy quantum walk operator $W = R_{L} \cdot \mathrm{SELECT}$,
+    which is a product of two reflections:
+     - $R_L = (2|L\rangle\langle L| - I)$ and
+     - $\mathrm{SELECT}=\sum_l |l\rangle\langle l|H_l$.
+
+    The action of $W$ partitions the Hilbert space into a direct sum of two-dimensional irreducible
+    vector spaces giving it the name "qubitization".
+    For an arbitrary eigenstate $|k\rangle$ of $H$ with eigenvalue $E_k$,
+    the two-dimensional space is spanned by $|L\rangle|k\rangle$ and
+    an orthogonal state $\phi_k$. In this space, $W$ implements a Pauli-Y rotation by an angle of
+    $-2\arccos(E_k / \lambda)$ where $\lambda = \sum_l w_l$. That is,
+    $W = e^{i \arccos(E_k / \lambda) Y}$.
+
+    Thus, the walk operator $W$ encodes the spectrum of $H$ as a function of eigenphases of $W$,
+    specifically $\mathrm{spectrum}(H) = \lambda \cos(\arg(\mathrm{spectrum}(W)))$
+    where $\arg(e^{i\phi}) = \phi$.
+
+    Args:
+        select: The SELECT lcu gate implementing $\mathrm{SELECT}=\sum_{l}|l\rangle\langle l|H_{l}$.
+        prepare: Then PREPARE lcu gate implementing
+            $\mathrm{PREPARE}|0\dots 0\rangle = \sum_l \sqrt{\frac{w_{l}}{\lambda}}
+            |l\rangle = |L\rangle$
+
+    References:
+        [Encoding Electronic Spectra in Quantum Circuits with Linear T Complexity](https://arxiv.org/abs/1805.03662).
+        Babbush et al. (2018). Figure 1.
+    """
+
+    block_encoding: Union[SelectBlockEncoding, LCUBlockEncoding]
 
 
 @bloq_example(generalizer=[cirq_to_bloqs, ignore_split_join, ignore_cliffords])

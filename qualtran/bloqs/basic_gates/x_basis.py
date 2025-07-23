@@ -25,8 +25,10 @@ from qualtran import (
     BloqBuilder,
     BloqDocSpec,
     CBit,
+    CompositeBloq,
     ConnectionT,
     CtrlSpec,
+    DecomposeTypeError,
     QBit,
     Register,
     Side,
@@ -217,6 +219,9 @@ class XGate(Bloq):
     @cached_property
     def signature(self) -> 'Signature':
         return Signature.build(q=1)
+
+    def decompose_bloq(self) -> 'CompositeBloq':
+        raise DecomposeTypeError(f"{self} is atomic")
 
     def adjoint(self) -> 'Bloq':
         return self

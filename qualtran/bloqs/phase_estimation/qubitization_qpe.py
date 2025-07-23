@@ -29,7 +29,10 @@ from qualtran import (
 )
 from qualtran.bloqs.phase_estimation.qpe_window_state import QPEWindowStateBase
 from qualtran.bloqs.qft.qft_text_book import QFTTextBook
-from qualtran.bloqs.qubitization.qubitization_walk_operator import QubitizationWalkOperator
+from qualtran.bloqs.qubitization.qubitization_walk_operator import (
+    QubitizationWalkOperator,
+    QubitizationWalkOperatorBase,
+)
 from qualtran.symbolics import is_symbolic, SymbolicInt
 
 if TYPE_CHECKING:
@@ -79,7 +82,7 @@ class QubitizationQPE(GateWithRegisters):
         Complexity](https://arxiv.org/abs/1805.03662) Fig. 2
     """
 
-    walk: QubitizationWalkOperator
+    walk: QubitizationWalkOperatorBase
     ctrl_state_prep: QPEWindowStateBase
     qft_inv: Bloq = attrs.field()
 
