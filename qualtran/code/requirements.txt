@@ -1,0 +1,7 @@
+pytest
+numpy
+stim~=1.15
+sinter~=1.15
+sympy
+pygltflib
+matplotlib

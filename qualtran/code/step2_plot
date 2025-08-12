@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+set -e
+
+mkdir assets/gen -p
+cp \
+    src/facto/algorithm/_simple_example_code.py \
+    assets/gen/simple_example_code.py
+echo "wrote file://$(realpath assets/gen/simple_example_code.py)"
+cp \
+    src/facto/algorithm/_detailed_example_code.py \
+    assets/gen/detailed_example_code.py
+echo "wrote file://$(realpath assets/gen/detailed_example_code.py)"
+
+PYTHONPATH=src python \
+    src/facto/operations/adder/main2_make_adder_circuit_diagram.py \
+    --out_dir assets/gen \
+    &
+
+PYTHONPATH=src python \
+    src/facto/algorithm/estimates/main3_generate_progression_plot.py \
+    --out assets/gen/historical-physical-cost-progression.png \
+    &
+
+PYTHONPATH=src python \
+    src/facto/operations/phaseup/main2_make_phaseup_circuit_diagram.py \
+    --out_dir assets/gen \
+    &
+
+PYTHONPATH=src python \
+    src/facto/algorithm/sim/main0_generate_compression_example_plot.py \
+    --out_path assets/gen/period-finding-compression-example.svg \
+    --n 3127 \
+    --g 3122 \
+    --mask_proportion 0.1 \
+    &
+
+PYTHONPATH=src python \
+    src/facto/algorithm/estimates/main2_generate_pareto_plot.py \
+    --out assets/gen/logical-pareto-cost-curves.png \
+    --csv_path out/cost_variations.csv \
+    &
+
+PYTHONPATH=src python \
+    src/facto/algorithm/estimates/main5_generate_cost_table.py \
+    --csv_path out/cost_variations.csv \
+    --toffoli_power 1 \
+    --qubit_power 3 \
+    --out assets/gen/logical-cost-table.tex \
+    &
+
+PYTHONPATH=src python src/facto/algorithm/sim/main2_plot_masked_success_rates.py \
+    --in assets/masked_success_stats.csv \
+    --out assets/gen/masked_success_rate.png \
+    --xmax 10_000 \
+    &
+
+wait
+
+if (which inkscape > /dev/null); then
+  for filename in assets/gen/*.svg; do
+    out_path="${filename%.svg}.png"
+    inkscape "${filename}" -o "${out_path}" -w 4096
+    abs_path=$(realpath "${out_path}")
+    echo Converted "file://${abs_path}"
+  done
+else
+  echo "Warning: 'inkscape' not in PATH. Skipping conversion of SVG images to PNG images."
+fi

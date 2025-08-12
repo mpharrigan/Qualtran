@@ -1,0 +1,74 @@
+    \centering
+    \resizebox{\linewidth}{!}{
+    \begin{tabular}{|c|c|l|}
+        \hline
+        \textbf{Notation} & \textbf{Equivalent To} & \textbf{Description} \\
+        \hline
+        $\len a$ & $\lceil \log_2 \max(1, a) \rceil$ & Min bits needed to store an integer in the range $[0, a)$. 
+        \\
+        \hline
+        $\len q$ & - & Number of qubits in a quantum register $q$. 
+        \\
+        \hline
+        $a // b$ & $\lfloor a/b \rfloor$ & Floored division of $a$ by $b$.
+        \\
+        \hline
+        $a \bmod b$ & $a - b \cdot (a // b)$ & Remainder of $a$ divided by $b$, canonicalized into $[0, b)$.
+        \\
+        \hline
+        $a \bmod b \bmod c$ & $(a \bmod b) \bmod c$ & $\bmod$ is left-associative.
+        \\
+        \hline
+        $a \gg b$ & $a//2^b$ & Right shift of $a$ by $b$ bits.
+        \\
+        \hline
+        $a \ll b$ & $a2^b$ & Left shift of $a$ by $b$ bits.
+        \\
+        \hline
+        $|a:b:c\rangle$ & $\displaystyle\rangesum{k}{\lceil (b-a)/c \rceil} \frac{|kc + a\rangle}{\sqrt{\lceil (b-a)/c \rceil}}$ & Uniform superposition, from $a$ to $b-1$, stepping by $c$.
+        \\
+        \hline
+        $\text{GRAD}_{a}^b$ & $\displaystyle\rangesum{k}{a} |k\rangle\langle k| e^{ik 2\pi b/a}$ & Phase gradient modulo $a$, scaled by $b$.
+        \\
+        \hline
+        $\text{QFT}_{a}$ & $\displaystyle\frac{1}{\sqrt{a}}\rangesum{k}{a}\rangesum{j}{a} |j\rangle\langle k| e^{ijk 2\pi /a}$ & Quantum Fourier Transform modulo $a$.
+        \\
+        \hline
+        $\Delta_N(a)$
+        & $\min(a \bmod N, -a \bmod N) / N$
+        & Modular deviation of $a$, relative to $N$.
+        \\
+        \hline
+        $\text{int}(a)$
+        &
+            $\begin{cases} a &\rightarrow 1\\\lnot a &\rightarrow 0 \end{cases}$
+        & Indicator function for a boolean expression.
+        \\
+        \hline
+        $\text{negif}(a)$
+        &
+            $(-1)^{\text{int}(a)}$
+        & Phase flip indicator function for a boolean expression.
+        \\
+        \hline
+        $a_b$
+        &
+            $(a \gg b) \mod 2$
+        & Access bit (or qubit) $b$ within integer (or quint) $a$.
+        \\
+        \hline
+        $a \;\&\; b$
+        & $\sum_k a_k b_k \ll k$
+        & Bitwise AND of $a$ and $b$.
+        \\
+        \hline
+        $\text{MultiplicativeInverse}_a(b)$
+        & $b^{-1} \pmod{a}$
+        & Multiplicative inverse of $b$ modulo $a$.
+        \\
+        \hline
+    \end{tabular}
+    }
+    \caption{
+        Various bits of mostly-Python-inspired notation used in this paper.
+    }

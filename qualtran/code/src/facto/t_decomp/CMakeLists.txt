@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.15.3)
+project(decompose)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY out)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY out)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY out)
+
+add_executable(decomp main.cc val.cc mat2.cc state.cc val_r2.cc ket.cc)
+target_compile_options(decomp PRIVATE -O3 -Wall -Wpedantic -fno-strict-aliasing -march=native)
+target_link_options(decomp PRIVATE -O3)
+
+add_executable(decomp_test val.cc val.test.cc mat2.cc state.cc state.test.cc mat2.test.cc val_r2.cc val_r2.test.cc ket.cc ket.test.cc)
+target_link_libraries(decomp_test /usr/local/lib/libgtest.a /usr/local/lib/libgtest_main.a)
+target_compile_options(decomp_test PRIVATE -Wall -Wpedantic -g -fno-omit-frame-pointer -fno-strict-aliasing -fsanitize=undefined -fsanitize=address -march=native)
+target_link_options(decomp_test PRIVATE -g -fno-omit-frame-pointer -fsanitize=undefined -fsanitize=address)

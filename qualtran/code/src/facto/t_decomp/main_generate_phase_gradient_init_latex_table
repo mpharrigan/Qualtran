@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+
+import argparse
+import pathlib
+import sys
+
+from facto import t_decomp
+
+
+def describe_float(e: float) -> str:
+    if e == 0:
+        return '0'
+    r = f'{e:0.1e}'
+    if '.' not in r and 'e' in r:
+        r = r.replace('e', '.0e')
+    r = r.replace('e-0', 'e-')
+    return r
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--in', type=str, required=True)
+    parser.add_argument('--use_stdin', action='store_true')
+    parser.add_argument('--max_t', type=int, default=90)
+    parser.add_argument('--max_infidelity', type=float, default=1)
+    parser.add_argument('--max_trace_distance', type=float, default=1)
+    args = parser.parse_args()
+    path = pathlib.Path(getattr(args, 'in'))
+    max_infidelity = args. max_infidelity
+    max_trace_distance = args. max_trace_distance
+    max_cost = args.max_t
+
+    choices = {}
+
+    with open(path) as f:
+        for line in (sys.stdin if args.use_stdin else f):
+            line = line.strip()
+            if line.startswith('angle_power,'):
+                continue
+            angle_power, err, t_count, init, txz_signs, end_clifford = line.split(',')
+            t_count = int(t_count)
+            assert t_count == len(txz_signs)
+            angle_power = int(angle_power)
+
+            gate_seq = list(txz_signs + end_clifford)
+            if init == 'RX':
+                gate_seq = ['H', *gate_seq]
+            elif init == 'RY':
+                gate_seq = ['H_YZ', *gate_seq]
+            elif init == 'RZ':
+                pass
+            else:
+                raise NotImplementedError(f'{init=}')
+            res = t_decomp.high_precision_fidelity_analysis_of_phase_gradient_gate_sequence(
+                phase_gradient_qubit_index=angle_power,
+                gate_sequence=gate_seq,
+                digits_of_precision=100,
+            )
+            trace_distance = res['float_trace_distance']
+            infidelity = res['float_infidelity']
+
+            if t_count >= max_cost or trace_distance >= max_trace_distance or infidelity >= max_infidelity:
+                continue
+            if angle_power in choices:
+                if max_trace_distance == 1 and max_infidelity == 1:
+                    if infidelity > choices[angle_power][1]:
+                        continue
+                else:
+                    if t_count > choices[angle_power][0]:
+                        continue
+            choices[angle_power] = (t_count, infidelity, trace_distance, init, txz_signs, end_clifford)
+
+    print(r"""
+    \resizebox{\linewidth}{!}{
+    \begin{tabular}{|c|c|l|c|c|c|}
+    \hline Qubit Index 
+        & Init 
+        & T Gate Directions 
+        & Finish 
+        & T 
+        & Infidelity
+    \\($k$ in $Z^{2^{-k}} |+\rangle$) 
+        & Basis 
+        &  (the signs in $T_X^{\pm 1}, T_Z^{\pm 1}, T_X^{\pm 1}, T_Z^{\pm 1}, \dots$) 
+        & Clifford 
+        & Count 
+        &
+    """)
+
+    vacuous_cases = 0
+    total_infidelity = 0
+    total_trace_distance = 0
+    total_t_count = 0
+    for angle_power, (t_count, infidelity, trace_distance, init, txz_signs, end_clifford) in sorted(choices.items()):
+        if infidelity < 1e-15 and angle_power < 4:
+            infidelity = 0
+            trace_distance = 0
+        if txz_signs == '':
+            vacuous_cases += 1
+        total_infidelity += infidelity
+        total_trace_distance += trace_distance
+        total_t_count += t_count
+        if vacuous_cases < 5:
+            print(
+                f'    \\\\\\hline',
+                f'\n        ${angle_power}$',
+                '\n        &',
+                f'$R_{init[1:]}$',
+                '\n        &',
+                '\\texttt{' + '{}'.join(txz_signs) + '}',
+                '\n        &',
+                ','.join(end_clifford.strip()),
+                '\n        &',
+                str(t_count),
+                # '\n        &',
+                # f'{describe_float(trace_distance)}',
+                '\n        &',
+                f'{describe_float(infidelity)}',
+            )
+
+    print(
+        f'    \\\\\\hline\\hline',
+        f'\n        Totals',
+        '\n        &',
+        f'',
+        '\n        &',
+        '',
+        '\n        &',
+        '',
+        '\n        &',
+        str(total_t_count),
+        # '\n        &\leq',
+        # describe_float(total_trace_distance),
+        '\n        &',
+        describe_float(total_infidelity),
+    )
+
+    print(r"""
+    \\\hline
+    \end{tabular}}""")
+
+
+if __name__ == '__main__':
+    main()

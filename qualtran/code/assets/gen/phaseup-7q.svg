@@ -1,0 +1,531 @@
+<svg viewBox="-100 -25 1107 540" font-family="Times New Roman" xmlns="http://www.w3.org/2000/svg">
+<path d="M14.5,50.0 L887.5,50.0" stroke="black" fill="none"/>
+<path d="M14.5,70.0 L887.5,70.0" stroke="black" fill="none"/>
+<path d="M44.5,90.0 L827.5,90.0 M827.5,89.0 L847.5,89.0 M827.5,91.0 L847.5,91.0" stroke="black" fill="none"/>
+<path d="M14.5,110.0 L887.5,110.0" stroke="black" fill="none"/>
+<path d="M84.5,130.0 L727.5,130.0 M727.5,129.0 L787.5,129.0 M727.5,131.0 L787.5,131.0" stroke="black" fill="none"/>
+<path d="M104.5,150.0 L727.5,150.0 M727.5,149.0 L767.5,149.0 M727.5,151.0 L767.5,151.0" stroke="black" fill="none"/>
+<path d="M124.5,170.0 L727.5,170.0 M727.5,169.0 L747.5,169.0 M727.5,171.0 L747.5,171.0" stroke="black" fill="none"/>
+<path d="M14.5,190.0 L887.5,190.0" stroke="black" fill="none"/>
+<path d="M14.5,210.0 L887.5,210.0" stroke="black" fill="none"/>
+<path d="M44.5,230.0 L827.5,230.0 M827.5,229.0 L847.5,229.0 M827.5,231.0 L847.5,231.0" stroke="black" fill="none"/>
+<path d="M14.5,250.0 L887.5,250.0" stroke="black" fill="none"/>
+<path d="M84.5,270.0 L727.5,270.0 M727.5,269.0 L787.5,269.0 M727.5,271.0 L787.5,271.0" stroke="black" fill="none"/>
+<path d="M104.5,290.0 L727.5,290.0 M727.5,289.0 L767.5,289.0 M727.5,291.0 L767.5,291.0" stroke="black" fill="none"/>
+<path d="M124.5,310.0 L727.5,310.0 M727.5,309.0 L747.5,309.0 M727.5,311.0 L747.5,311.0" stroke="black" fill="none"/>
+<path d="M14.5,330.0 L887.5,330.0" stroke="black" fill="none"/>
+<path d="M164.5,350.0 L547.5,350.0 M547.5,349.0 L687.5,349.0 M547.5,351.0 L687.5,351.0" stroke="black" fill="none"/>
+<path d="M184.5,370.0 L547.5,370.0 M547.5,369.0 L667.5,369.0 M547.5,371.0 L667.5,371.0" stroke="black" fill="none"/>
+<path d="M204.5,390.0 L547.5,390.0 M547.5,389.0 L647.5,389.0 M547.5,391.0 L647.5,391.0" stroke="black" fill="none"/>
+<path d="M224.5,410.0 L547.5,410.0 M547.5,409.0 L627.5,409.0 M547.5,411.0 L627.5,411.0" stroke="black" fill="none"/>
+<path d="M244.5,430.0 L547.5,430.0 M547.5,429.0 L607.5,429.0 M547.5,431.0 L607.5,431.0" stroke="black" fill="none"/>
+<path d="M264.5,450.0 L547.5,450.0 M547.5,449.0 L587.5,449.0 M547.5,451.0 L587.5,451.0" stroke="black" fill="none"/>
+<path d="M284.5,470.0 L547.5,470.0 M547.5,469.0 L567.5,469.0 M547.5,471.0 L567.5,471.0" stroke="black" fill="none"/>
+<text x="14.5" y="50.0" font-size="18" text-anchor="end" dominant-baseline="middle">a₀</text>
+<text x="14.5" y="70.0" font-size="18" text-anchor="end" dominant-baseline="middle">a₁</text>
+<text x="14.5" y="110.0" font-size="18" text-anchor="end" dominant-baseline="middle">a₂</text>
+<text x="14.5" y="190.0" font-size="18" text-anchor="end" dominant-baseline="middle">a₃</text>
+<text x="14.5" y="210.0" font-size="18" text-anchor="end" dominant-baseline="middle">a₄</text>
+<text x="14.5" y="250.0" font-size="18" text-anchor="end" dominant-baseline="middle">a₅</text>
+<text x="14.5" y="330.0" font-size="18" text-anchor="end" dominant-baseline="middle">a₆</text>
+<path d="M47.5,50.0 L47.5,90.0" stroke="black" fill="none"/>
+<rect x="40.0" y="42.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="47.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="40.0" y="62.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="47.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="40.0" y="82.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="47.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M47.5,190.0 L47.5,230.0" stroke="black" fill="none"/>
+<rect x="40.0" y="182.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="47.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="40.0" y="202.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="47.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="40.0" y="222.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="47.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M87.5,50.0 L87.5,130.0" stroke="black" fill="none"/>
+<rect x="80.0" y="42.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="87.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="80.0" y="102.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="87.5" y="111.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="80.0" y="122.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="87.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M87.5,190.0 L87.5,270.0" stroke="black" fill="none"/>
+<rect x="80.0" y="182.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="87.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="80.0" y="242.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="87.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="80.0" y="262.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="87.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M107.5,70.0 L107.5,150.0" stroke="black" fill="none"/>
+<rect x="100.0" y="62.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="107.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="100.0" y="102.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="107.5" y="111.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="100.0" y="142.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="107.5" y="151.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M107.5,210.0 L107.5,290.0" stroke="black" fill="none"/>
+<rect x="100.0" y="202.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="107.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="100.0" y="242.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="107.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="100.0" y="282.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="107.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M127.5,90.0 L127.5,170.0" stroke="black" fill="none"/>
+<rect x="120.0" y="82.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="127.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="120.0" y="102.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="127.5" y="111.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="120.0" y="162.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="127.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M127.5,230.0 L127.5,310.0" stroke="black" fill="none"/>
+<rect x="120.0" y="222.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="127.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="120.0" y="242.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="127.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="120.0" y="302.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="127.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M167.5,190.0 L167.5,350.0" stroke="black" fill="none"/>
+<rect x="160.0" y="182.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="167.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="160.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="167.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="160.0" y="342.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="167.5" y="351.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M187.5,210.0 L187.5,370.0" stroke="black" fill="none"/>
+<rect x="180.0" y="202.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="187.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="180.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="187.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="180.0" y="362.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="187.5" y="371.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M207.5,230.0 L207.5,390.0" stroke="black" fill="none"/>
+<rect x="200.0" y="222.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="207.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="200.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="207.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="200.0" y="382.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="207.5" y="391.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M227.5,250.0 L227.5,410.0" stroke="black" fill="none"/>
+<rect x="220.0" y="242.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="227.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="220.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="227.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="220.0" y="402.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="227.5" y="411.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M247.5,270.0 L247.5,430.0" stroke="black" fill="none"/>
+<rect x="240.0" y="262.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="247.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="240.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="247.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="240.0" y="422.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="247.5" y="431.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M267.5,290.0 L267.5,450.0" stroke="black" fill="none"/>
+<rect x="260.0" y="282.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="267.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="260.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="267.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="260.0" y="442.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="267.5" y="451.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M287.5,310.0 L287.5,470.0" stroke="black" fill="none"/>
+<rect x="280.0" y="302.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="287.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="280.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="287.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="280.0" y="462.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="287.5" y="471.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<rect x="34.3" y="40.0" width="266.59999999999997" height="440.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="167.6" y="482.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Produce all control products</text>
+<text x="167.6" y="494.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">for the low half and high half of the address</text>
+<rect x="34.3" y="180.0" width="266.59999999999997" height="300.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="327.5" y="46.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₀</text>
+<text x="327.5" y="66.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₁</text>
+<text x="327.5" y="86.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₀·a₁</text>
+<text x="327.5" y="106.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₂</text>
+<text x="327.5" y="126.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₀·a₂</text>
+<text x="327.5" y="146.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₀·a₂</text>
+<text x="327.5" y="166.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₀·a₁·a₂</text>
+<text x="327.5" y="186.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₃</text>
+<text x="327.5" y="206.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₄</text>
+<text x="327.5" y="226.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₃·a₄</text>
+<text x="327.5" y="246.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₅</text>
+<text x="327.5" y="266.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₃·a₅</text>
+<text x="327.5" y="286.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₄·a₅</text>
+<text x="327.5" y="306.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₃·a₄·a₅</text>
+<text x="327.5" y="326.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₆</text>
+<text x="327.5" y="346.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₃·a₆</text>
+<text x="327.5" y="366.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₄·a₆</text>
+<text x="327.5" y="386.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₃·a₄·a₆</text>
+<text x="327.5" y="406.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₅·a₆</text>
+<text x="327.5" y="426.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₃·a₅·a₆</text>
+<text x="327.5" y="446.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₄·a₅·a₆</text>
+<text x="327.5" y="466.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a₃·a₄·a₅·a₆</text>
+<path d="M367.5,50.0 L367.5,190.0" stroke="black" fill="none"/>
+<rect x="360.0" y="42.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="367.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="360.0" y="182.5" width="15" height="295" stroke="black" fill="white"/>
+<text x="367.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="351.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="371.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="391.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="411.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="431.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="451.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="367.5" y="471.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M387.5,70.0 L387.5,190.0" stroke="black" fill="none"/>
+<rect x="380.0" y="62.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="387.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="380.0" y="182.5" width="15" height="295" stroke="black" fill="white"/>
+<text x="387.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="351.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="371.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="391.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="411.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="431.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="451.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="387.5" y="471.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M407.5,90.0 L407.5,190.0" stroke="black" fill="none"/>
+<rect x="400.0" y="82.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="407.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="400.0" y="182.5" width="15" height="295" stroke="black" fill="white"/>
+<text x="407.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="351.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="371.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="391.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="411.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="431.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="451.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="407.5" y="471.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M427.5,110.0 L427.5,190.0" stroke="black" fill="none"/>
+<rect x="420.0" y="102.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="427.5" y="111.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="420.0" y="182.5" width="15" height="295" stroke="black" fill="white"/>
+<text x="427.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="351.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="371.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="391.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="411.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="431.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="451.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="427.5" y="471.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M447.5,130.0 L447.5,190.0" stroke="black" fill="none"/>
+<rect x="440.0" y="122.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="447.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="440.0" y="182.5" width="15" height="295" stroke="black" fill="white"/>
+<text x="447.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="351.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="371.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="391.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="411.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="431.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="451.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="447.5" y="471.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M467.5,150.0 L467.5,190.0" stroke="black" fill="none"/>
+<rect x="460.0" y="142.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="467.5" y="151.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="460.0" y="182.5" width="15" height="295" stroke="black" fill="white"/>
+<text x="467.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="351.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="371.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="391.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="411.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="431.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="451.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="467.5" y="471.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M487.5,170.0 L487.5,190.0" stroke="black" fill="none"/>
+<rect x="480.0" y="162.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="487.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="480.0" y="182.5" width="15" height="295" stroke="black" fill="white"/>
+<text x="487.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="351.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="371.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="391.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="411.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="431.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="451.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<text x="487.5" y="471.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,50.0 L508.5,50.0" stroke="black" fill="none"/>
+<path d="M506.5,50.0 L506.5,50.0" stroke="black" fill="none"/>
+<rect x="500.0" y="42.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,70.0 L508.5,70.0" stroke="black" fill="none"/>
+<path d="M506.5,70.0 L506.5,70.0" stroke="black" fill="none"/>
+<rect x="500.0" y="62.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,90.0 L508.5,90.0" stroke="black" fill="none"/>
+<path d="M506.5,90.0 L506.5,90.0" stroke="black" fill="none"/>
+<rect x="500.0" y="82.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,110.0 L508.5,110.0" stroke="black" fill="none"/>
+<path d="M506.5,110.0 L506.5,110.0" stroke="black" fill="none"/>
+<rect x="500.0" y="102.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="111.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,130.0 L508.5,130.0" stroke="black" fill="none"/>
+<path d="M506.5,130.0 L506.5,130.0" stroke="black" fill="none"/>
+<rect x="500.0" y="122.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,150.0 L508.5,150.0" stroke="black" fill="none"/>
+<path d="M506.5,150.0 L506.5,150.0" stroke="black" fill="none"/>
+<rect x="500.0" y="142.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="151.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,170.0 L508.5,170.0" stroke="black" fill="none"/>
+<path d="M506.5,170.0 L506.5,170.0" stroke="black" fill="none"/>
+<rect x="500.0" y="162.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,190.0 L508.5,190.0" stroke="black" fill="none"/>
+<path d="M506.5,190.0 L506.5,190.0" stroke="black" fill="none"/>
+<rect x="500.0" y="182.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,210.0 L508.5,210.0" stroke="black" fill="none"/>
+<path d="M506.5,210.0 L506.5,210.0" stroke="black" fill="none"/>
+<rect x="500.0" y="202.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,230.0 L508.5,230.0" stroke="black" fill="none"/>
+<path d="M506.5,230.0 L506.5,230.0" stroke="black" fill="none"/>
+<rect x="500.0" y="222.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,250.0 L508.5,250.0" stroke="black" fill="none"/>
+<path d="M506.5,250.0 L506.5,250.0" stroke="black" fill="none"/>
+<rect x="500.0" y="242.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,270.0 L508.5,270.0" stroke="black" fill="none"/>
+<path d="M506.5,270.0 L506.5,270.0" stroke="black" fill="none"/>
+<rect x="500.0" y="262.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,290.0 L508.5,290.0" stroke="black" fill="none"/>
+<path d="M506.5,290.0 L506.5,290.0" stroke="black" fill="none"/>
+<rect x="500.0" y="282.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,310.0 L508.5,310.0" stroke="black" fill="none"/>
+<path d="M506.5,310.0 L506.5,310.0" stroke="black" fill="none"/>
+<rect x="500.0" y="302.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,330.0 L508.5,330.0" stroke="black" fill="none"/>
+<path d="M506.5,330.0 L506.5,330.0" stroke="black" fill="none"/>
+<rect x="500.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,350.0 L508.5,350.0" stroke="black" fill="none"/>
+<path d="M506.5,350.0 L506.5,350.0" stroke="black" fill="none"/>
+<rect x="500.0" y="342.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="351.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,370.0 L508.5,370.0" stroke="black" fill="none"/>
+<path d="M506.5,370.0 L506.5,370.0" stroke="black" fill="none"/>
+<rect x="500.0" y="362.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="371.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,390.0 L508.5,390.0" stroke="black" fill="none"/>
+<path d="M506.5,390.0 L506.5,390.0" stroke="black" fill="none"/>
+<rect x="500.0" y="382.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="391.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,410.0 L508.5,410.0" stroke="black" fill="none"/>
+<path d="M506.5,410.0 L506.5,410.0" stroke="black" fill="none"/>
+<rect x="500.0" y="402.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="411.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,430.0 L508.5,430.0" stroke="black" fill="none"/>
+<path d="M506.5,430.0 L506.5,430.0" stroke="black" fill="none"/>
+<rect x="500.0" y="422.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="431.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,450.0 L508.5,450.0" stroke="black" fill="none"/>
+<path d="M506.5,450.0 L506.5,450.0" stroke="black" fill="none"/>
+<rect x="500.0" y="442.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="451.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<path d="M508.5,470.0 L508.5,470.0" stroke="black" fill="none"/>
+<path d="M506.5,470.0 L506.5,470.0" stroke="black" fill="none"/>
+<rect x="500.0" y="462.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="507.5" y="471.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">?</text>
+<rect x="354.3" y="40.0" width="166.60000000000008" height="440.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="437.6" y="482.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Perform data-driven phasing</text>
+<text x="437.6" y="494.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">(each ? is Z/I based on table data)</text>
+<rect x="540.0" y="342.5" width="15" height="15" stroke="black" fill="black" />
+<text x="547.5" y="351.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="540.0" y="362.5" width="15" height="15" stroke="black" fill="black" />
+<text x="547.5" y="371.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="540.0" y="382.5" width="15" height="15" stroke="black" fill="black" />
+<text x="547.5" y="391.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="540.0" y="402.5" width="15" height="15" stroke="black" fill="black" />
+<text x="547.5" y="411.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="540.0" y="422.5" width="15" height="15" stroke="black" fill="black" />
+<text x="547.5" y="431.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="540.0" y="442.5" width="15" height="15" stroke="black" fill="black" />
+<text x="547.5" y="451.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="540.0" y="462.5" width="15" height="15" stroke="black" fill="black" />
+<text x="547.5" y="471.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<path d="M567.5,310.0 L567.5,470.0" stroke="black" fill="none"/>
+<rect x="560.0" y="302.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="567.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="560.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="567.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="560.0" y="462.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="567.5" y="471.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M587.5,290.0 L587.5,450.0" stroke="black" fill="none"/>
+<rect x="580.0" y="282.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="587.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="580.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="587.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="580.0" y="442.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="587.5" y="451.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M607.5,270.0 L607.5,430.0" stroke="black" fill="none"/>
+<rect x="600.0" y="262.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="607.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="600.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="607.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="600.0" y="422.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="607.5" y="431.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M627.5,250.0 L627.5,410.0" stroke="black" fill="none"/>
+<rect x="620.0" y="242.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="627.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="620.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="627.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="620.0" y="402.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="627.5" y="411.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M647.5,230.0 L647.5,390.0" stroke="black" fill="none"/>
+<rect x="640.0" y="222.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="647.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="640.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="647.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="640.0" y="382.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="647.5" y="391.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M667.5,210.0 L667.5,370.0" stroke="black" fill="none"/>
+<rect x="660.0" y="202.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="667.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="660.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="667.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="660.0" y="362.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="667.5" y="371.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M687.5,190.0 L687.5,350.0" stroke="black" fill="none"/>
+<rect x="680.0" y="182.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="687.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="680.0" y="322.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="687.5" y="331.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="680.0" y="342.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="687.5" y="351.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="720.0" y="122.5" width="15" height="15" stroke="black" fill="black" />
+<text x="727.5" y="131.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="720.0" y="142.5" width="15" height="15" stroke="black" fill="black" />
+<text x="727.5" y="151.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="720.0" y="162.5" width="15" height="15" stroke="black" fill="black" />
+<text x="727.5" y="171.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="720.0" y="262.5" width="15" height="15" stroke="black" fill="black" />
+<text x="727.5" y="271.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="720.0" y="282.5" width="15" height="15" stroke="black" fill="black" />
+<text x="727.5" y="291.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="720.0" y="302.5" width="15" height="15" stroke="black" fill="black" />
+<text x="727.5" y="311.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<path d="M747.5,90.0 L747.5,170.0" stroke="black" fill="none"/>
+<rect x="740.0" y="82.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="747.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="740.0" y="102.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="747.5" y="111.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="740.0" y="162.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="747.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M747.5,230.0 L747.5,310.0" stroke="black" fill="none"/>
+<rect x="740.0" y="222.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="747.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="740.0" y="242.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="747.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="740.0" y="302.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="747.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M767.5,70.0 L767.5,150.0" stroke="black" fill="none"/>
+<rect x="760.0" y="62.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="767.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="760.0" y="102.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="767.5" y="111.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="760.0" y="142.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="767.5" y="151.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M767.5,210.0 L767.5,290.0" stroke="black" fill="none"/>
+<rect x="760.0" y="202.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="767.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="760.0" y="242.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="767.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="760.0" y="282.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="767.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M787.5,50.0 L787.5,130.0" stroke="black" fill="none"/>
+<rect x="780.0" y="42.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="787.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="780.0" y="102.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="787.5" y="111.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="780.0" y="122.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="787.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M787.5,190.0 L787.5,270.0" stroke="black" fill="none"/>
+<rect x="780.0" y="182.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="787.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="780.0" y="242.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="787.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="780.0" y="262.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="787.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="820.0" y="82.5" width="15" height="15" stroke="black" fill="black" />
+<text x="827.5" y="91.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="820.0" y="222.5" width="15" height="15" stroke="black" fill="black" />
+<text x="827.5" y="231.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<path d="M847.5,50.0 L847.5,90.0" stroke="black" fill="none"/>
+<rect x="840.0" y="42.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="847.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="840.0" y="62.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="847.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="840.0" y="82.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="847.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M847.5,190.0 L847.5,230.0" stroke="black" fill="none"/>
+<rect x="840.0" y="182.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="847.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="840.0" y="202.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="847.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="840.0" y="222.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="847.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="534.3" y="40.0" width="326.60000000000014" height="440.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="697.6" y="482.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Uncompute control products</text>
+<rect x="534.3" y="180.0" width="326.60000000000014" height="300.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="890.5" y="50.0" font-size="18" text-anchor="start" dominant-baseline="middle">a₀</text>
+<text x="890.5" y="70.0" font-size="18" text-anchor="start" dominant-baseline="middle">a₁</text>
+<text x="890.5" y="110.0" font-size="18" text-anchor="start" dominant-baseline="middle">a₂</text>
+<text x="890.5" y="190.0" font-size="18" text-anchor="start" dominant-baseline="middle">a₃</text>
+<text x="890.5" y="210.0" font-size="18" text-anchor="start" dominant-baseline="middle">a₄</text>
+<text x="890.5" y="250.0" font-size="18" text-anchor="start" dominant-baseline="middle">a₅</text>
+<text x="890.5" y="330.0" font-size="18" text-anchor="start" dominant-baseline="middle">a₆</text>
+</svg>

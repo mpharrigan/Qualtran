@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+
+import argparse
+import pathlib
+import sys
+
+src_path = pathlib.Path(__file__).parent.parent / 'src'
+assert src_path.exists()
+sys.path.append(str(src_path))
+
+from facto.t_decomp.exact_fidelity import high_precision_fidelity_analysis_of_phase_gradient_gate_sequence
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--seq',
+                        type=str,
+                        required=True,
+                        help="A sequence of characters encoding gates to apply.\n"
+                             "+- characters alternate between T_X^{+-1} and T_Z^{+-1}.\n"
+                             "\n"
+                             "Example: --seq '+-++-+-+----+++--+-++--+-+-+-++-++---++-+--+++-+--++HZ'")
+    parser.add_argument('--target_phase_gradient_qubit_index', type=int, default=None)
+    parser.add_argument('--digits_of_precision', type=int, default=1000)
+    args = parser.parse_args()
+    seq = args.seq
+    target_q = args.target_phase_gradient_qubit_index
+    if seq.startswith('+'):
+        seq = list(seq)
+    else:
+        seq = seq.split('+')
+
+    if target_q == -1:
+        qs = range(100)
+    else:
+        qs = [target_q]
+    best_infidelity = float('inf')
+    best_q = None
+    for q in qs:
+        infidelity = high_precision_fidelity_analysis_of_phase_gradient_gate_sequence(
+            phase_gradient_qubit_index=q,
+            gate_sequence=seq,
+            digits_of_precision=args.digits_of_precision,
+        )['float_infidelity']
+        if infidelity < best_infidelity:
+            best_infidelity = infidelity
+            best_q = q
+    if target_q == -1:
+        print(f"target = Z**(2**-{best_q}) |0>")
+        print(f"infidelity = {best_infidelity}")
+    else:
+        print(best_infidelity)
+
+
+if __name__ == '__main__':
+    main()

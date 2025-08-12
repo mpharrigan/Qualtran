@@ -1,0 +1,258 @@
+<svg viewBox="-100 -25 1127 380" font-family="Times New Roman" xmlns="http://www.w3.org/2000/svg">
+<path d="M14.5,50.0 L907.5,50.0" stroke="black" fill="none"/>
+<path d="M14.5,70.0 L907.5,70.0" stroke="black" fill="none"/>
+<path d="M14.5,90.0 L907.5,90.0" stroke="black" fill="none"/>
+<path d="M14.5,110.0 L907.5,110.0" stroke="black" fill="none"/>
+<path d="M14.5,130.0 L527.5,130.0 M527.5,129.0 L887.5,129.0 M527.5,131.0 L887.5,131.0" stroke="black" fill="none"/>
+<path d="M54.5,150.0 L907.5,150.0" stroke="black" fill="none"/>
+<path d="M54.5,170.0 L227.5,170.0 M227.5,169.0 L887.5,169.0 M227.5,171.0 L887.5,171.0" stroke="black" fill="none"/>
+<path d="M54.5,190.0 L227.5,190.0 M227.5,189.0 L887.5,189.0 M227.5,191.0 L887.5,191.0" stroke="black" fill="none"/>
+<path d="M54.5,210.0 L327.5,210.0 M327.5,209.0 L887.5,209.0 M327.5,211.0 L887.5,211.0" stroke="black" fill="none"/>
+<path d="M54.5,230.0 L327.5,230.0 M327.5,229.0 L887.5,229.0 M327.5,231.0 L887.5,231.0" stroke="black" fill="none"/>
+<path d="M54.5,250.0 L327.5,250.0 M327.5,249.0 L887.5,249.0 M327.5,251.0 L887.5,251.0" stroke="black" fill="none"/>
+<path d="M534.5,270.0 L687.5,270.0 M687.5,269.0 L887.5,269.0 M687.5,271.0 L887.5,271.0" stroke="black" fill="none"/>
+<path d="M534.5,290.0 L687.5,290.0 M687.5,289.0 L887.5,289.0 M687.5,291.0 L887.5,291.0" stroke="black" fill="none"/>
+<path d="M534.5,310.0 L687.5,310.0 M687.5,309.0 L887.5,309.0 M687.5,311.0 L887.5,311.0" stroke="black" fill="none"/>
+<text x="14.5" y="50.0" font-size="18" text-anchor="end" dominant-baseline="middle">a[k-1]</text>
+<text x="14.5" y="70.0" font-size="18" text-anchor="end" dominant-baseline="middle">b[k-1]</text>
+<text x="14.5" y="90.0" font-size="18" text-anchor="end" dominant-baseline="middle">(a+b)[k-1]</text>
+<text x="14.5" y="110.0" font-size="18" text-anchor="end" dominant-baseline="middle">a[k]</text>
+<text x="14.5" y="130.0" font-size="18" text-anchor="end" dominant-baseline="middle">b[k]</text>
+<text x="0" y="0" font-size="18" text-anchor="middle" dominant-baseline="hanging" transform="translate(52.5,170.0) rotate(90)">|CCZ⟩</text>
+<text x="54.5" y="210.0" font-size="18" text-anchor="end" dominant-baseline="middle">|i⟩</text>
+<text x="54.5" y="230.0" font-size="18" text-anchor="end" dominant-baseline="middle">|i⟩</text>
+<text x="54.5" y="250.0" font-size="18" text-anchor="end" dominant-baseline="middle">|i⟩</text>
+<path d="M67.5,150.0 L67.5,210.0" stroke="black" fill="none"/>
+<rect x="60.0" y="142.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="67.5" y="151.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="60.0" y="202.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="67.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M87.5,150.0 L87.5,230.0" stroke="black" fill="none"/>
+<rect x="80.0" y="142.5" width="15" height="55" stroke="black" fill="white"/>
+<text x="87.5" y="151.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="87.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="80.0" y="222.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="87.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M107.5,150.0 L107.5,250.0" stroke="black" fill="none"/>
+<rect x="100.0" y="142.5" width="15" height="35" stroke="black" fill="white"/>
+<text x="107.5" y="151.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="107.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="100.0" y="242.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="107.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M128.5,150.0 L128.5,150.0" stroke="black" fill="none"/>
+<path d="M126.5,150.0 L126.5,150.0" stroke="black" fill="none"/>
+<rect x="120.0" y="142.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="127.5" y="151.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">H</text>
+<rect x="34.3" y="140.0" width="106.60000000000001" height="120.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="87.6" y="262.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Semi-Auto</text>
+<text x="87.6" y="274.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Magic State</text>
+<path d="M167.5,50.0 L167.5,150.0" stroke="black" fill="none"/>
+<rect x="160.0" y="42.5" width="15" height="95" stroke="black" fill="white"/>
+<text x="167.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="167.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="167.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="167.5" y="111.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="167.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="160.0" y="142.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="167.5" y="151.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M187.5,70.0 L187.5,170.0" stroke="black" fill="none"/>
+<rect x="180.0" y="62.5" width="15" height="35" stroke="black" fill="white"/>
+<text x="187.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="187.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="180.0" y="162.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="187.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M207.5,50.0 L207.5,190.0" stroke="black" fill="none"/>
+<rect x="200.0" y="42.5" width="15" height="55" stroke="black" fill="white"/>
+<text x="207.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="207.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="200.0" y="182.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="207.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<rect x="220.0" y="162.5" width="15" height="15" stroke="black" fill="black" />
+<text x="227.5" y="171.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MZ</text>
+<rect x="220.0" y="182.5" width="15" height="15" stroke="black" fill="black" />
+<text x="227.5" y="191.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MZ</text>
+<rect x="154.3" y="40.0" width="86.6" height="220.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="197.60000000000002" y="262.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Interact</text>
+<path d="M268.5,170.0 L268.5,210.0" stroke="black" fill="none"/>
+<path d="M266.5,170.0 L266.5,210.0" stroke="black" fill="none"/>
+<rect x="260.0" y="162.5" width="15" height="35" stroke="none" fill="black"/>
+<text x="267.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="267.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="260.0" y="202.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="267.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">H</text>
+<path d="M288.5,170.0 L288.5,230.0" stroke="black" fill="none"/>
+<path d="M286.5,170.0 L286.5,230.0" stroke="black" fill="none"/>
+<rect x="280.0" y="162.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="287.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="280.0" y="222.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="287.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">H</text>
+<path d="M308.5,190.0 L308.5,250.0" stroke="black" fill="none"/>
+<path d="M306.5,190.0 L306.5,250.0" stroke="black" fill="none"/>
+<rect x="300.0" y="182.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="307.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="300.0" y="242.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="307.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">H</text>
+<rect x="320.0" y="202.5" width="15" height="15" stroke="black" fill="black" />
+<text x="327.5" y="211.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="320.0" y="222.5" width="15" height="15" stroke="black" fill="black" />
+<text x="327.5" y="231.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="320.0" y="242.5" width="15" height="15" stroke="black" fill="black" />
+<text x="327.5" y="251.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="254.3" y="160.0" width="86.60000000000002" height="100.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="297.6" y="262.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Reaction-Limited</text>
+<text x="297.6" y="274.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Basis Choice</text>
+<path d="M378.5,150.0 L378.5,170.0" stroke="black" fill="none"/>
+<path d="M376.5,150.0 L376.5,170.0" stroke="black" fill="none"/>
+<rect x="370.0" y="162.5" width="15" height="95" stroke="none" fill="black" stroke-dasharray="3 2"/>
+<text x="377.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="377.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="377.5" y="211.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="377.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="377.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="370.0" y="142.5" width="15" height="15" stroke="black" fill="white" stroke-dasharray="3 2"/>
+<text x="377.5" y="151.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<rect x="364.3" y="140.0" width="26.600000000000023" height="120.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="377.6" y="262.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Backdated</text>
+<text x="377.6" y="274.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">X Frame</text>
+<text x="457.5" y="46.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a[k-1]</text>
+<text x="457.5" y="66.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">b[k-1]</text>
+<text x="457.5" y="86.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">(a+b)[k-1]</text>
+<text x="457.5" y="106.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">a[k]</text>
+<text x="457.5" y="126.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">b[k]</text>
+<text x="457.5" y="146.0" font-size="12" text-anchor="middle" dominant-baseline="bottom">(a+b)[k]</text>
+<rect x="414.3" y="40.0" width="86.60000000000002" height="220.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="457.6" y="262.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Rest of Adder</text>
+<text x="457.6" y="274.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">(recurse with k+=1)</text>
+<text x="534.5" y="270.0" font-size="18" text-anchor="end" dominant-baseline="middle">|i⟩</text>
+<text x="534.5" y="290.0" font-size="18" text-anchor="end" dominant-baseline="middle">|i⟩</text>
+<text x="534.5" y="310.0" font-size="18" text-anchor="end" dominant-baseline="middle">|i⟩</text>
+<rect x="520.0" y="122.5" width="15" height="15" stroke="black" fill="black" />
+<text x="527.5" y="131.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<path d="M547.5,50.0 L547.5,270.0" stroke="black" fill="none"/>
+<rect x="540.0" y="42.5" width="15" height="35" stroke="black" fill="white"/>
+<text x="547.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="547.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="540.0" y="262.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="547.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M567.5,50.0 L567.5,290.0" stroke="black" fill="none"/>
+<rect x="560.0" y="42.5" width="15" height="55" stroke="black" fill="white"/>
+<text x="567.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="567.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="560.0" y="282.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="567.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<path d="M587.5,70.0 L587.5,310.0" stroke="black" fill="none"/>
+<rect x="580.0" y="62.5" width="15" height="35" stroke="black" fill="white"/>
+<text x="587.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="587.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="580.0" y="302.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="587.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">X</text>
+<rect x="514.3" y="40.0" width="86.60000000000014" height="280.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="557.6" y="322.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Start Uncomputing</text>
+<text x="557.6" y="334.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Input b</text>
+<path d="M628.5,130.0 L628.5,270.0" stroke="black" fill="none"/>
+<path d="M626.5,130.0 L626.5,270.0" stroke="black" fill="none"/>
+<rect x="620.0" y="122.5" width="15" height="15" stroke="none" fill="black"/>
+<text x="627.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="620.0" y="262.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="627.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">H</text>
+<path d="M648.5,130.0 L648.5,290.0" stroke="black" fill="none"/>
+<path d="M646.5,130.0 L646.5,290.0" stroke="black" fill="none"/>
+<rect x="640.0" y="122.5" width="15" height="55" stroke="none" fill="black"/>
+<text x="647.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="647.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="640.0" y="282.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="647.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">H</text>
+<path d="M668.5,130.0 L668.5,310.0" stroke="black" fill="none"/>
+<path d="M666.5,130.0 L666.5,310.0" stroke="black" fill="none"/>
+<rect x="660.0" y="122.5" width="15" height="75" stroke="none" fill="black"/>
+<text x="667.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="667.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="660.0" y="302.5" width="15" height="15" stroke="black" fill="white"/>
+<text x="667.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">H</text>
+<rect x="680.0" y="262.5" width="15" height="15" stroke="black" fill="black" />
+<text x="687.5" y="271.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="680.0" y="282.5" width="15" height="15" stroke="black" fill="black" />
+<text x="687.5" y="291.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="680.0" y="302.5" width="15" height="15" stroke="black" fill="black" />
+<text x="687.5" y="311.0" font-size="9" text-anchor="middle" dominant-baseline="middle" fill="white">MX</text>
+<rect x="614.3" y="120.0" width="86.60000000000014" height="200.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="657.6" y="322.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Reaction-Limited</text>
+<text x="657.6" y="334.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Basis Choice</text>
+<path d="M728.5,50.0 L728.5,170.0" stroke="black" fill="none"/>
+<path d="M726.5,50.0 L726.5,170.0" stroke="black" fill="none"/>
+<rect x="720.0" y="42.5" width="15" height="15" stroke="black" fill="white" stroke-dasharray="3 2"/>
+<text x="727.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="720.0" y="162.5" width="15" height="135" stroke="none" fill="black" stroke-dasharray="3 2"/>
+<text x="727.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="727.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="727.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="727.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M748.5,70.0 L748.5,190.0" stroke="black" fill="none"/>
+<path d="M746.5,70.0 L746.5,190.0" stroke="black" fill="none"/>
+<rect x="740.0" y="62.5" width="15" height="15" stroke="black" fill="white" stroke-dasharray="3 2"/>
+<text x="747.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="740.0" y="182.5" width="15" height="135" stroke="none" fill="black" stroke-dasharray="3 2"/>
+<text x="747.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="747.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="747.5" y="271.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="747.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M768.5,90.0 L768.5,130.0" stroke="black" fill="none"/>
+<path d="M766.5,90.0 L766.5,130.0" stroke="black" fill="none"/>
+<rect x="760.0" y="82.5" width="15" height="15" stroke="black" fill="white" stroke-dasharray="3 2"/>
+<text x="767.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="760.0" y="122.5" width="15" height="195" stroke="none" fill="black" stroke-dasharray="3 2"/>
+<text x="767.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="767.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="767.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="767.5" y="231.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="767.5" y="251.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="767.5" y="291.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<text x="767.5" y="311.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M788.5,110.0 L788.5,130.0" stroke="black" fill="none"/>
+<path d="M786.5,110.0 L786.5,130.0" stroke="black" fill="none"/>
+<rect x="780.0" y="102.5" width="15" height="15" stroke="black" fill="white" stroke-dasharray="3 2"/>
+<text x="787.5" y="111.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="780.0" y="122.5" width="15" height="15" stroke="none" fill="black" stroke-dasharray="3 2"/>
+<text x="787.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M808.5,130.0 L808.5,150.0" stroke="black" fill="none"/>
+<path d="M806.5,130.0 L806.5,150.0" stroke="black" fill="none"/>
+<rect x="800.0" y="142.5" width="15" height="15" stroke="black" fill="white" stroke-dasharray="3 2"/>
+<text x="807.5" y="151.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="800.0" y="122.5" width="15" height="15" stroke="none" fill="black" stroke-dasharray="3 2"/>
+<text x="807.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M828.5,50.0 L828.5,190.0" stroke="black" fill="none"/>
+<path d="M826.5,50.0 L826.5,190.0" stroke="black" fill="none"/>
+<rect x="820.0" y="42.5" width="15" height="35" stroke="black" fill="white" stroke-dasharray="3 2"/>
+<text x="827.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="827.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="820.0" y="162.5" width="15" height="15" stroke="none" fill="black" stroke-dasharray="3 2"/>
+<text x="827.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="820.0" y="182.5" width="15" height="15" stroke="none" fill="black" stroke-dasharray="3 2"/>
+<text x="827.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M848.5,50.0 L848.5,170.0" stroke="black" fill="none"/>
+<path d="M846.5,50.0 L846.5,170.0" stroke="black" fill="none"/>
+<rect x="840.0" y="42.5" width="15" height="55" stroke="black" fill="white" stroke-dasharray="3 2"/>
+<text x="847.5" y="51.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="847.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="840.0" y="122.5" width="15" height="15" stroke="none" fill="black" stroke-dasharray="3 2"/>
+<text x="847.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="840.0" y="162.5" width="15" height="15" stroke="none" fill="black" stroke-dasharray="3 2"/>
+<text x="847.5" y="171.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<path d="M868.5,70.0 L868.5,190.0" stroke="black" fill="none"/>
+<path d="M866.5,70.0 L866.5,190.0" stroke="black" fill="none"/>
+<rect x="860.0" y="62.5" width="15" height="35" stroke="black" fill="white" stroke-dasharray="3 2"/>
+<text x="867.5" y="71.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<text x="867.5" y="91.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="black">Z</text>
+<rect x="860.0" y="122.5" width="15" height="15" stroke="none" fill="black" stroke-dasharray="3 2"/>
+<text x="867.5" y="131.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="860.0" y="182.5" width="15" height="15" stroke="none" fill="black" stroke-dasharray="3 2"/>
+<text x="867.5" y="191.0" font-size="16" text-anchor="middle" dominant-baseline="middle" fill="white">C</text>
+<rect x="714.3000000000001" y="40.0" width="166.60000000000002" height="280.0" stroke="red" fill="none" stroke-dasharray="4 1" stroke-width="2" />
+<text x="797.6000000000001" y="322.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Backdated</text>
+<text x="797.6000000000001" y="334.0" font-size="12" text-anchor="middle" dominant-baseline="text-before-edge" fill="red">Z Frame</text>
+<text x="910.5" y="50.0" font-size="18" text-anchor="start" dominant-baseline="middle">a[k-1]</text>
+<text x="910.5" y="70.0" font-size="18" text-anchor="start" dominant-baseline="middle">b[k-1]</text>
+<text x="910.5" y="90.0" font-size="18" text-anchor="start" dominant-baseline="middle">(a+b)[k-1]</text>
+<text x="910.5" y="110.0" font-size="18" text-anchor="start" dominant-baseline="middle">a[k]</text>
+<text x="910.5" y="150.0" font-size="18" text-anchor="start" dominant-baseline="middle">(a+b)[k]</text>
+</svg>
