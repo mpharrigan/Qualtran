@@ -10,7 +10,7 @@ This repository contains code and assets created for the paper
 - [src/](src/): Source code.
     - [src/facto/](src/facto/): Python code directly related to the paper (e.g. simulating and estimating the cost of quantum factoring).
         - [src/facto/algorithm/](src/facto/algorithm/): Python code for simulating the approximate modular exponentiation.
-        - [src/facto/algorithm/](src/facto/operations/): Python code for testing and drawing some of the detailed mock-up figures in the appendix.
+        - [src/facto/operations/](src/facto/operations/): Python code for testing and drawing some of the detailed mock-up figures in the appendix.
         - [src/facto/t_decomp/](src/facto/t_decomp/): C++ and Python code for generating/verifying decompositions of rotations into Clifford+T.
     - [src/scatter_script/](src/scatter_script/): Python library for writing and testing nearly-classical quantum computations.
     - [src/gen/](src/gen/): Python library for produce QEC circuits.
