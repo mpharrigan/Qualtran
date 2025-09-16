@@ -389,17 +389,6 @@ class ClassicalSimState:
             return self.finalize()
 
 
-@attrs.frozen
-class MeasurementPhase:
-    """Sentinel value to return from `Bloq.basis_state_phase` if a phase should be applied based on a measurement outcome.
-
-    This can be used in special circumstances to verify measurement-based uncomputation (MBUC).
-    """
-
-    reg_name: str
-    idx: Tuple[int, ...] = ()
-
-
 class PhasedClassicalSimState(ClassicalSimState):
     """A mutable class for classically simulating composite bloqs with phase tracking.
 
@@ -432,7 +421,7 @@ class PhasedClassicalSimState(ClassicalSimState):
         signature: 'Signature',
         binst_graph: nx.DiGraph,
         vals: Mapping[str, Union[sympy.Symbol, ClassicalValT]],
-        rnd_handler: '_RandomValHandler',
+        *,
         phase: complex = 1.0,
         random_handler: '_ClassicalValHandler',
     ):
