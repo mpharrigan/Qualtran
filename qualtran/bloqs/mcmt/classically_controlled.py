@@ -26,6 +26,12 @@ if TYPE_CHECKING:
 
 @attrs.frozen
 class ClassicallyControlled(HasClassicalBranches, _ControlledBase):  # type: ignore[misc]
+    """Bloq that represents a gate controlled by a classical value.
+
+    Args:
+        subbloq: Bloq representing the gate or operations to be controlled
+        ctrl_spec: Control value specification.
+    """
 
     subbloq: 'Bloq'
     ctrl_spec: 'CtrlSpec'

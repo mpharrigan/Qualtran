@@ -286,6 +286,13 @@ class XGate(Bloq):
 
 @frozen
 class MeasX(Bloq):
+    """Measure a qubit in the X basis.
+
+    Registers:
+        q [LEFT]: The qubit to measure.
+        c [RIGHT]: The classical measurement result.
+    """
+
     @cached_property
     def signature(self) -> 'Signature':
         return Signature(
