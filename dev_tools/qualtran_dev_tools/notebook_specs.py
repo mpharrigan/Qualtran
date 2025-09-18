@@ -95,6 +95,7 @@ import qualtran.bloqs.gf_arithmetic.gf2_square
 import qualtran.bloqs.gf_poly_arithmetic.gf2_poly_add
 import qualtran.bloqs.gf_poly_arithmetic.gf2_poly_add_k
 import qualtran.bloqs.gf_poly_arithmetic.gf_poly_split_and_join
+import qualtran.bloqs.hamiltonian_simulation.guided_hamiltonian
 import qualtran.bloqs.hamiltonian_simulation.hamiltonian_simulation_by_gqsp
 import qualtran.bloqs.mcmt.and_bloq
 import qualtran.bloqs.mcmt.controlled_via_and
@@ -107,6 +108,7 @@ import qualtran.bloqs.multiplexers.apply_lth_bloq
 import qualtran.bloqs.multiplexers.black_box_select
 import qualtran.bloqs.multiplexers.select_base
 import qualtran.bloqs.multiplexers.select_pauli_lcu
+import qualtran.bloqs.optimization.k_xor_sat
 import qualtran.bloqs.optimization.k_xor_sat.kikuchi_guiding_state
 import qualtran.bloqs.phase_estimation.lp_resource_state
 import qualtran.bloqs.phase_estimation.qubitization_qpe
@@ -209,6 +211,15 @@ BASIC_GATES: List[NotebookSpecV2] = [
             qualtran.bloqs.basic_gates.x_basis._PLUS_EFFECT_DOC,
             qualtran.bloqs.basic_gates.x_basis._MINUS_STATE_DOC,
             qualtran.bloqs.basic_gates.x_basis._MINUS_EFFECT_DOC,
+        ],
+    ),
+    NotebookSpecV2(
+        title='Measurement',
+        module=qualtran.bloqs.basic_gates.z_basis,
+        path_stem='measurement',
+        bloq_specs=[
+            qualtran.bloqs.basic_gates.z_basis._MEASURE_Z_DOC,
+            qualtran.bloqs.basic_gates.x_basis._MEASURE_X_DOC,
         ],
     ),
     NotebookSpecV2(
@@ -583,6 +594,7 @@ GF_ARITHMETIC = [
             qualtran.bloqs.gf_arithmetic.gf2_multiplication._MULTIPLY_POLY_BY_ONE_PLUS_XK_DOC,
             qualtran.bloqs.gf_arithmetic.gf2_multiplication._BINARY_POLYNOMIAL_MULTIPLICATION_DOC,
             qualtran.bloqs.gf_arithmetic.gf2_multiplication._GF2_SHIFT_RIGHT_MOD_DOC,
+            qualtran.bloqs.gf_arithmetic.gf2_multiplication._GF2_SHIFT_LEFT_MOD_DOC,
             qualtran.bloqs.gf_arithmetic.gf2_multiplication._GF2_MUL_DOC,
         ],
     ),
@@ -838,6 +850,12 @@ BLOCK_ENCODING: List[NotebookSpecV2] = [
 # -----   Optimization   ---------------------------------------------------
 # --------------------------------------------------------------------------
 OPTIMIZATION: List[NotebookSpecV2] = [
+    # -----   Algorithm  ------------------------------------------
+    NotebookSpecV2(
+        title='kXOR: Instance load Oracles',
+        module=qualtran.bloqs.optimization.k_xor_sat.load_kxor_instance,
+        bloq_specs=[qualtran.bloqs.optimization.k_xor_sat.load_kxor_instance._LOAD_INSTANCE_DOC],
+    ),
     NotebookSpecV2(
         title='Planted Noisy kXOR - Kikuchi Guiding State',
         module=qualtran.bloqs.optimization.k_xor_sat.kikuchi_guiding_state,
@@ -845,7 +863,28 @@ OPTIMIZATION: List[NotebookSpecV2] = [
             qualtran.bloqs.optimization.k_xor_sat.kikuchi_guiding_state._SIMPLE_GUIDING_STATE_DOC,
             qualtran.bloqs.optimization.k_xor_sat.kikuchi_guiding_state._GUIDING_STATE_DOC,
         ],
-    )
+    ),
+    NotebookSpecV2(
+        title='Planted Noisy kXOR: Kikuchi Adjacency List',
+        module=qualtran.bloqs.optimization.k_xor_sat.kikuchi_adjacency_list,
+        bloq_specs=[
+            qualtran.bloqs.optimization.k_xor_sat.kikuchi_adjacency_list._KIKUCHI_NONZERO_INDEX_DOC
+        ],
+    ),
+    NotebookSpecV2(
+        title='Planted Noisy kXOR: Kikuchi Adjacency Matrix',
+        module=qualtran.bloqs.optimization.k_xor_sat.kikuchi_adjacency_matrix,
+        bloq_specs=[
+            qualtran.bloqs.optimization.k_xor_sat.kikuchi_adjacency_matrix._KIKUCHI_MATRIX_ENTRY_DOC
+        ],
+    ),
+    NotebookSpecV2(
+        title='Planted Noisy kXOR: Block-encoding the Kikuchi Matrix',
+        module=qualtran.bloqs.optimization.k_xor_sat.kikuchi_block_encoding,
+        bloq_specs=[
+            qualtran.bloqs.optimization.k_xor_sat.kikuchi_block_encoding._KIKUCHI_HAMILTONIAN_DOC
+        ],
+    ),
 ]
 
 # --------------------------------------------------------------------------
@@ -952,6 +991,14 @@ OTHER: List[NotebookSpecV2] = [
         module=qualtran.bloqs.hamiltonian_simulation.hamiltonian_simulation_by_gqsp,
         bloq_specs=[
             qualtran.bloqs.hamiltonian_simulation.hamiltonian_simulation_by_gqsp._Hamiltonian_Simulation_by_GQSP_DOC
+        ],
+    ),
+    NotebookSpecV2(
+        title='Guided Hamiltonian Problem',
+        module=qualtran.bloqs.hamiltonian_simulation.guided_hamiltonian,
+        bloq_specs=[
+            qualtran.bloqs.hamiltonian_simulation.guided_hamiltonian._GUIDED_HAMILTONIAN_DOC,
+            qualtran.bloqs.hamiltonian_simulation.guided_hamiltonian._GUIDED_HAMILTONIAN_PHASE_ESTIMATION_DOC,
         ],
     ),
 ]
