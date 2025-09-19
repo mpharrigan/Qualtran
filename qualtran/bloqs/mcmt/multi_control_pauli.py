@@ -190,6 +190,11 @@ class MultiControlX(MultiControlPauli):
     def __attrs_post_init__(self):
         pass
 
+    @classmethod
+    def from_soqs(cls, controls, target):
+        n = len(controls)
+        return cls(cvs=[0] * n)
+
     def adjoint(self) -> 'Bloq':
         return self
 

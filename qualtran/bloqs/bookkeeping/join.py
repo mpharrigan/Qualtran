@@ -16,6 +16,7 @@ from typing import cast, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 import numpy as np
 from attrs import field, frozen
+from numpy.typing import NDArray
 
 from qualtran import (
     Bloq,
@@ -24,19 +25,20 @@ from qualtran import (
     CompositeBloq,
     ConnectionT,
     DecomposeTypeError,
+    QAny,
     QBit,
     QDType,
     QUInt,
     Register,
     Side,
     Signature,
+    Soquet,
 )
 from qualtran.bloqs.bookkeeping._bookkeeping_bloq import _BookkeepingBloq
 from qualtran.drawing import directional_text_box, Text, WireSymbol
 
 if TYPE_CHECKING:
     import quimb.tensor as qtn
-    from numpy.typing import NDArray
     from pennylane.operation import Operation
     from pennylane.wires import Wires
 
@@ -65,6 +67,12 @@ class Join(_BookkeepingBloq):
                 Register('reg', self.dtype, shape=tuple(), side=Side.RIGHT),
             ]
         )
+
+    @classmethod
+    def from_soqs(cls, dtype: QDType = None, *, reg: NDArray[Soquet]):
+        if dtype is None:
+            dtype = QAny(len(reg))
+        return cls(dtype=dtype)
 
     @dtype.validator
     def _validate_dtype(self, attribute, value):

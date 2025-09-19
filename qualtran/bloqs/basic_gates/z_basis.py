@@ -167,6 +167,10 @@ class ZeroState(_ZVector):
     def __init__(self, n: int = 1):
         self.__attrs_init__(bit=False, state=True, n=n)
 
+    @classmethod
+    def from_soqs(cls):
+        return cls()
+
     def adjoint(self) -> 'Bloq':
         return ZeroEffect()
 
