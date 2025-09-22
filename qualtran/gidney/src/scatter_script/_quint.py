@@ -1,17 +1,19 @@
 from __future__ import annotations
 
+import logging
 import random
-from typing import Iterator, Sequence, Iterable, TYPE_CHECKING
+from typing import Iterable, Iterator, Sequence, TYPE_CHECKING
 
 import numpy as np
-
 from scatter_script._cost_key import CostKey
 from scatter_script._rvalue_multi_int import rvalue_multi_int
-from scatter_script._util import slice_int, phase_correction_table_for_qrom_uncompute
+from scatter_script._util import phase_correction_table_for_qrom_uncompute, slice_int
 
 if TYPE_CHECKING:
-    from scatter_script._qpu import QPU
     from scatter_script._lookup import Lookup, LookupCmp
+    from scatter_script._qpu import QPU
+
+log = logging.getLogger(__name__)
 
 
 class quint:
@@ -293,9 +295,11 @@ class quint:
         return self._length
 
     def __getitem__(self, item: int | slice) -> quint:
+        log.debug("quint __getitem__")
         if isinstance(item, int):
             # @mph what is this? bounds checking?
             idx = range(self._length)[item]
+
             return quint(
                 buffer=self._buffer,
                 offset=self._offset + idx,
