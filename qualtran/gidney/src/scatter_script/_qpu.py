@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import collections
+import logging
 import random
-from typing import Sequence, Any
+from typing import Any, Sequence
 
 import numpy as np
-
 from scatter_script._cost_key import CostKey
-from scatter_script._quint import quint, rvalue_multi_int
 from scatter_script._lookup import Lookup, LookupCmp
+from scatter_script._quint import quint, rvalue_multi_int
 from scatter_script._util import phase_correction_table_for_qrom_uncompute
+
+log = logging.getLogger(__name__)
 
 
 class QPU:
@@ -374,6 +376,7 @@ class QPU:
         Returns:
             The allocated register.
         """
+        log.info("Alloc quint length=%d val=%s", length, val)
         if val and scatter:
             raise ValueError(f"Can't specify both {val=} and {scatter=}.")
         if scatter_range is not None and not scatter:
