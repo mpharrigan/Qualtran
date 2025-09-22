@@ -16,10 +16,11 @@
 from functools import cached_property
 from typing import Tuple, TYPE_CHECKING, Union
 
+import attrs
 from attrs import field, frozen
 
 if TYPE_CHECKING:
-    from qualtran import Bloq, Register
+    from qualtran import Bloq, BloqBuilder, Register
 
 
 @frozen
@@ -103,6 +104,7 @@ class Soquet:
         for i, shape in zip(value, self.reg.shape):
             if i >= shape:
                 raise ValueError(f"Bad index {i} for {self.reg}.")
+        return value
 
     def pretty(self) -> str:
         label = self.reg.name
@@ -112,6 +114,12 @@ class Soquet:
 
     def __str__(self) -> str:
         return f'{self.binst}.{self.pretty()}'
+
+
+@attrs.mutable
+class _QVar:
+    soquet: Soquet
+    bb: 'BloqBuilder' = field(kw_only=True)
 
 
 LeftDangle = DanglingT("LeftDangle")

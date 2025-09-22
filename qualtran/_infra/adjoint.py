@@ -57,15 +57,15 @@ def _adjoint_cbloq(cbloq: 'CompositeBloq') -> 'CompositeBloq':
     # First, we reverse the registers to initialize the BloqBuilder.
     old_signature = cbloq.signature
     new_signature = cbloq.signature.adjoint()
-    old_i_soqs = [_reg_to_soq(RightDangle, reg) for reg in old_signature.rights()]
-    new_i_soqs = [_reg_to_soq(LeftDangle, reg) for reg in new_signature.lefts()]
-    soq_map: List[Tuple[SoquetT, SoquetT]] = list(zip(old_i_soqs, new_i_soqs))
 
     # Then we reverse the order of subbloqs
     bloqnections = reversed(list(cbloq.iter_bloqnections()))
 
     # And add subbloq.adjoint() back in for each subbloq.
     bb, _ = BloqBuilder.from_signature(new_signature)
+    old_i_soqs = [_reg_to_soq(RightDangle, reg) for reg in old_signature.rights()]
+    new_i_soqs = [bb._reg_to_qvar(LeftDangle, reg) for reg in new_signature.lefts()]
+    soq_map: List[Tuple[SoquetT, '_QVar']] = list(zip(old_i_soqs, new_i_soqs))
     for binst, preds, succs in bloqnections:
         # Instead of get_me returning the right element of a predecessor connection,
         # it's the left element of a successor connection.

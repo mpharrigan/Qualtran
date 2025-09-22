@@ -18,6 +18,7 @@ from typing import Dict, TYPE_CHECKING
 from attrs import frozen
 
 from qualtran import Bloq, BloqBuilder, Signature, Soquet
+from qualtran._infra.quantum_graph import _QVar
 from qualtran.bloqs.for_testing.atom import TestAtom
 
 if TYPE_CHECKING:
@@ -47,7 +48,7 @@ class TestParallelCombo(Bloq):
         return Signature.build(reg=3)
 
     def build_composite_bloq(self, bb: 'BloqBuilder', reg: 'SoquetT') -> Dict[str, 'SoquetT']:
-        assert isinstance(reg, Soquet)
+        assert isinstance(reg, _QVar)
         reg = bb.split(reg)
         for i in range(len(reg)):
             reg[i] = bb.add(TestAtom(), q=reg[i])
