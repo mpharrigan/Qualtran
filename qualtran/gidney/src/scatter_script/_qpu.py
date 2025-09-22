@@ -361,6 +361,7 @@ class QPU:
 
         Args:
             length: The number of qubits in the register. The register is typically interpreted as
+                @mph 2s complement doesn't make sense for a quint.
                 a 2s complement unsigned integer, meaning it can represent integers in
                 [0, 2**length).
             val: Defaults to None (unused). A deterministic initial value of the register, that will
