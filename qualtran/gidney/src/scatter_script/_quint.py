@@ -294,6 +294,7 @@ class quint:
 
     def __getitem__(self, item: int | slice) -> quint:
         if isinstance(item, int):
+            # @mph what is this? bounds checking?
             idx = range(self._length)[item]
             return quint(
                 buffer=self._buffer,
