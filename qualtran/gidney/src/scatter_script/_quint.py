@@ -27,6 +27,7 @@ class quint:
         self._buffer = buffer
         self._offset = offset
         self._length = length
+        # @mph what if I make a quint myself with a bogus parrent and alloc_id? will that be caught?
         self._parent = parent
         self._alloc_id = alloc_id
 
