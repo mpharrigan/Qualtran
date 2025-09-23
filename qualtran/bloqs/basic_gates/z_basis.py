@@ -50,7 +50,7 @@ from qualtran import (
     Side,
     Signature,
     Soquet,
-    SoquetT,
+    SoquetT, QInt,
 )
 from qualtran.bloqs.bookkeeping import ArbitraryClifford
 from qualtran.drawing import Circle, directional_text_box, Text, TextBox, WireSymbol
@@ -474,7 +474,7 @@ class _IntVector(Bloq):
     def dtype(self) -> QDType:
         if self.bitsize == 1:
             return QBit()
-        return QAny(self.bitsize)
+        return QInt(self.bitsize)
 
     @cached_property
     def signature(self) -> Signature:

@@ -1,0 +1,58 @@
+#  Copyright 2025 Google LLC
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+from typing import Union, Sequence, Protocol
+
+from qualtran import BloqBuilder, Bloq, Register
+from qualtran._infra.quantum_graph import _QVar
+
+
+class _TracingBloqFuncT(Protocol):
+    def __call__(self, bb: 'BloqBuilder', /, **kwargs: Union[_QVar, Register]): ...
+
+
+class _TracingBloqIntermediate:
+    def __init__(self, func):
+        self.func = func
+
+    def _prep(self, **kwargs):
+        sub_bb = BloqBuilder()
+        soqs = {}
+        classical_kwargs = {}
+
+        # TODO: inspect.signature.bind
+        for k, v in kwargs.items():
+            # v is either a qvar or a register ... they both have dtype
+            if isinstance(v, Register):
+                soqs[k] = sub_bb.in_register(name=k, dtype=v.dtype)
+            elif isinstance(v, _QVar):
+                soqs[k] = sub_bb.in_register(name=k, dtype=v.dtype)
+            else:
+                classical_kwargs[k] = v
+
+        soqs = self.func(sub_bb, **classical_kwargs, **soqs)
+        return sub_bb.finalize(**soqs), set(soqs.keys())
+
+    def make(self, **kwargs):
+        bloq, _ = self._prep(**kwargs)
+        return bloq
+
+    def __call__(
+        self, bb: 'BloqBuilder', /, **kwargs: Union[_QVar, Register]
+    ) -> Union['Bloq', _QVar, Sequence[_QVar]]:
+        bloq, soqnames = self._prep(**kwargs)
+        return bb.add(bloq, **{k: v for k, v in kwargs.items() if k in soqnames})
+
+
+def bloq_compile(func: _TracingBloqFuncT) -> _TracingBloqIntermediate:
+    return _TracingBloqIntermediate(func)

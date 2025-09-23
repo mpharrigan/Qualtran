@@ -63,8 +63,8 @@ class PrepareIdentity(PrepareOracle):
         return ()
 
     def build_composite_bloq(self, bb: 'BloqBuilder', **soqs: Soquet) -> Dict[str, Soquet]:
-        for label, soq in soqs.items():
-            soqs[label] = bb.add(Identity(soq.reg.bitsize), q=soq)
+        for reg in self.selection_registers:
+            soqs[reg.name] = bb.add(Identity(reg.bitsize), q=soqs[reg.name])
         return soqs
 
     def adjoint(self) -> 'PrepareIdentity':

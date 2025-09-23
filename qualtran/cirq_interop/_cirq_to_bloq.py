@@ -47,6 +47,7 @@ from qualtran._infra.gate_with_registers import (
     get_named_qubits,
     split_qubits,
 )
+from qualtran._infra.quantum_graph import _QVar
 from qualtran.cirq_interop._interop_qubit_manager import InteropQubitManager
 from qualtran.cirq_interop.t_complexity_protocol import _from_directly_countable_cirq
 from qualtran.resource_counting import CostKey, GateCounts, QECGatesCost
@@ -312,9 +313,9 @@ def _ensure_in_reg_exists(
             # Cast single QBit registers to the appropriate single-bit register dtype.
             err_msg = (
                 "Found non-QBit type register which shouldn't happen: "
-                f"{soq.reg.name} {soq.reg.dtype}"
+                f"{soq}"
             )
-            assert isinstance(soq.reg.dtype, QBit), err_msg
+            assert isinstance(soq.soquet.reg.dtype, QBit), err_msg
             if not isinstance(in_reg.dtype, QBit):
                 qreg_to_qvar[in_reg] = bb.add(Cast(QBit(), in_reg.dtype), reg=soq)
             else:
@@ -517,7 +518,7 @@ def cirq_optree_to_cbloq(
         if reg.name not in in_quregs:
             raise ValueError(f"Register {reg.name} from signature must be present in in_quregs.")
         soqs = initial_soqs[reg.name]
-        if isinstance(soqs, Soquet):
+        if isinstance(soqs, (Soquet, _QVar)):
             soqs = np.array(soqs)
         if in_quregs[reg.name].shape != soqs.shape:
             raise ValueError(
@@ -567,10 +568,10 @@ def cirq_optree_to_cbloq(
     final_soqs_dict = _gather_input_soqs(
         bb, {reg.name: out_quregs[reg.name] for reg in signature.rights()}, qreg_to_qvar
     )
-    final_soqs_set = set(soq for soqs in final_soqs_dict.values() for soq in soqs.flatten())
+    final_soqs_set = set(soq.soquet for soqs in final_soqs_dict.values() for soq in soqs.flatten())
     # 5. Free all dangling Soquets which are not part of the final soquets set.
     for qvar in qreg_to_qvar.values():
-        if qvar not in final_soqs_set:
+        if qvar.soquet not in final_soqs_set:
             bb.free(qvar)
     return bb.finalize(**final_soqs_dict)
 

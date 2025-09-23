@@ -420,7 +420,7 @@ class AddK(Bloq):
     def __attrs_post_init__(self):
         if not isinstance(self.dtype, (QInt, QUInt, QMontgomeryUInt)):
             raise NotImplementedError(
-                "Only QInt, QUInt and QMontgomeryUInt types are supported for composite addition."
+                f"Only QInt, QUInt and QMontgomeryUInt types are supported for composite addition, not {self.dtype}"
             )
 
     @cached_property

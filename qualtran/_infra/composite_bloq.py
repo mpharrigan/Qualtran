@@ -1450,3 +1450,26 @@ class BloqBuilder:
             dtype = QAny(n)
 
         return self.add(Join(dtype=dtype), reg=soqs)
+
+    def in_register(self, name: str, dtype: QCDType):
+        return self.add_register_from_dtype(name, dtype)
+
+    def alloc_qint(self, k: int, bitsize:int):
+        from qualtran.bloqs.basic_gates import IntState
+        return self.add(IntState(val=k, bitsize=bitsize))
+
+    def alloc_qbit(self, k: int):
+        from qualtran.bloqs.basic_gates import ZeroState, OneState
+        if k == 0:
+            return self.add(ZeroState())
+        elif k == 1:
+            return self.add(OneState())
+        raise ValueError(f"Bad qubit value: {k}")
+
+    def free_qubit(self, q, k: int):
+        from qualtran.bloqs.basic_gates import ZeroEffect, OneEffect
+        if k == 0:
+            return self.add(ZeroEffect(), q=q)
+        elif k == 1:
+            return self.add(OneEffect(), q=q)
+        raise ValueError(f"Bad qubit value: {k}")

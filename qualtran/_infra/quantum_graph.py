@@ -121,6 +121,30 @@ class _QVar:
     soquet: Soquet
     bb: 'BloqBuilder' = field(kw_only=True)
 
+    @property
+    def dtype(self):
+        return self.soquet.reg.dtype
+
+    def __invert__(self) -> '_QVar':
+        import qualtran.dtype as qdt
+        from qualtran.bloqs.arithmetic import BitwiseNot
+        from qualtran.bloqs.basic_gates import XGate
+
+        if self.dtype == qdt.QBit():
+            return self.bb.add(XGate(), q=self)
+        return self.bb.add(BitwiseNot(self.dtype), x=self)
+
+    def __add__(self, other):
+        from qualtran.bloqs.arithmetic import Add
+        if isinstance(other, _QVar):
+            return self.bb.add(Add(a_dtype=self.dtype, b_dtype=other.dtype), a=self, b=other)
+
+    def __iadd__(self, other):
+        if isinstance(other, int):
+            from qualtran.bloqs.arithmetic import AddK
+            return self.bb.add(AddK(dtype=self.dtype, k=other), x=self)
+        return NotImplemented
+
 
 LeftDangle = DanglingT("LeftDangle")
 RightDangle = DanglingT("RightDangle")
