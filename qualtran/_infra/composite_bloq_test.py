@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from functools import cached_property
-from typing import assert_type, cast, Dict, List, Tuple
+from typing import cast, Dict, List, Tuple
 
 import attrs
 import networkx as nx
@@ -21,6 +21,7 @@ import numpy as np
 import pytest
 import sympy
 from numpy.typing import NDArray
+from typing_extensions import assert_type
 
 import qualtran.testing as qlt_testing
 from qualtran import (

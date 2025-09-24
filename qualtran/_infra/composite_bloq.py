@@ -73,6 +73,7 @@ class SoquetT(Protocol):
         ...     first_soq = soq_or_soqs.item()
 
     """
+
     @property
     def shape(self) -> Tuple[int, ...]: ...
 
