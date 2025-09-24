@@ -153,7 +153,7 @@ class Subtract(Bloq):
 
     def build_call_graph(self, ssa: 'SympySymbolAllocator') -> 'BloqCountDictT':
         delta = self.b_dtype.bitsize - self.a_dtype.bitsize
-        costs = {
+        costs: Dict[Bloq, int] = {
             OnEach(self.b_dtype.bitsize, XGate()): 3,
             Add(QUInt(self.b_dtype.bitsize), QUInt(self.b_dtype.bitsize)): 1,
         }
@@ -196,7 +196,7 @@ class Subtract(Bloq):
                 a_split[delta], prefix = bb.add(
                     MultiTargetCNOT(delta), control=a_split[delta], targets=prefix
                 )
-            prefix = bb.add(Cast(prefix.reg.dtype, QAny(delta)), reg=prefix)
+            prefix = bb.add(Cast(prefix.dtype, QAny(delta)), reg=prefix)
             bb.free(prefix)
             a = bb.join(a_split[delta:], QUInt(self.a_dtype.bitsize))
         a = bb.add(Cast(QUInt(self.a_dtype.bitsize), self.a_dtype), reg=a)

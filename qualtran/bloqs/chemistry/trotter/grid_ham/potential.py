@@ -27,7 +27,6 @@ from qualtran import (
     QAny,
     Register,
     Signature,
-    Soquet,
     SoquetT,
 )
 from qualtran._infra.data_types import BQUInt
@@ -93,7 +92,7 @@ class PairPotential(Bloq):
     def build_composite_bloq(
         self, bb: BloqBuilder, *, system_i: SoquetT, system_j: SoquetT
     ) -> Dict[str, SoquetT]:
-        if isinstance(system_i, Soquet) or isinstance(system_j, Soquet):
+        if not (BloqBuilder.is_ndarray(system_i) and BloqBuilder.is_ndarray(system_j)):
             raise ValueError("system_i and system_j must be numpy arrays of Soquet")
         # compute r_i - r_j
         # r_i + (-r_j), in practice we need to flip the sign bit, but this is just 3 cliffords.
@@ -120,8 +119,8 @@ class PairPotential(Bloq):
         qrom_anc_c2 = bb.allocate(self.poly_bitsize)
         qrom_anc_c3 = bb.allocate(self.poly_bitsize)
         cast = Cast(
-            inp_dtype=sos.reg.dtype,
-            out_dtype=BQUInt(sos.reg.dtype.bitsize, iteration_length=len(self.qrom_data[0])),
+            inp_dtype=sos.dtype,
+            out_dtype=BQUInt(sos.dtype.bitsize, iteration_length=len(self.qrom_data[0])),
         )
         sos = bb.add(cast, reg=sos)
         qrom_bloq = QROM(
@@ -227,7 +226,7 @@ class PotentialEnergy(Bloq):
         return super().wire_symbol(reg, idx)
 
     def build_composite_bloq(self, bb: BloqBuilder, *, system: SoquetT) -> Dict[str, SoquetT]:
-        if isinstance(system, Soquet):
+        if not BloqBuilder.is_ndarray(system):
             raise ValueError("system must be a numpy array of Soquet")
         bitsize = (self.num_grid - 1).bit_length() + 1
         ij_pairs = np.triu_indices(self.num_elec, k=1)
