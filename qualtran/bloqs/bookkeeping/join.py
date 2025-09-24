@@ -68,12 +68,6 @@ class Join(_BookkeepingBloq):
             ]
         )
 
-    @classmethod
-    def from_soqs(cls, dtype: QDType = None, *, reg: NDArray[Soquet]):
-        if dtype is None:
-            dtype = QAny(len(reg))
-        return cls(dtype=dtype)
-
     @dtype.validator
     def _validate_dtype(self, attribute, value):
         if value.is_symbolic():

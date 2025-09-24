@@ -56,7 +56,7 @@ def _add_classical_bras(
         if reg.shape:
             reg_vals = np.asarray(vals[reg.name])
             reg_name = soqs[reg.name]
-            if not SoquetT.is_ndarray(reg_name):
+            if not BloqBuilder.is_ndarray(reg_name):
                 raise ValueError(f'soqs {reg.name} must be a numpy array: {soqs[reg.name]}')
             for idx in reg.all_idxs():
                 bb.add(IntEffect(val=reg_vals[idx], bitsize=reg.bitsize), val=reg_name[idx])

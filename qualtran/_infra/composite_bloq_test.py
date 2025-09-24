@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from functools import cached_property
-from typing import Dict, List, Tuple, assert_type
+from typing import Dict, List, Tuple
 
 import attrs
 import networkx as nx
@@ -21,6 +21,7 @@ import numpy as np
 import pytest
 import sympy
 from numpy.typing import NDArray
+from typing_extensions import assert_type
 
 import qualtran.testing as qlt_testing
 from qualtran import (
@@ -144,11 +145,7 @@ def test_map_soqs():
     bb, _ = BloqBuilder.from_signature(cbloq.signature)
     bb._i = 100  # pylint: disable=protected-access
 
-    # TODO: factor out
-    soq_map: List[Tuple[SoquetT, 'QVarT']] = [
-        (_reg_to_soq(LeftDangle, reg), bb._reg_to_qvar(LeftDangle, reg))
-        for reg in cbloq.signature.lefts()
-    ]
+    soq_map = bb.initial_soq_map(cbloq.signature.lefts())
 
     for binst, in_soqs, old_out_soqs in cbloq.iter_bloqsoqs():
         if binst.i == 0:
@@ -685,6 +682,7 @@ def test_can_tell_individual_from_ndsoquet():
     single_soq_unwarp = single_soq.item()
     assert single_soq_unwarp == s1
 
+    # A single soquet wrapped in a 0-dim ndarray is ok if you call `item()`.
     single_soq2: SoquetT = np.asarray(s1)
     assert_type(single_soq2, SoquetT)
     assert not single_soq2.shape

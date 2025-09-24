@@ -48,7 +48,7 @@ class TestParallelCombo(Bloq):
         return Signature.build(reg=3)
 
     def build_composite_bloq(self, bb: 'BloqBuilder', reg: 'SoquetT') -> Dict[str, 'SoquetT']:
-        assert isinstance(reg, _QVar)
+        assert BloqBuilder.is_single(reg)
         reg = bb.split(reg)
         for i in range(len(reg)):
             reg[i] = bb.add(TestAtom(), q=reg[i])

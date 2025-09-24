@@ -195,8 +195,8 @@ class AndIdentity(Bloq):
     def build_composite_bloq(
         self, bb: 'BloqBuilder', q0: 'SoquetT', q1: 'SoquetT'
     ) -> Dict[str, 'SoquetT']:
-        assert SoquetT.is_single(q0)
-        assert SoquetT.is_single(q1)
+        assert BloqBuilder.is_single(q0)
+        assert BloqBuilder.is_single(q1)
         qs, trg = bb.add(And(), ctrl=[q0, q1])
         q0, q1 = bb.add(And(uncompute=True), ctrl=qs, target=trg)
         return {'q0': q0, 'q1': q1}

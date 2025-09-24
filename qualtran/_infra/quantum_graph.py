@@ -114,7 +114,7 @@ class _Soquet:
     def shape(self) -> Tuple[int, ...]:
         return ()
 
-    def item(self, *args):
+    def item(self, *args) -> '_Soquet':
         if args:
             raise ValueError("Tried to index into a single soquet.")
         return self

@@ -42,7 +42,9 @@ class TestCastToFrom(Bloq):
             [Register('a', QUInt(self.bitsize)), Register('b', QFxp(self.bitsize, self.bitsize))]
         )
 
-    def build_composite_bloq(self, bb: 'BloqBuilder', *, a, b) -> Dict[str, 'Soquet']:
+    def build_composite_bloq(
+        self, bb: 'BloqBuilder', *, a: 'Soquet', b: 'Soquet'
+    ) -> Dict[str, 'Soquet']:
         cast = Cast(QFxp(self.bitsize, self.bitsize), QUInt(self.bitsize))
         b = bb.add(cast, reg=b)
         assert isinstance(a.dtype, (QInt, QUInt, QMontgomeryUInt))

@@ -78,11 +78,6 @@ class Split(_BookkeepingBloq):
         if value.is_symbolic():
             raise ValueError(f"{self} cannot have a symbolic data type.")
 
-    @classmethod
-    def from_soqs(cls, *, reg: Soquet):
-        assert isinstance(reg.reg.dtype, QDType), reg.reg.dtype
-        return cls(reg.reg.dtype)
-
     def decompose_bloq(self) -> 'CompositeBloq':
         raise DecomposeTypeError(f'{self} is atomic')
 
