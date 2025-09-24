@@ -59,6 +59,20 @@ if TYPE_CHECKING:
 
 
 class SoquetT(Protocol):
+    """Either a Soquet or an array thereof.
+
+    To narrow objects of this type, use `BloqBuilder.is_single(soq)` and/or
+    `BloqBuilder.is_ndarray(soqs)`.
+
+    Example:
+        >>> soq_or_soqs: SoquetT
+        ... if BloqBuilder.is_ndarray(soq_or_soqs):
+        ...     first_soq = soq_or_soqs.reshape(-1).item(0)
+        ... else:
+        ...     # Note: `.item()` raises if not a single item.
+        ...     first_soq = soq_or_soqs.item()
+
+    """
     @property
     def shape(self) -> Tuple[int, ...]: ...
 
