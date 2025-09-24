@@ -35,10 +35,8 @@ from numpy.typing import NDArray
 
 from ..symbolics import is_symbolic, prod, Shaped, SymbolicInt
 from .bloq import Bloq, DecomposeNotImplementedError, DecomposeTypeError
-from .composite_bloq import _reg_to_soq
 from .data_types import CDType, QBit, QCDType, QDType
 from .gate_with_registers import GateWithRegisters
-from .quantum_graph import LeftDangle
 from .registers import Register, Side, Signature
 
 if TYPE_CHECKING:
@@ -646,12 +644,7 @@ class Controlled(_ControlledBase):
             cbloq = self.subbloq.decompose_bloq()
 
         ctrl_soqs: List['SoquetT'] = [initial_soqs[creg_name] for creg_name in self.ctrl_reg_names]
-
-        # TODO factor
-        soq_map: List[Tuple[SoquetT, 'QVarT']] = [
-            (_reg_to_soq(LeftDangle, reg), bb._reg_to_qvar(LeftDangle, reg))
-            for reg in cbloq.signature.lefts()
-        ]
+        soq_map = bb.initial_soq_map(cbloq.signature.lefts())
 
         for binst, in_soqs, old_out_soqs in cbloq.iter_bloqsoqs():
             in_soqs = bb.map_soqs(in_soqs, soq_map)

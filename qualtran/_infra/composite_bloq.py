@@ -13,6 +13,7 @@
 #  limitations under the License.
 
 """Classes for building and manipulating `CompositeBloq`."""
+from abc import ABCMeta
 from collections.abc import Hashable
 from functools import cached_property
 from typing import (
@@ -33,6 +34,11 @@ from typing import (
     TYPE_CHECKING,
     TypeVar,
     Union,
+    Protocol,
+    TypeAlias,
+    TypeGuard,
+    runtime_checkable,
+    _ProtocolMeta,
 )
 
 import attrs
@@ -40,6 +46,7 @@ import networkx as nx
 import numpy as np
 import sympy
 from numpy.typing import NDArray
+from typing_extensions import TypeIs
 
 from .binst_graph_iterators import greedy_topological_sort
 from .bloq import Bloq, DecomposeNotImplementedError, DecomposeTypeError
@@ -51,7 +58,7 @@ from .quantum_graph import (
     DanglingT,
     LeftDangle,
     RightDangle,
-    Soquet,
+    _Soquet,
 )
 from .registers import Register, Side, Signature
 
@@ -65,12 +72,61 @@ if TYPE_CHECKING:
     from qualtran.symbolics import SymbolicInt
 
 # NDArrays must be bound to np.generic
-_SoquetType = TypeVar('_SoquetType', bound=np.generic)
+# _SoquetType = TypeVar('_SoquetType', bound=np.generic)
 
-SoquetT = Union[Soquet, NDArray[_SoquetType]]
-"""A `Soquet` or array of soquets."""
+# SoquetT = Union[Soquet, NDArray[_SoquetType]]
+# """A `Soquet` or array of soquets."""
 
-SoquetInT = Union[Soquet, NDArray[_SoquetType], Sequence[Soquet]]
+
+class QVar(Protocol): ...
+
+
+class _NoSoquetIsInstanceMeta(_ProtocolMeta):
+    def __instancecheck__(cls, instance):
+        raise TypeError(
+            "Do not rely on isinstance(..., Soquet). "
+            "To distinguish a single soquet quantum variable "
+            "from an n-dimensional array of them, use "
+            "`SoquetT.is_single(soq)` and/or `SoquetT.is_ndarray(soq)`."
+        )
+        return isinstance(instance, _Soquet)
+
+
+class Soquet(Protocol, metaclass=_NoSoquetIsInstanceMeta):
+    def __hash__(self): ...
+
+
+class QVarT(Protocol):
+    @property
+    def shape(self) -> Tuple[int, ...]: ...
+
+    def item(self) -> Soquet: ...
+
+    @staticmethod
+    def is_single(x: 'QVarT') -> TypeGuard['QVar']:
+        return x.shape == ()
+
+    @staticmethod
+    def is_ndarray(x: 'QVarT') -> TypeGuard[NDArray]:
+        return x.shape != ()
+
+
+class SoquetT(Protocol):
+    @property
+    def shape(self) -> Tuple[int, ...]: ...
+
+    def item(self) -> Soquet: ...
+
+    @staticmethod
+    def is_single(x: 'SoquetT') -> TypeGuard['Soquet']:
+        return x.shape == ()
+
+    @staticmethod
+    def is_ndarray(x: 'SoquetT') -> TypeGuard['NDArray']:
+        return x.shape != ()
+
+
+SoquetInT = Union[Soquet, NDArray, Sequence[Soquet]]
 """A soquet or array-like of soquets.
 
 This type alias is used for input argument to parts of the library that are more
@@ -715,8 +771,8 @@ def _flatten_soquet_collection(vals: Iterable[SoquetT]) -> List[Soquet]:
     """
     soqvals = []
     for soq_or_arr in vals:
-        if isinstance(soq_or_arr, Soquet):
-            soqvals.append(soq_or_arr)
+        if not soq_or_arr.shape:
+            soqvals.append(soq_or_arr.item())
         else:
             soqvals.extend(soq_or_arr.reshape(-1))
     return soqvals
@@ -766,14 +822,14 @@ def _reg_to_soq(binst: Union[BloqInstance, DanglingT], reg: Register) -> SoquetT
     if reg.shape:
         soqs = np.empty(reg.shape, dtype=object)
         for ri in reg.all_idxs():
-            soq = Soquet(binst, reg, idx=ri)
+            soq = _Soquet(binst, reg, idx=ri)
             soqs[ri] = soq
         return soqs
 
     # Annoyingly, this must be a special case.
     # Otherwise, x[i] = thing will nest *array* objects because our ndarray's type is
     # 'object'. This wouldn't happen--for example--with an integer array.
-    soq = Soquet(binst, reg)
+    soq = _Soquet(binst, reg)
     return soq
 
 
@@ -850,10 +906,10 @@ def _map_soqs(
     """
 
     # First: flatten out any numpy arrays
-    flat_soq_map: Dict[Soquet, _QVar] = {}
+    flat_soq_map: Dict[_Soquet, _QVar] = {}
     for old_soqs, new_soqs in soq_map:
-        if isinstance(old_soqs, Soquet):
-            assert isinstance(new_soqs, _QVar), new_soqs
+        if not old_soqs.shape:
+            assert not new_soqs.shape, new_soqs
             flat_soq_map[old_soqs] = new_soqs
             continue
 
@@ -872,9 +928,9 @@ def _map_soqs(
     vmap = np.vectorize(_map_soq, otypes=[object])
 
     def _map_soqs(soqs: SoquetT) -> '_QVarT':
-        if isinstance(soqs, Soquet):
-            return _map_soq(soqs)
-        return vmap(soqs)
+        if soqs.shape:
+            return vmap(soqs)
+        return _map_soq(soqs.item())
 
     return {name: _map_soqs(soqs) for name, soqs in soqs.items()}
 
@@ -1103,7 +1159,7 @@ class BloqBuilder:
     def _make_qvar(
         self, binst: Union[BloqInstance, DanglingT], reg: Register, idx: Tuple[int, ...] = ()
     ):
-        return _QVar(Soquet(binst, reg, idx), bb=self)
+        return _QVar(_Soquet(binst, reg, idx), bb=self)
 
     def _reg_to_qvar(self, binst: Union[BloqInstance, DanglingT], reg: Register) -> 'QVarT':
         """Create the soquet or array of soquets for a register.
@@ -1123,7 +1179,7 @@ class BloqBuilder:
         if reg.shape:
             soqs = np.empty(reg.shape, dtype=object)
             for ri in reg.all_idxs():
-                soq = _QVar(Soquet(binst, reg, idx=ri), bb=self)
+                soq = _QVar(_Soquet(binst, reg, idx=ri), bb=self)
                 soqs[ri] = soq
                 self._available.add(soq.soquet)
             return soqs
@@ -1131,7 +1187,7 @@ class BloqBuilder:
         # Annoyingly, this must be a special case.
         # Otherwise, x[i] = thing will nest *array* objects because our ndarray's type is
         # 'object'. This wouldn't happen--for example--with an integer array.
-        soq = _QVar(Soquet(binst, reg), bb=self)
+        soq = _QVar(_Soquet(binst, reg), bb=self)
         self._available.add(soq.soquet)
         return soq
 
@@ -1285,6 +1341,17 @@ class BloqBuilder:
             registers=bloq.signature.lefts(), in_soqs=in_soqs, debug_str=str(bloq), func=_add
         )
         yield from ((reg.name, self._reg_to_qvar(binst, reg)) for reg in bloq.signature.rights())
+
+    def initial_soq_map(self, lefts: Iterable[Register]) -> List[Tuple[SoquetT, 'QVarT']]:
+        """The initial mapping from old soquets to new soquets known to this bloq builder.
+
+        This is used in patterns when you plan on calling `BloqBuilder.map_soqs` to add
+        connections from an "old" composite bloq to the "new" bloq we're currently building.
+        """
+        soq_map: List[Tuple[SoquetT, 'QVarT']] = [
+            (_reg_to_soq(LeftDangle, reg), self._reg_to_qvar(LeftDangle, reg)) for reg in lefts
+        ]
+        return soq_map
 
     def add_from(self, bloq: Bloq, **in_soqs: SoquetInT) -> Tuple[SoquetT, ...]:
         """Add all the sub-bloqs from `bloq` to the compute graph.
@@ -1454,12 +1521,14 @@ class BloqBuilder:
     def in_register(self, name: str, dtype: QCDType):
         return self.add_register_from_dtype(name, dtype)
 
-    def alloc_qint(self, k: int, bitsize:int):
+    def alloc_qint(self, k: int, bitsize: int):
         from qualtran.bloqs.basic_gates import IntState
+
         return self.add(IntState(val=k, bitsize=bitsize))
 
     def alloc_qbit(self, k: int):
-        from qualtran.bloqs.basic_gates import ZeroState, OneState
+        from qualtran.bloqs.basic_gates import OneState, ZeroState
+
         if k == 0:
             return self.add(ZeroState())
         elif k == 1:
@@ -1467,7 +1536,8 @@ class BloqBuilder:
         raise ValueError(f"Bad qubit value: {k}")
 
     def free_qubit(self, q, k: int):
-        from qualtran.bloqs.basic_gates import ZeroEffect, OneEffect
+        from qualtran.bloqs.basic_gates import OneEffect, ZeroEffect
+
         if k == 0:
             return self.add(ZeroEffect(), q=q)
         elif k == 1:

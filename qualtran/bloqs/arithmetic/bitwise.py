@@ -221,6 +221,10 @@ class BitwiseNot(Bloq):
     def signature(self) -> 'Signature':
         return Signature.build_from_dtypes(x=self.dtype)
 
+    @classmethod
+    def qcall(cls, x: '_QVar'):
+        return x.bb.add(cls(dtype=x.dtype), x=x)
+
     def adjoint(self) -> 'BitwiseNot':
         return self
 

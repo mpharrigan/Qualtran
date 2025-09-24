@@ -24,6 +24,7 @@ from qualtran import (
     BloqBuilder,
     BloqDocSpec,
     QAny,
+    QBit,
     QInt,
     QMontgomeryUInt,
     QUInt,
@@ -158,8 +159,9 @@ class Subtract(Bloq):
             Add(QUInt(self.b_dtype.bitsize), QUInt(self.b_dtype.bitsize)): 1,
         }
         if delta:
+            delta_type = QAny(delta) if delta > 1 else QBit()
             costs[Allocate(QAny(delta))] = 1
-            costs[Free(QAny(delta))] = 1
+            costs[Free(delta_type)] = 1
             if isinstance(self.a_dtype, QInt):
                 costs[MultiTargetCNOT(delta)] = 2
         return costs
@@ -196,7 +198,6 @@ class Subtract(Bloq):
                 a_split[delta], prefix = bb.add(
                     MultiTargetCNOT(delta), control=a_split[delta], targets=prefix
                 )
-            prefix = bb.add(Cast(prefix.reg.dtype, QAny(delta)), reg=prefix)
             bb.free(prefix)
             a = bb.join(a_split[delta:], QUInt(self.a_dtype.bitsize))
         a = bb.add(Cast(QUInt(self.a_dtype.bitsize), self.a_dtype), reg=a)

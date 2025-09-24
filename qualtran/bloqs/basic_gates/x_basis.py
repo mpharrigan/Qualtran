@@ -218,6 +218,10 @@ class XGate(Bloq):
     def signature(self) -> 'Signature':
         return Signature.build(q=1)
 
+    @classmethod
+    def qcall(cls, q: '_QVar'):
+        return q.bb.add(cls(), q=q)
+
     def adjoint(self) -> 'Bloq':
         return self
 

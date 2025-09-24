@@ -46,6 +46,7 @@ from qualtran import (
     Soquet,
 )
 from qualtran._infra.composite_bloq import _binst_to_cxns, _get_soquet
+from qualtran._infra.quantum_graph import _Soquet
 
 if TYPE_CHECKING:
     from qualtran import CompositeBloq, QCDType
@@ -98,11 +99,11 @@ def _get_in_vals(
 ) -> ClassicalValT:
     """Pluck out the correct values from `soq_assign` for `reg` on `binst`."""
     if not reg.shape:
-        return soq_assign[Soquet(binst, reg)]
+        return soq_assign[_Soquet(binst, reg)]
 
     arg = _empty_ndarray_from_reg(reg)
     for idx in reg.all_idxs():
-        soq = Soquet(binst, reg, idx=idx)
+        soq = _Soquet(binst, reg, idx=idx)
         arg[idx] = soq_assign[soq]
 
     return arg
@@ -284,12 +285,12 @@ class ClassicalSimState:
                 reg.dtype.assert_valid_classical_val_array(val, debug_str)
 
                 for idx in reg.all_idxs():
-                    soq = Soquet(binst, reg, idx=idx)
+                    soq = _Soquet(binst, reg, idx=idx)
                     self.soq_assign[soq] = val[idx]
 
             elif isinstance(val, sympy.Expr):
                 # `val` is symbolic
-                soq = Soquet(binst, reg)
+                soq = _Soquet(binst, reg)
                 self.soq_assign[soq] = val  # type: ignore[assignment]
 
             else:
@@ -298,7 +299,7 @@ class ClassicalSimState:
                     val = self._random_handler.get(binst, val)
 
                 reg.dtype.assert_valid_classical_val(val, debug_str)
-                soq = Soquet(binst, reg)
+                soq = _Soquet(binst, reg)
                 self.soq_assign[soq] = val
 
     def _binst_on_classical_vals(self, binst, in_vals) -> None:

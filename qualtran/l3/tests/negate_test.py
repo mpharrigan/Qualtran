@@ -23,19 +23,18 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import TYPE_CHECKING, Dict
+from typing import Dict, TYPE_CHECKING
 
 import attrs
 
 import qualtran as qlt
 import qualtran.dtype as qdt
-
 from qualtran.l3.tracing import bloq_compile
-from qualtran.l3.tracing_bloqs import bitwise_not, add_k
+from qualtran.l3.tracing_bloqs import add_k, bitwise_not
 
 if TYPE_CHECKING:
-    from qualtran._infra.quantum_graph import _QVar as QVar
     from qualtran import BloqBuilder
+    from qualtran._infra.quantum_graph import _QVar as QVar
 
 
 @bloq_compile
@@ -43,6 +42,25 @@ def negate(bb: 'BloqBuilder', x: 'QVar'):
     x = ~x
     x += 1
     return {'x': x}
+
+
+@attrs.frozen
+class Negate(qlt.Bloq):
+    n: int
+
+    @property
+    def signature(self) -> 'qlt.Signature':
+        return qlt.Signature([qlt.Register('x', qdt.QInt(self.n))])
+
+    def decompose_bloq(self) -> 'qlt.CompositeBloq':
+        return negate.make_from_signature(self.signature)
+
+
+def test_negate_bloq():
+    bloq = Negate(32)
+    assert bloq.signature.n_bits() == 32
+    (x,) = bloq.call_classically(x=-6)
+    assert x == 6
 
 
 @bloq_compile
@@ -56,7 +74,7 @@ def test_negate_program():
     bloq = negate_program.make(n=8)
     assert bloq.signature.n_bits() == 8
     (x,) = bloq.call_classically()
-    assert x == -5
+    assert x == qdt.QUInt(8).from_bits(qdt.QInt(8).to_bits(-5))  # TODO IntState
 
 
 @attrs.frozen

@@ -11,9 +11,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Union, Sequence, Protocol
+from typing import Protocol, Sequence, Union
 
-from qualtran import BloqBuilder, Bloq, Register
+from qualtran import Bloq, BloqBuilder, Register, Signature
 from qualtran._infra.quantum_graph import _QVar
 
 
@@ -26,7 +26,7 @@ class _TracingBloqIntermediate:
         self.func = func
 
     def _prep(self, **kwargs):
-        sub_bb = BloqBuilder()
+        bb = BloqBuilder()
         soqs = {}
         classical_kwargs = {}
 
@@ -34,14 +34,19 @@ class _TracingBloqIntermediate:
         for k, v in kwargs.items():
             # v is either a qvar or a register ... they both have dtype
             if isinstance(v, Register):
-                soqs[k] = sub_bb.in_register(name=k, dtype=v.dtype)
+                soqs[k] = bb.in_register(name=k, dtype=v.dtype)
             elif isinstance(v, _QVar):
-                soqs[k] = sub_bb.in_register(name=k, dtype=v.dtype)
+                soqs[k] = bb.in_register(name=k, dtype=v.dtype)
             else:
                 classical_kwargs[k] = v
 
-        soqs = self.func(sub_bb, **classical_kwargs, **soqs)
-        return sub_bb.finalize(**soqs), set(soqs.keys())
+        soqs = self.func(bb, **classical_kwargs, **soqs)
+        return bb.finalize(**soqs), set(soqs.keys())
+
+    def make_from_signature(self, signature: 'Signature', **classical_kwargs):
+        bb, soqs = BloqBuilder.from_signature(signature)
+        soqs = self.func(bb, **classical_kwargs, **soqs)
+        return bb.finalize(**soqs)
 
     def make(self, **kwargs):
         bloq, _ = self._prep(**kwargs)

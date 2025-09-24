@@ -47,6 +47,7 @@ from qualtran import (
     Soquet,
 )
 from qualtran._infra.composite_bloq import _binst_to_cxns
+from qualtran._infra.quantum_graph import _Soquet
 
 
 @frozen
@@ -224,11 +225,11 @@ def _get_in_vals(
 ) -> Union[RegPosition, NDArray[RegPosition]]:
     """Pluck out the correct values from `soq_assign` for `reg` on `binst`."""
     if not reg.shape:
-        return soq_assign[Soquet(binst, reg)]
+        return soq_assign[_Soquet(binst, reg)]
 
     arg = np.empty(reg.shape, dtype=object)
     for idx in reg.all_idxs():
-        soq = Soquet(binst, reg, idx=idx)
+        soq = _Soquet(binst, reg, idx=idx)
         arg[idx] = soq_assign[soq]
 
     return arg
@@ -265,10 +266,10 @@ def _update_assign_from_vals(
                 )
 
             for idx in reg.all_idxs():
-                soq = Soquet(binst, reg, idx=idx)
+                soq = _Soquet(binst, reg, idx=idx)
                 soq_assign[soq] = attrs.evolve(arr[idx], seq_x=seq_x, topo_gen=topo_gen)
         else:
-            soq = Soquet(binst, reg)
+            soq = _Soquet(binst, reg)
             assert isinstance(arr, RegPosition)
             soq_assign[soq] = attrs.evolve(arr, seq_x=seq_x, topo_gen=topo_gen)
 

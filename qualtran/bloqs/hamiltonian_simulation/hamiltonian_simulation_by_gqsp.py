@@ -175,11 +175,11 @@ class HamiltonianSimulationByGQSP(Bloq):
         soqs, state_prep_ancilla = self.__add_prepare(bb, soqs, state_prep_ancilla, adjoint=True)
 
         for soq in state_prep_ancilla.values():
-            if isinstance(soq, Soquet):
-                bb.free(soq)
-            else:
-                for soq_element in soq:
+            if isinstance(soq, np.ndarray):
+                for soq_element in soq.reshape(-1):
                     bb.free(cast(Soquet, soq_element))
+            else:
+                bb.free(soq)
 
         return soqs
 

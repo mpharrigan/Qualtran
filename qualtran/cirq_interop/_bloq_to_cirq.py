@@ -40,6 +40,7 @@ from qualtran._infra.gate_with_registers import (
     merge_qubits,
     split_qubits,
 )
+from qualtran._infra.quantum_graph import _Soquet
 from qualtran.cirq_interop._cirq_to_bloq import _QReg, CirqQuregInT, CirqQuregT
 from qualtran.cirq_interop._interop_qubit_manager import InteropQubitManager
 from qualtran.drawing import Circle, LarrowTextBox, ModPlus, RarrowTextBox, TextBox, WireSymbol
@@ -255,7 +256,7 @@ def _cbloq_to_cirq_circuit(
         for k, v in cirq_quregs.items()
     }
     qvar_to_qreg: Dict[Soquet, _QReg] = {
-        Soquet(LeftDangle, idx=idx, reg=reg): np.asarray(cirq_quregs[reg.name])[idx]
+        _Soquet(LeftDangle, idx=idx, reg=reg): np.asarray(cirq_quregs[reg.name])[idx]
         for reg in signature.lefts()
         for idx in reg.all_idxs()
     }
@@ -276,7 +277,7 @@ def _cbloq_to_cirq_circuit(
     def _f_quregs(reg: Register) -> CirqQuregT:
         ret = np.empty(reg.shape + (reg.bitsize,), dtype=object)
         for idx in reg.all_idxs():
-            soq = Soquet(RightDangle, idx=idx, reg=reg)
+            soq = _Soquet(RightDangle, idx=idx, reg=reg)
             ret[idx] = qvar_to_qreg[soq].qubits
         return ret
 

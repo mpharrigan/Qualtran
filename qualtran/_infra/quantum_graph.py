@@ -20,7 +20,7 @@ import attrs
 from attrs import field, frozen
 
 if TYPE_CHECKING:
-    from qualtran import Bloq, BloqBuilder, Register
+    from qualtran import Bloq, BloqBuilder, Register, QCDType
 
 
 @frozen
@@ -73,7 +73,7 @@ def _to_tuple(x: Union[int, Tuple[int, ...]]) -> Tuple[int, ...]:
 
 
 @frozen
-class Soquet:
+class _Soquet:
     """One half of a connection.
 
     Users should not construct these directly. They should be marshalled
@@ -106,6 +106,19 @@ class Soquet:
                 raise ValueError(f"Bad index {i} for {self.reg}.")
         return value
 
+    @property
+    def dtype(self) -> 'QCDType':
+        return self.reg.dtype
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        return ()
+
+    def item(self, *args):
+        if args:
+            raise ValueError("Tried to index into a single soquet.")
+        return self
+
     def pretty(self) -> str:
         label = self.reg.name
         if len(self.idx) > 0:
@@ -118,12 +131,21 @@ class Soquet:
 
 @attrs.mutable
 class _QVar:
-    soquet: Soquet
+    soquet: _Soquet
     bb: 'BloqBuilder' = field(kw_only=True)
 
     @property
     def dtype(self):
         return self.soquet.reg.dtype
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        return ()
+
+    def item(self, *args):
+        if args:
+            raise ValueError("Tried to index into a single soquet.")
+        return self
 
     def __invert__(self) -> '_QVar':
         import qualtran.dtype as qdt
@@ -131,17 +153,20 @@ class _QVar:
         from qualtran.bloqs.basic_gates import XGate
 
         if self.dtype == qdt.QBit():
-            return self.bb.add(XGate(), q=self)
-        return self.bb.add(BitwiseNot(self.dtype), x=self)
+            return XGate.qcall(self)
+
+        return BitwiseNot.qcall(self)
 
     def __add__(self, other):
         from qualtran.bloqs.arithmetic import Add
+
         if isinstance(other, _QVar):
             return self.bb.add(Add(a_dtype=self.dtype, b_dtype=other.dtype), a=self, b=other)
 
     def __iadd__(self, other):
         if isinstance(other, int):
             from qualtran.bloqs.arithmetic import AddK
+
             return self.bb.add(AddK(dtype=self.dtype, k=other), x=self)
         return NotImplemented
 
@@ -165,8 +190,8 @@ class Connection:
     is directed.
     """
 
-    left: Soquet
-    right: Soquet
+    left: _Soquet
+    right: _Soquet
 
     @cached_property
     def shape(self) -> int:

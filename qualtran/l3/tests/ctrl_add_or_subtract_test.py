@@ -11,8 +11,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from qualtran import BloqBuilder, dtype as qdt, Register
-
+from qualtran import BloqBuilder
+from qualtran import dtype as qdt
+from qualtran import Register
 from qualtran.l3.tracing import bloq_compile
 from qualtran.l3.tracing_bloqs import bitwise_not, c_bitwise_not
 

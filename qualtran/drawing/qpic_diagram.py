@@ -27,6 +27,7 @@ from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple, TYPE_CHECKING, Union
 
 from qualtran import DanglingT, LeftDangle, QBit, RightDangle, Side, Soquet
+from qualtran._infra.quantum_graph import _Soquet
 from qualtran.drawing.musical_score import (
     _soq_to_symb,
     Circle,
@@ -150,7 +151,7 @@ class QpicCircuit:
     def add_left_wires_for_signature(self, signature: 'Signature') -> None:
         for reg in signature.lefts():
             for idx in reg.all_idxs():
-                self._alloc_wire_for_soq(Soquet(LeftDangle, reg, idx))
+                self._alloc_wire_for_soq(_Soquet(LeftDangle, reg, idx))
         # Add horizontal blank space since left dangling wires would have annotations
         # corresponding to their QDType, which takes up horizontal space.
         self.wires += ['LABEL length=10']
@@ -161,7 +162,7 @@ class QpicCircuit:
             if reg.side & Side.LEFT:
                 continue
             for idx in reg.all_idxs():
-                soq = Soquet(RightDangle, reg, idx)
+                soq = _Soquet(RightDangle, reg, idx)
                 wire_name = self.wire_manager.soq_to_wirename(self.soq_map[soq])
                 self.gates += [f'{wire_name} / {_format_label_text(soq.pretty(), scale=0.5)} ']
                 add_space = True

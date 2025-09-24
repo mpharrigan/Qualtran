@@ -42,12 +42,10 @@ class TestCastToFrom(Bloq):
             [Register('a', QUInt(self.bitsize)), Register('b', QFxp(self.bitsize, self.bitsize))]
         )
 
-    def build_composite_bloq(
-        self, bb: 'BloqBuilder', *, a: 'Soquet', b: 'Soquet'
-    ) -> Dict[str, 'Soquet']:
-        cast = Cast(b.reg.dtype, a.reg.dtype)
+    def build_composite_bloq(self, bb: 'BloqBuilder', *, a, b) -> Dict[str, 'Soquet']:
+        cast = Cast(QFxp(self.bitsize, self.bitsize), QUInt(self.bitsize))
         b = bb.add(cast, reg=b)
-        assert isinstance(a.reg.dtype, (QInt, QUInt, QMontgomeryUInt))
-        a, b = bb.add(Add(a.reg.dtype), a=a, b=b)
+        assert isinstance(a.dtype, (QInt, QUInt, QMontgomeryUInt))
+        a, b = bb.add(Add(QUInt(self.bitsize)), a=a, b=b)
         b = bb.add(cast.adjoint(), reg=b)
         return {'a': a, 'b': b}
