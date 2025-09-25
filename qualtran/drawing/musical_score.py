@@ -520,7 +520,7 @@ def directional_text_box(text: str, side: Side) -> WireSymbol:
     raise ValueError(f"Unknown side: {side}")
 
 
-def _soq_to_symb(soq: Soquet) -> WireSymbol:
+def _soq_to_symb(soq: _Soquet) -> WireSymbol:
     """Return a pleasing symbol for the given soquet."""
 
     # Use text (with no box) for dangling register identifiers.

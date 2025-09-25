@@ -30,9 +30,9 @@ from qualtran.linalg.polynomial.jacobi_anger_approximations import (
 )
 from qualtran.linalg.polynomial.qsp_testing import scale_down_to_qsp_polynomial
 from qualtran.symbolics import is_symbolic, Shaped, SymbolicFloat, SymbolicInt
+from qualtran import BloqBuilder, SoquetT
 
 if TYPE_CHECKING:
-    from qualtran import BloqBuilder, SoquetT
     from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
 
 

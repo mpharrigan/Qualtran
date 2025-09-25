@@ -274,7 +274,7 @@ def _connection_to_proto(cxn: Connection, bloq_to_id: Dict[Bloq, int]):
     )
 
 
-def _soquet_to_proto(soq: Soquet, bloq_to_id: Dict[Bloq, int]) -> bloq_pb2.Soquet:
+def _soquet_to_proto(soq: _Soquet, bloq_to_id: Dict[Bloq, int]) -> bloq_pb2.Soquet:
     if isinstance(soq.binst, DanglingT):
         return bloq_pb2.Soquet(
             dangling_t=repr(soq.binst), register=registers.register_to_proto(soq.reg), index=soq.idx

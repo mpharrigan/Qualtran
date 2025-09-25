@@ -331,7 +331,7 @@ class LinearCombination(BlockEncoding):
 
         # partition system register of Select into system, ancilla, resource of block encoding
         be_soqs = bb.add_d(be_part, x=select_out_soqs.pop("system"))
-        out: Dict[str, SoquetT] = {"system": be_soqs.pop("system")}
+        out = {"system": be_soqs.pop("system")}
 
         if self.is_controlled:
             out["ctrl"] = select_out_soqs.pop("ctrl")
@@ -340,7 +340,7 @@ class LinearCombination(BlockEncoding):
         anc_soqs = {"selection": prep_adj_soqs.pop("selection")}
         if self.be_ancilla_bitsize > 0:
             anc_soqs["ancilla"] = be_soqs.pop("ancilla")
-        out["ancilla"] = cast(Soquet, bb.add(evolve(anc_part, partition=False), **anc_soqs))
+        out["ancilla"] = bb.add(evolve(anc_part, partition=False), **anc_soqs)
 
         # merge resource registers of block encoding and Prepare oracle
         if self.resource_bitsize > 0:
@@ -349,7 +349,7 @@ class LinearCombination(BlockEncoding):
                 res_soqs["resource"] = be_soqs.pop("resource")
             if self.prepare.junk_bitsize > 0:
                 res_soqs["prepare_junk"] = prep_adj_soqs.pop("junk")
-            out["resource"] = cast(Soquet, bb.add(evolve(res_part, partition=False), **res_soqs))
+            out["resource"] = bb.add(evolve(res_part, partition=False), **res_soqs)
 
         return out
 

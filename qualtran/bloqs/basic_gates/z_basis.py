@@ -472,7 +472,7 @@ class _IntVector(Bloq):
     def dtype(self) -> QDType:
         if self.bitsize == 1:
             return QBit()
-        return QAny(self.bitsize)
+        return QUInt(self.bitsize)
 
     @cached_property
     def signature(self) -> Signature:

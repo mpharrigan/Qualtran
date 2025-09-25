@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from functools import cached_property
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, cast
 
 import attrs
 import networkx as nx
@@ -150,8 +150,8 @@ def test_map_soqs():
     for binst, in_soqs, old_out_soqs in cbloq.iter_bloqsoqs():
         if binst.i == 0:
             assert bb.map_soqs(in_soqs, soq_map) == {
-                'ctrl': _QVar(in_soqs['ctrl'], bb=bb),
-                'target': _QVar(in_soqs['target'], bb=bb),
+                'ctrl': _QVar(in_soqs['ctrl'].item(), bb=bb),
+                'target': _QVar(in_soqs['target'].item(), bb=bb),
             }
         elif binst.i == 1:
             for k, val in bb.map_soqs(in_soqs, soq_map).items():
@@ -660,10 +660,10 @@ def test_get_soquet():
 
 
 def test_can_tell_individual_from_ndsoquet():
-    s1 = _Soquet(None, Register('test', QBit(), shape=(4,)), idx=(0,))
-    s2 = _Soquet(None, Register('test', QBit(), shape=(4,)), idx=(1,))
-    s3 = _Soquet(None, Register('test', QBit(), shape=(4,)), idx=(2,))
-    s4 = _Soquet(None, Register('test', QBit(), shape=(4,)), idx=(3,))
+    s1 = _Soquet(cast(BloqInstance, None), Register('test', QBit(), shape=(4,)), idx=(0,))
+    s2 = _Soquet(cast(BloqInstance, None), Register('test', QBit(), shape=(4,)), idx=(1,))
+    s3 = _Soquet(cast(BloqInstance, None), Register('test', QBit(), shape=(4,)), idx=(2,))
+    s4 = _Soquet(cast(BloqInstance, None), Register('test', QBit(), shape=(4,)), idx=(3,))
 
     # A ndarray of soquet objects should be SoquetT and we can tell by checking its shape.
     ndsoq: SoquetT = np.array([s1, s2, s3, s4])
