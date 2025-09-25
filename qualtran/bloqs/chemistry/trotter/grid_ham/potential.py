@@ -27,7 +27,6 @@ from qualtran import (
     QAny,
     Register,
     Signature,
-    Soquet,
     SoquetT,
 )
 from qualtran._infra.data_types import BQUInt

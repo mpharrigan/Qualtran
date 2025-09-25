@@ -29,16 +29,16 @@ import attrs
 
 import qualtran as qlt
 import qualtran.dtype as qdt
+from qualtran._infra.composite_bloq import QVarT, QVar
 from qualtran.l3.tracing import bloq_compile
 from qualtran.l3.tracing_bloqs import add_k, bitwise_not
 
 if TYPE_CHECKING:
     from qualtran import BloqBuilder
-    from qualtran._infra.quantum_graph import _QVar as QVar
 
 
 @bloq_compile
-def negate(bb: 'BloqBuilder', x: 'QVar'):
+def negate(bb: 'BloqBuilder', x: 'QVar') -> Dict[str, 'QVar']:
     x = ~x
     x += 1
     return {'x': x}

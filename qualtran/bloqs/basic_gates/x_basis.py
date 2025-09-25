@@ -33,6 +33,7 @@ from qualtran import (
     Signature,
     SoquetT,
 )
+from qualtran._infra.composite_bloq import QVar
 from qualtran.drawing import directional_text_box, Text, WireSymbol
 from qualtran.simulation.classical_sim import (
     ClassicalValDistribution,
@@ -219,7 +220,7 @@ class XGate(Bloq):
         return Signature.build(q=1)
 
     @classmethod
-    def qcall(cls, q: '_QVar'):
+    def qcall(cls, q: QVar) -> QVar:
         return q.bb.add(cls(), q=q)
 
     def adjoint(self) -> 'Bloq':

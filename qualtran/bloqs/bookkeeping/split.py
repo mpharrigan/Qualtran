@@ -32,7 +32,6 @@ from qualtran import (
     Register,
     Side,
     Signature,
-    Soquet,
 )
 from qualtran.bloqs.bookkeeping._bookkeeping_bloq import _BookkeepingBloq
 from qualtran.drawing import directional_text_box, Text, WireSymbol

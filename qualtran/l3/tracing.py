@@ -11,14 +11,15 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Protocol, Sequence, Union
+from typing import Protocol, Sequence, Union, Any, Dict
 
 from qualtran import Bloq, BloqBuilder, Register, Signature
+from qualtran._infra.composite_bloq import QVarT
 from qualtran._infra.quantum_graph import _QVar
 
 
 class _TracingBloqFuncT(Protocol):
-    def __call__(self, bb: 'BloqBuilder', /, **kwargs: Union[_QVar, Register]): ...
+    def __call__(self, bb: 'BloqBuilder', *args: Any, **kwargs: Any) -> Dict[str, Any]: ...
 
 
 class _TracingBloqIntermediate:
@@ -52,9 +53,8 @@ class _TracingBloqIntermediate:
         bloq, _ = self._prep(**kwargs)
         return bloq
 
-    def __call__(
-        self, bb: 'BloqBuilder', /, **kwargs: Union[_QVar, Register]
-    ) -> Union['Bloq', _QVar, Sequence[_QVar]]:
+    def __call__(self, bb: 'BloqBuilder', /, **kwargs: Any):
+        # Note: no return type annotation (same as bb.add())
         bloq, soqnames = self._prep(**kwargs)
         return bb.add(bloq, **{k: v for k, v in kwargs.items() if k in soqnames})
 

@@ -33,6 +33,7 @@ from qualtran import (
     Soquet,
     SoquetT,
 )
+from qualtran._infra.composite_bloq import QVar
 from qualtran.bloqs.basic_gates import CNOT, OnEach, XGate
 from qualtran.drawing import TextBox, WireSymbol
 from qualtran.resource_counting.generalizers import ignore_split_join
@@ -222,7 +223,7 @@ class BitwiseNot(Bloq):
         return Signature.build_from_dtypes(x=self.dtype)
 
     @classmethod
-    def qcall(cls, x: '_QVar'):
+    def qcall(cls, x: 'QVar') -> 'QVar':
         return x.bb.add(cls(dtype=x.dtype), x=x)
 
     def adjoint(self) -> 'BitwiseNot':

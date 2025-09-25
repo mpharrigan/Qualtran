@@ -147,6 +147,15 @@ class _QVar:
             raise ValueError("Tried to index into a single soquet.")
         return self
 
+    @property
+    def reg(self) -> 'Register':
+        # TODO: deprecation warning
+        raise TypeError("Don't access register ")
+
+    def __hash__(self):
+        # TODO: message
+        raise TypeError("Don't access register ")
+
     def __invert__(self) -> '_QVar':
         import qualtran.dtype as qdt
         from qualtran.bloqs.arithmetic import BitwiseNot

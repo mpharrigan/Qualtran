@@ -95,7 +95,7 @@ def _empty_ndarray_from_reg(reg: Register) -> np.ndarray:
 
 
 def _get_in_vals(
-    binst: Union[DanglingT, BloqInstance], reg: Register, soq_assign: Dict[Soquet, ClassicalValT]
+    binst: Union[DanglingT, BloqInstance], reg: Register, soq_assign: Dict[_Soquet, ClassicalValT]
 ) -> ClassicalValT:
     """Pluck out the correct values from `soq_assign` for `reg` on `binst`."""
     if not reg.shape:
@@ -233,7 +233,7 @@ class ClassicalSimState:
         self._random_handler = random_handler
 
         # Keep track of each soquet's bit array. Initialize with LeftDangle
-        self.soq_assign: Dict[Soquet, ClassicalValT] = {}
+        self.soq_assign: Dict[_Soquet, ClassicalValT] = {}
         self._update_assign_from_vals(self._signature.lefts(), LeftDangle, dict(vals))
 
         self.last_binst: Optional['BloqInstance'] = None
@@ -509,7 +509,7 @@ def call_cbloq_classically(
     random_handler: '_ClassicalValHandler' = _RandomClassicalValHandler(
         rng=np.random.default_rng()
     ),
-) -> Tuple[Dict[str, ClassicalValT], Dict[Soquet, ClassicalValT]]:
+) -> Tuple[Dict[str, ClassicalValT], Dict[_Soquet, ClassicalValT]]:
     """Propagate `on_classical_vals` calls through a composite bloq's contents.
 
     While we're handling the plumbing, we also do error checking on the arguments; see

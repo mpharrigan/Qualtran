@@ -221,7 +221,7 @@ class LineManager:
 
 
 def _get_in_vals(
-    binst: Union[DanglingT, BloqInstance], reg: Register, soq_assign: Dict[Soquet, RegPosition]
+    binst: Union[DanglingT, BloqInstance], reg: Register, soq_assign: Dict[_Soquet, RegPosition]
 ) -> Union[RegPosition, NDArray[RegPosition]]:
     """Pluck out the correct values from `soq_assign` for `reg` on `binst`."""
     if not reg.shape:
@@ -239,7 +239,7 @@ def _update_assign_from_vals(
     regs: Iterable[Register],
     binst: Union[DanglingT, BloqInstance],
     vals: Dict[str, RegPosition],
-    soq_assign: Dict[Soquet, RegPosition],
+    soq_assign: Dict[_Soquet, RegPosition],
     seq_x: int,
     topo_gen: int,
     manager: LineManager,
@@ -277,7 +277,7 @@ def _update_assign_from_vals(
 def _binst_assign_line(
     binst: BloqInstance,
     pred_cxns: Iterable[Connection],
-    soq_assign: Dict[Soquet, RegPosition],
+    soq_assign: Dict[_Soquet, RegPosition],
     seq_x: int,
     topo_gen: int,
     manager: LineManager,
@@ -327,7 +327,7 @@ def _binst_assign_line(
 
 def _cbloq_musical_score(
     signature: Signature, binst_graph: nx.DiGraph, manager: Optional[LineManager] = None
-) -> Tuple[Dict[str, RegPosition], Dict[Soquet, RegPosition], LineManager]:
+) -> Tuple[Dict[str, RegPosition], Dict[_Soquet, RegPosition], LineManager]:
     """Assign musical score positions through a composite bloq's contents.
 
     Args:
@@ -344,7 +344,7 @@ def _cbloq_musical_score(
 
     # Keep track of each soquet's position. Initialize by implicitly allocating new positions.
     # We introduce the convention that `LeftDangle`s are a seq_x=-1 and topo_gen=0
-    soq_assign: Dict[Soquet, RegPosition] = {}
+    soq_assign: Dict[_Soquet, RegPosition] = {}
     topo_gen = 0
     _update_assign_from_vals(
         signature.lefts(), LeftDangle, {}, soq_assign, seq_x=-1, topo_gen=topo_gen, manager=manager
@@ -583,7 +583,7 @@ class MusicalScoreData:
         return attrs.asdict(self, recurse=False)
 
 
-def _make_ident(binst: BloqInstance, me: Soquet):
+def _make_ident(binst: BloqInstance, me: _Soquet):
     """Make a unique string identifier key for a soquet."""
     soqi = f'{me.reg.name},{me.reg.side},{me.idx}'
     if isinstance(binst, DanglingT):

@@ -13,16 +13,12 @@
 #  limitations under the License.
 
 from functools import cached_property
-from typing import Dict, TYPE_CHECKING
+from typing import Dict
 
 from attrs import frozen
 
-from qualtran import Bloq, BloqBuilder, Signature, Soquet
-from qualtran._infra.quantum_graph import _QVar
+from qualtran import Bloq, BloqBuilder, Signature, SoquetT
 from qualtran.bloqs.for_testing.atom import TestAtom
-
-if TYPE_CHECKING:
-    from qualtran import SoquetT
 
 
 @frozen

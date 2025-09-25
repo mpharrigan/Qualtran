@@ -19,7 +19,7 @@ import numpy as np
 from attrs import field, frozen
 from numpy.typing import NDArray
 
-from qualtran import Bloq, bloq_example, BloqDocSpec, CtrlSpec, Signature, Soquet
+from qualtran import Bloq, bloq_example, BloqBuilder, BloqDocSpec, CtrlSpec, Signature, SoquetT
 from qualtran.bloqs.basic_gates.su2_rotation import SU2RotationGate
 from qualtran.bloqs.bookkeeping import Always
 from qualtran.bloqs.qsp.generalized_qsp import GeneralizedQSP
@@ -30,7 +30,6 @@ from qualtran.linalg.polynomial.jacobi_anger_approximations import (
 )
 from qualtran.linalg.polynomial.qsp_testing import scale_down_to_qsp_polynomial
 from qualtran.symbolics import is_symbolic, Shaped, SymbolicFloat, SymbolicInt
-from qualtran import BloqBuilder, SoquetT
 
 if TYPE_CHECKING:
     from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator

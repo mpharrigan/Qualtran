@@ -17,7 +17,7 @@ from typing import cast, Dict, Iterable, Optional, TYPE_CHECKING
 
 import numpy as np
 
-from qualtran import Bloq, BloqBuilder, CompositeBloq, Register, Soquet, SoquetT
+from qualtran import Bloq, BloqBuilder, CompositeBloq, Register, SoquetT
 
 if TYPE_CHECKING:
     from qualtran.simulation.classical_sim import ClassicalValT

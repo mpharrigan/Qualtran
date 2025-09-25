@@ -43,7 +43,7 @@ if TYPE_CHECKING:
     from qualtran import Bloq, Connection, QCDType, Signature
 
 
-def _wire_name_prefix_for_soq(soq: Soquet) -> str:
+def _wire_name_prefix_for_soq(soq: _Soquet) -> str:
     return soq.pretty()
 
 
@@ -100,10 +100,10 @@ class QpicWireManager:
     """
 
     def __init__(self):
-        self._soq_to_wire_name_tuple: Dict[Soquet, Tuple[str, int]] = {}
+        self._soq_to_wire_name_tuple: Dict[_Soquet, Tuple[str, int]] = {}
         self._alloc_wires_with_prefix: Dict[str, Set[int]] = defaultdict(set)
 
-    def _wire_name_tuple_for_soq(self, soq: Soquet) -> Tuple[str, int]:
+    def _wire_name_tuple_for_soq(self, soq: _Soquet) -> Tuple[str, int]:
         prefix = _wire_name_prefix_for_soq(soq)
         allocated_suffixes = self._alloc_wires_with_prefix[prefix]
         next_i = next(i for i in range(len(allocated_suffixes) + 1) if i not in allocated_suffixes)
@@ -113,13 +113,13 @@ class QpicWireManager:
         prefix, i = wire_name
         return prefix + '_' + str(i) if i else prefix
 
-    def alloc_wire_for_soq(self, soq: Soquet) -> str:
+    def alloc_wire_for_soq(self, soq: _Soquet) -> str:
         prefix, i = self._wire_name_tuple_for_soq(soq)
         self._alloc_wires_with_prefix[prefix].add(i)
         self._soq_to_wire_name_tuple[soq] = (prefix, i)
         return self._wire_name_tuple_to_str((prefix, i))
 
-    def dealloc_wire_for_soq(self, soq: Soquet) -> str:
+    def dealloc_wire_for_soq(self, soq: _Soquet) -> str:
         prefix, i = self._soq_to_wire_name_tuple[soq]
         self._alloc_wires_with_prefix[prefix].remove(i)
         self._soq_to_wire_name_tuple.pop(soq)
@@ -173,7 +173,7 @@ class QpicCircuit:
     def data(self) -> List[str]:
         return self.wires + self.gates
 
-    def _add_soq(self, soq: Soquet) -> Tuple[str, Optional[str]]:
+    def _add_soq(self, soq: _Soquet) -> Tuple[str, Optional[str]]:
         symbol = _soq_to_symb(soq)
         suffix = ''
         wire = self.wire_manager.soq_to_wirename(self.soq_map[soq])
@@ -196,7 +196,7 @@ class QpicCircuit:
             shape = '>'
         return f'{wire} ', f'G:width={width}:shape={shape} {symbol_text}'
 
-    def _dealloc_wire_for_soq(self, soq: Soquet) -> None:
+    def _dealloc_wire_for_soq(self, soq: _Soquet) -> None:
         self.wire_manager.dealloc_wire_for_soq(self.soq_map[soq])
         self.soq_map.pop(soq)
 
@@ -208,7 +208,7 @@ class QpicCircuit:
         else:
             return []
 
-    def _alloc_wire_for_soq(self, soq: Soquet) -> None:
+    def _alloc_wire_for_soq(self, soq: _Soquet) -> None:
         self.soq_map[soq] = soq
         wire_name = self.wire_manager.alloc_wire_for_soq(soq)
         if wire_name in self.allocated_wires:
@@ -249,7 +249,7 @@ class QpicCircuit:
             self._add_bloq_with_no_wire(bloq)
             return
 
-        def add_soq(soq: Soquet):
+        def add_soq(soq: _Soquet):
             wire, gate = self._add_soq(soq)
             if gate is None:
                 controls.append(wire)
