@@ -11,6 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from typing import no_type_check
 
 import pytest
 
@@ -45,6 +46,18 @@ def test_dangling_hash():
 
 def test_soquet():
     soq = _Soquet(BloqInstance(TestTwoBitOp(), i=0), Register('x', QAny(10)))
+    assert soq.reg.side is Side.THRU
+    assert soq.idx == ()
+    assert soq.pretty() == 'x'
+
+    assert soq.item() == soq
+    assert soq.dtype == QAny(10)
+
+
+@no_type_check
+def test_old_construct_soquet():
+    with pytest.warns(DeprecationWarning, match=r'construxct'):
+        soq = Soquet(BloqInstance(TestTwoBitOp(), i=0), Register('x', QAny(10)))
     assert soq.reg.side is Side.THRU
     assert soq.idx == ()
     assert soq.pretty() == 'x'

@@ -13,9 +13,11 @@
 #  limitations under the License.
 
 """Classes for building and manipulating `CompositeBloq`."""
+import warnings
 from collections.abc import Hashable
 from functools import cached_property
 from typing import (
+    _ProtocolMeta,
     Callable,
     cast,
     Dict,
@@ -26,16 +28,15 @@ from typing import (
     Mapping,
     Optional,
     overload,
+    Protocol,
     Sequence,
     Set,
     Tuple,
     TYPE_CHECKING,
-    TypeVar,
-    Union,
-    Protocol,
     TypeAlias,
     TypeGuard,
-    _ProtocolMeta,
+    TypeVar,
+    Union,
 )
 
 import attrs
@@ -49,12 +50,12 @@ from .bloq import Bloq, DecomposeNotImplementedError, DecomposeTypeError
 from .data_types import check_dtypes_consistent, QAny, QBit, QCDType, QDType
 from .quantum_graph import (
     _QVar,
+    _Soquet,
     BloqInstance,
     Connection,
     DanglingT,
     LeftDangle,
     RightDangle,
-    _Soquet,
 )
 from .registers import Register, Side, Signature
 
@@ -72,6 +73,8 @@ QVar = _QVar
 
 class _NoSoquetIsInstanceMeta(_ProtocolMeta):
     def __instancecheck__(cls, instance):
+        warnings.warn("isinstance(..., Soquet) is deprecated.")
+        return isinstance(instance, (_Soquet, _QVar))
         raise TypeError(
             "Do not rely on isinstance(..., Soquet). "
             "To distinguish a single soquet quantum variable "
@@ -82,7 +85,24 @@ class _NoSoquetIsInstanceMeta(_ProtocolMeta):
 
 
 class Soquet(Protocol, metaclass=_NoSoquetIsInstanceMeta):
-    """this is a liar: if somethings returning QVars but asserting that it's returning Soquets (which we do to not break userspace) you don't get reg or hash."""
+    """this is a liar: if somethings returning QVars but asserting that it's returning Soquets (which we do to not break userspace) you don't get reg or hash.
+
+    The responsibilities affored to Soquet has been split into two new classes: _Soquet and QVar.
+    The `Soquet`  object is now just a `typing.Protocol` to provide backwards compatibility to
+    Python type checking. `isinstance(..., Soquet)` checks will emit a deprecation warning
+    and return True for *either* _Soquet or QVar.
+
+    If you're using isinstance(soq, Soquet) to determine whether an item is a single object
+    or an ndarray of those objects, use `BloqBuilder.is_single(x)` or
+    `BloqBuilder.is_ndarray(x)`. See the documentation in `QVarT` for an example.
+
+    If you're developing library functionality, you can port isinstance checks to either
+    `_Soquet` or `QVar` as appropriate.
+    """
+
+    def __new__(cls, *args, **kwargs):
+        warnings.warn("Do not construct a Soquet!!", DeprecationWarning)
+        return _Soquet(*args, **kwargs)
 
     @property
     def shape(self) -> Tuple[int, ...]: ...

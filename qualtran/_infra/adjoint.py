@@ -23,12 +23,12 @@ from .composite_bloq import (
     _cxns_to_soq_dict,
     _map_soqs,
     _reg_to_soq,
-    BloqBuilder,
     _SoquetT,
+    BloqBuilder,
     QVarT,
 )
 from .gate_with_registers import GateWithRegisters
-from .quantum_graph import LeftDangle, RightDangle, _QVar
+from .quantum_graph import _QVar, LeftDangle, RightDangle
 from .registers import Signature
 
 if TYPE_CHECKING:

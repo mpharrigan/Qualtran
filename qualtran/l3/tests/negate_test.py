@@ -29,7 +29,7 @@ import attrs
 
 import qualtran as qlt
 import qualtran.dtype as qdt
-from qualtran._infra.composite_bloq import QVarT, QVar
+from qualtran._infra.composite_bloq import QVar, QVarT
 from qualtran.l3.tracing import bloq_compile
 from qualtran.l3.tracing_bloqs import add_k, bitwise_not
 

@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from functools import cached_property
-from typing import Dict, List, Tuple, cast
+from typing import cast, Dict, List, Tuple
 
 import attrs
 import networkx as nx
@@ -45,6 +45,7 @@ from qualtran._infra.composite_bloq import (
     _get_dangling_soquets,
     _get_soquet,
     _reg_to_soq,
+    _SoquetT,
 )
 from qualtran._infra.data_types import BQUInt, QAny, QBit, QFxp, QUInt
 from qualtran._infra.quantum_graph import _QVar, _Soquet
@@ -161,8 +162,8 @@ def test_map_soqs():
         else:
             raise AssertionError()
 
-        in_soqs = bb.map_soqs(in_soqs, soq_map)
-        new_out_soqs = bb.add_t(binst.bloq, **in_soqs)
+        mapped_in_soqs = bb.map_soqs(in_soqs, soq_map)
+        new_out_soqs = bb.add_t(binst.bloq, **mapped_in_soqs)
         soq_map.extend(zip(old_out_soqs, new_out_soqs))
 
     fsoqs = bb.map_soqs(cbloq.final_soqs(), soq_map)
@@ -666,8 +667,8 @@ def test_can_tell_individual_from_ndsoquet():
     s4 = _Soquet(cast(BloqInstance, None), Register('test', QBit(), shape=(4,)), idx=(3,))
 
     # A ndarray of soquet objects should be SoquetT and we can tell by checking its shape.
-    ndsoq: SoquetT = np.array([s1, s2, s3, s4])
-    assert_type(ndsoq, SoquetT)
+    ndsoq: _SoquetT = np.array([s1, s2, s3, s4])
+    assert_type(ndsoq, _SoquetT)
     assert ndsoq.shape
     assert ndsoq.shape == (4,)
     assert ndsoq.item(2) == s3
@@ -675,21 +676,23 @@ def test_can_tell_individual_from_ndsoquet():
         _ = ndsoq.item()
 
     # A single soquet is still a valid SoquetT, and it has a false-y shape.
-    single_soq: SoquetT = s1
-    assert_type(single_soq, SoquetT)
+    single_soq: _SoquetT = s1
+    assert_type(single_soq, _SoquetT)
     assert not single_soq.shape
     assert single_soq.shape == ()
     single_soq_unwarp = single_soq.item()
     assert single_soq_unwarp == s1
 
     # A single soquet wrapped in a 0-dim ndarray is ok if you call `item()`.
-    single_soq2: SoquetT = np.asarray(s1)
-    assert_type(single_soq2, SoquetT)
+    single_soq2: _SoquetT = np.asarray(s1)
+    assert_type(single_soq2, _SoquetT)
     assert not single_soq2.shape
     assert single_soq2.shape == ()
     single_soq2_unwrap = single_soq2.item()
     assert hash(single_soq2_unwrap) == hash(s1)
     assert single_soq2_unwrap == s1
+    with pytest.warns(UserWarning, match=r'deprecated'):
+        assert isinstance(single_soq2_unwrap, Soquet)  # type: ignore[misc]
     assert isinstance(single_soq2_unwrap, _Soquet)
 
 

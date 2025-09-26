@@ -20,7 +20,7 @@ import attrs
 from attrs import field, frozen
 
 if TYPE_CHECKING:
-    from qualtran import Bloq, BloqBuilder, Register, QCDType
+    from qualtran import Bloq, BloqBuilder, QCDType, Register
 
 
 @frozen
