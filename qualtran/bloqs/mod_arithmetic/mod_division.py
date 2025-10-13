@@ -678,18 +678,15 @@ class KaliskiModInverse(Bloq):
             junk_arr = bb.split(junk)
             m = bb.join(junk_arr[: 2 * self.bitsize])
             terminal_condition = bb.join(junk_arr[2 * self.bitsize :])
-            u, x, r, s, m, f, terminal_condition = cast(
-                Tuple[Soquet, Soquet, Soquet, Soquet, Soquet, Soquet, Soquet],
-                bb.add_from(
-                    _KaliskiModInverseImpl(self.bitsize, self.mod).adjoint(),
-                    u=u,
-                    v=r,
-                    r=x,
-                    s=s,
-                    m=m,
-                    f=f,
-                    terminal_condition=terminal_condition,
-                ),
+            u, x, r, s, m, f, terminal_condition = bb.add_from(
+                _KaliskiModInverseImpl(self.bitsize, self.mod).adjoint(),
+                u=u,
+                v=r,
+                r=x,
+                s=s,
+                m=m,
+                f=f,
+                terminal_condition=terminal_condition,
             )
             bb.free(u)
             bb.free(r)

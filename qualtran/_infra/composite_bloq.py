@@ -101,7 +101,12 @@ class Soquet(Protocol, metaclass=_NoSoquetIsInstanceMeta):
     """
 
     def __new__(cls, *args, **kwargs):
-        warnings.warn("Do not construct a Soquet!!", DeprecationWarning)
+        warnings.warn(
+            "Constructing a soquet via `Soquet(...)` is deprecated. "
+            "User code should never construct soquets directly: "
+            "please use BloqBuilder.",
+            DeprecationWarning,
+        )
         return _Soquet(*args, **kwargs)
 
     @property
@@ -1403,7 +1408,7 @@ class BloqBuilder:
         ]
         return soq_map
 
-    def add_from(self, bloq: Bloq, **in_soqs: SoquetInT) -> Tuple[QVarT, ...]:
+    def add_from(self, bloq: Bloq, **in_soqs: SoquetInT):
         """Add all the sub-bloqs from `bloq` to the compute graph.
 
         This is useful for adding multiple bloq instances at once in a "flat" or "unrolled" way.
@@ -1511,14 +1516,14 @@ class BloqBuilder:
 
     def allocate(
         self, n: Union[int, sympy.Expr] = 1, dtype: Optional[QDType] = None, dirty: bool = False
-    ) -> Soquet:
+    ) -> QVar:
         from qualtran.bloqs.bookkeeping import Allocate
 
         if dtype is not None:
             return self.add(Allocate(dtype=dtype, dirty=dirty))
         return self.add(Allocate(dtype=(QAny(n)), dirty=dirty))
 
-    def free(self, soq: Soquet, dirty: bool = False) -> None:
+    def free(self, soq: QVarT, dirty: bool = False) -> None:
         from qualtran.bloqs.bookkeeping import Free
 
         if not BloqBuilder.is_single(soq):
@@ -1530,7 +1535,7 @@ class BloqBuilder:
 
         self.add(Free(dtype=qdtype, dirty=dirty), reg=soq)
 
-    def split(self, soq: Soquet) -> NDArray[Soquet]:  # type: ignore[type-var]
+    def split(self, soq: QVarT) -> NDArray[QVar]:  # type: ignore[type-var]
         """Add a Split bloq to split up a register."""
         from qualtran.bloqs.bookkeeping import Split
 
@@ -1543,7 +1548,7 @@ class BloqBuilder:
 
         return self.add(Split(dtype=qdtype), reg=soq)
 
-    def join(self, soqs: SoquetInT, dtype: Optional[QDType] = None) -> Soquet:
+    def join(self, soqs: SoquetInT, dtype: Optional[QDType] = None) -> QVar:
         from qualtran.bloqs.bookkeeping import Join
 
         try:
@@ -1559,7 +1564,7 @@ class BloqBuilder:
 
         return self.add(Join(dtype=dtype), reg=soqs)
 
-    def in_register(self, name: str, dtype: QCDType):
+    def in_register(self, name: str, dtype: QCDType) -> Union[None, QVarT]:
         return self.add_register_from_dtype(name, dtype)
 
     def alloc_qint(self, k: int, bitsize: int) -> QVar:
@@ -1567,7 +1572,7 @@ class BloqBuilder:
 
         return self.add(IntState(val=k, bitsize=bitsize))
 
-    def alloc_qbit(self, k: int):
+    def alloc_qbit(self, k: int) -> QVar:
         from qualtran.bloqs.basic_gates import OneState, ZeroState
 
         if k == 0:
@@ -1576,7 +1581,7 @@ class BloqBuilder:
             return self.add(OneState())
         raise ValueError(f"Bad qubit value: {k}")
 
-    def free_qubit(self, q: QVar, k: int):
+    def free_qubit(self, q: QVar, k: int) -> None:
         from qualtran.bloqs.basic_gates import OneEffect, ZeroEffect
 
         if k == 0:

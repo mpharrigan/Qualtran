@@ -268,9 +268,7 @@ class _QReg:
         return hash(self.qubits)
 
 
-def _ensure_in_reg_exists(
-    bb: BloqBuilder, in_reg: _QReg, qreg_to_qvar: Dict[_QReg, Soquet]
-) -> None:
+def _ensure_in_reg_exists(bb: BloqBuilder, in_reg: _QReg, qreg_to_qvar: Dict[_QReg, _QVar]) -> None:
     """Takes care of qubit allocations, split and joins to ensure `qreg_to_qvar[in_reg]` exists."""
     from qualtran.bloqs.bookkeeping import Cast
 
@@ -289,7 +287,7 @@ def _ensure_in_reg_exists(
     # a. Split all registers containing at-least one qubit corresponding to `in_reg`.
     in_reg_qubits = set(in_reg.qubits)
 
-    new_qreg_to_qvar: Dict[_QReg, Soquet] = {}
+    new_qreg_to_qvar: Dict[_QReg, _QVar] = {}
     for qreg, soq in qreg_to_qvar.items():
         if len(qreg.qubits) > 1 and any(q in qreg.qubits for q in in_reg_qubits):
             new_qreg_to_qvar |= {
@@ -300,7 +298,7 @@ def _ensure_in_reg_exists(
     qreg_to_qvar.clear()
 
     # b. Join all 1-bit registers, corresponding to individual qubits, that make up `in_reg`.
-    soqs_to_join: Dict[cirq.Qid, Soquet] = {}
+    soqs_to_join: Dict[cirq.Qid, _QVar] = {}
     for qreg, soq in new_qreg_to_qvar.items():
         if len(in_reg_qubits) > 1 and qreg.qubits and qreg.qubits[0] in in_reg_qubits:
             assert len(qreg.qubits) == 1, "Individual qubits should have been split by now."
@@ -312,7 +310,7 @@ def _ensure_in_reg_exists(
         elif len(in_reg_qubits) == 1 and qreg.qubits and qreg.qubits[0] in in_reg_qubits:
             # Cast single QBit registers to the appropriate single-bit register dtype.
             err_msg = "Found non-QBit type register which shouldn't happen: " f"{soq}"
-            assert isinstance(soq.soquet.reg.dtype, QBit), err_msg
+            assert isinstance(soq.dtype, QBit), err_msg
             if not isinstance(in_reg.dtype, QBit):
                 qreg_to_qvar[in_reg] = bb.add(Cast(QBit(), in_reg.dtype), reg=soq)
             else:
@@ -328,11 +326,11 @@ def _ensure_in_reg_exists(
 
 
 def _gather_input_soqs(
-    bb: BloqBuilder, op_quregs: Dict[str, NDArray[_QReg]], qreg_to_qvar: Dict[_QReg, Soquet]  # type: ignore[type-var]
+    bb: BloqBuilder, op_quregs: Dict[str, NDArray[_QReg]], qreg_to_qvar: Dict[_QReg, _QVar]  # type: ignore[type-var]
 ) -> Dict[str, NDArray[Soquet]]:  # type: ignore[type-var]
     qvars_in: Dict[str, NDArray[Soquet]] = {}  # type: ignore[type-var]
     for reg_name, quregs in op_quregs.items():
-        flat_soqs: List[Soquet] = []
+        flat_soqs: List[_QVar] = []
         for qureg in quregs.flatten():
             _ensure_in_reg_exists(bb, qureg, qreg_to_qvar)
             flat_soqs.append(qreg_to_qvar[qureg])
@@ -510,13 +508,12 @@ def cirq_optree_to_cbloq(
     bb, initial_soqs = BloqBuilder.from_signature(signature, add_registers_allowed=False)
 
     # 1. Compute qreg_to_qvar for input qubits in the LEFT signature.
-    qreg_to_qvar: Dict[_QReg, Soquet] = {}
+    qreg_to_qvar: Dict[_QReg, _QVar] = {}
     for reg in signature.lefts():
         if reg.name not in in_quregs:
             raise ValueError(f"Register {reg.name} from signature must be present in in_quregs.")
         soqs = initial_soqs[reg.name]
-        if not soqs.shape:
-            soqs = np.asarray(soqs)
+        soqs = np.asarray(soqs)
         if in_quregs[reg.name].shape != soqs.shape:
             raise ValueError(
                 f"Shape {in_quregs[reg.name].shape} of cirq register "

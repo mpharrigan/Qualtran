@@ -56,7 +56,7 @@ def test_soquet():
 
 @no_type_check
 def test_old_construct_soquet():
-    with pytest.warns(DeprecationWarning, match=r'construxct'):
+    with pytest.warns(DeprecationWarning, match=r'deprecated.*'):
         soq = Soquet(BloqInstance(TestTwoBitOp(), i=0), Register('x', QAny(10)))
     assert soq.reg.side is Side.THRU
     assert soq.idx == ()
