@@ -42,7 +42,7 @@ def ctrl_add_or_subtract(bb: 'BloqBuilder', ctrl, a, b, add_when_ctrl_is_on: boo
 @bloqify
 def preconfigure_add_or_subtract(bb: 'BloqBuilder', ctrl_val: int, a, b):
     ctrl = bb.alloc_qbit(ctrl_val)
-    ctrl, a, b = ctrl_add_or_subtract(bb, ctrl=ctrl, a=a, b=b)
+    ctrl, a, b = ctrl_add_or_subtract(bb, ctrl, a, b)
     bb.free_qubit(ctrl, ctrl_val)
     return {'a': a, 'b': b}
 

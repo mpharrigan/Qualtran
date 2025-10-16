@@ -12,9 +12,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import inspect
-from typing import Any, Dict, Protocol, Sequence, Union
+from typing import Any, Dict, Protocol, Sequence, Union, Set, Optional
 
-from qualtran import Bloq, BloqBuilder, Register, Signature
+import attrs
+
+from qualtran import Bloq, BloqBuilder, Register, Signature, CompositeBloq
 from qualtran._infra.composite_bloq import QVarT
 from qualtran._infra.quantum_graph import _QVar
 
@@ -41,6 +43,30 @@ class _TracingBloqFuncT(Protocol):
         """
 
 
+@attrs.mutable
+class _BloqifyPrepResult:
+    cbloq: 'CompositeBloq'
+    in_qargnames: Set[str]
+    out_qargnames: Set[str]
+    explicit_bb: Optional['BloqBuilder'] = None
+    found_bb: Optional['BloqBuilder'] = None
+
+    @property
+    def bb(self) -> 'BloqBuilder':
+        if self.explicit_bb is not None:
+            return self.explicit_bb
+        if self.found_bb is not None:
+            return self.found_bb
+
+        raise ValueError(
+            "Could not find a valid bloq builder object to qcall this function. "
+            "Please add an explicit `bb: BloqBuilder` argument to your `@bloqify` function."
+        )
+
+
+_BB_PLACEHOLDER = object()
+
+
 class _TracingBloqIntermediate:
     def __init__(self, func: _TracingBloqFuncT):
         self.func: _TracingBloqFuncT = func
@@ -53,13 +79,21 @@ class _TracingBloqIntermediate:
     def pkg(self) -> str:
         return self.func.__module__
 
+    def _bound_kvs(self, *args, **kwargs):
+        yield from inspect.signature(self.func).bind(
+            _BB_PLACEHOLDER, *args, **kwargs
+        ).arguments.items()
+
     def _prep_qstackframe(self, *args, **kwargs):
         bb = BloqBuilder(bloq_name=self.name, bloq_pkg_name=self.pkg)
         qkwargs = {}
         ckwargs = {}
 
-        for k, v in inspect.signature(self.func).bind_partial(*args, **kwargs).arguments.items():
-            if isinstance(v, _QVar):
+        for k, v in self._bound_kvs(*args, **kwargs):
+            # TODO: handle shaped
+            if v is _BB_PLACEHOLDER:
+                continue
+            elif isinstance(v, _QVar):
                 qkwargs[k] = bb.in_register(name=k, dtype=v.dtype)
             else:
                 ckwargs[k] = v
@@ -71,7 +105,9 @@ class _TracingBloqIntermediate:
                 f"output register name to output quantum variable."
             )
         cbloq = bb.finalize(**out_qvars)
-        return cbloq, set(qkwargs.keys()), set(out_qvars.keys())
+        return _BloqifyPrepResult(
+            cbloq=cbloq, in_qargnames=set(qkwargs.keys()), out_qargnames=set(out_qvars.keys())
+        )
 
     def make(self, signature: 'Signature', *classical_args, **classical_kwargs):
         bb, soqs = BloqBuilder.from_signature(
@@ -91,12 +127,20 @@ class _TracingBloqIntermediate:
         return bb.finalize(**soqs)
 
     def __call__(self, bb: 'BloqBuilder', /, *args, **kwargs):
-        bloq, in_soqnames, _ = self._prep_qstackframe(*args, **kwargs)
-        return bb.add(bloq, **{k: v for k, v in kwargs.items() if k in in_soqnames})
+        f = self._prep_qstackframe(*args, **kwargs)
+        return bb.add(
+            f.cbloq, **{k: v for k, v in self._bound_kvs(*args, **kwargs) if k in f.in_qargnames}
+        )
 
     def adjoint(self, bb: 'BloqBuilder', /, *args, **kwargs):
-        bloq, in_soqnames, out_soqnames = self._prep_qstackframe(*args, **kwargs)
-        return bb.add(bloq.adjoint(), **{k: v for k, v in kwargs.items() if k in out_soqnames})
+        f = self._prep_qstackframe(*args, **kwargs)
+        if args:
+            raise ValueError(
+                "`.adjoint` must be called with keyword arguments: the outputs are now inputs, and we can't inspect outputs."
+            )
+        return bb.add(
+            f.cbloq.adjoint(), **{k: v for k, v in kwargs.items() if k in f.out_qargnames}
+        )
 
 
 def bloq_compile(func: _TracingBloqFuncT) -> _TracingBloqIntermediate:
