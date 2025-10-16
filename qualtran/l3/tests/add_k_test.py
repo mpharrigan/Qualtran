@@ -17,11 +17,9 @@ import attrs
 
 import qualtran as qlt
 import qualtran.dtype as qdt
-from qualtran import BloqBuilder
-from qualtran._infra.composite_bloq import QVar, QVarT
+from qualtran import BloqBuilder, QVar
 from qualtran.bloqs.arithmetic import Add
 from qualtran.l3.tracing import bloq_compile
-from qualtran.l3.tracing_bloqs import xgate
 from qualtran.symbolics import is_symbolic
 
 

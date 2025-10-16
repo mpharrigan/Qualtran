@@ -31,6 +31,7 @@ from qualtran import (
     Register,
     Signature,
     SoquetT,
+    QVar,
 )
 from qualtran.drawing import Circle, Text, TextBox, WireSymbol
 
@@ -72,6 +73,10 @@ class Hadamard(Bloq):
 
     def decompose_bloq(self) -> 'CompositeBloq':
         raise DecomposeTypeError(f"{self} is atomic")
+
+    @classmethod
+    def qcall(cls, q: 'QVar'):
+        return q.bb.add(cls(), q=q)
 
     def my_tensors(
         self, incoming: Dict[str, 'ConnectionT'], outgoing: Dict[str, 'ConnectionT']
@@ -119,6 +124,10 @@ class Hadamard(Bloq):
 
     def __str__(self):
         return 'H'
+
+
+def H(q):
+    return Hadamard.qcall(q=q)
 
 
 @bloq_example

@@ -39,8 +39,8 @@ from qualtran import (
     Signature,
     Soquet,
     SoquetT,
+    QVar,
 )
-from qualtran._infra.composite_bloq import QVar
 from qualtran.bloqs.basic_gates import CNOT
 from qualtran.bloqs.bookkeeping import Always
 from qualtran.bloqs.mcmt.and_bloq import And

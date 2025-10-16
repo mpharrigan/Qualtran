@@ -85,7 +85,7 @@ class _TracingBloqIntermediate:
         ).arguments.items()
 
     def _prep_qstackframe(self, *args, **kwargs):
-        bb = BloqBuilder(bloq_name=self.name, bloq_pkg_name=self.pkg)
+        bb = BloqBuilder(bloq_name=self.name, bloq_pkg_name=self.pkg, add_registers_allowed=True)
         qkwargs = {}
         ckwargs = {}
 
@@ -111,7 +111,7 @@ class _TracingBloqIntermediate:
 
     def make(self, signature: 'Signature', *classical_args, **classical_kwargs):
         bb, soqs = BloqBuilder.from_signature(
-            signature, bloq_name=self.name, bloq_pkg_name=self.pkg
+            signature, bloq_name=self.name, bloq_pkg_name=self.pkg, add_registers_allowed=True
         )
 
         dupes = set(classical_kwargs.keys()) & set(soqs.keys())

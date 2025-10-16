@@ -44,6 +44,8 @@ from qualtran import (
     Register,
     Side,
     Signature,
+    QVar,
+    QVarT,
 )
 from qualtran.bloqs.basic_gates import XGate
 from qualtran.cirq_interop import decompose_from_cirq_style_method
@@ -91,6 +93,16 @@ class And(GateWithRegisters):
 
     def adjoint(self) -> 'And':
         return attrs.evolve(self, uncompute=not self.uncompute)
+
+    @classmethod
+    def qcall(cls, ctrl: 'QVarT', *, cv1=1, cv2=1, uncompute: bool = False, **maybe_target: 'QVar'):
+        ctrl = np.asarray(ctrl)
+        bb = ctrl.item(0).bb
+        bloq = cls(cv1=cv1, cv2=cv2, uncompute=uncompute)
+        if uncompute:
+            return bb.add(bloq, ctrl=ctrl, target=maybe_target['target'])
+        else:
+            return bb.add(bloq, ctrl=ctrl)
 
     def decompose_bloq(self) -> 'CompositeBloq':
         raise DecomposeTypeError(f"{self} is atomic.")

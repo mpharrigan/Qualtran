@@ -21,11 +21,10 @@ from qualtran.l3.tracing import bloq_compile
 
 @bloq_compile
 def bitwise_not(bb: 'BloqBuilder', x: 'QVar'):
-    from qualtran.l3.tracing_bloqs import xgate
 
     outs = []
     for i in range(len(x)):
-        out = xgate(x[i])
+        out = bb.X(x[i])
         outs.append(out)
 
     return {'x': bb.join(outs)}

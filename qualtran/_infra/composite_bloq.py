@@ -67,8 +67,7 @@ if TYPE_CHECKING:
     from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
     from qualtran.simulation.classical_sim import ClassicalValT
     from qualtran.symbolics import SymbolicInt
-
-QVar = _QVar
+    from qualtran import QVar
 
 
 class _NoSoquetIsInstanceMeta(_ProtocolMeta):
@@ -1281,7 +1280,10 @@ class BloqBuilder:
         except KeyError:
             bloq = binst if isinstance(binst, DanglingT) else binst.bloq
             raise BloqError(
-                f"{idxed_soq} is not an available Soquet for `{bloq}.{reg.name}`."
+                f"During construction of {self._bloq_name}, a quantum variable was re-used.\n"
+                f"  When calling: {bloq}\n"
+                f"  Register name: {reg.name}\n"
+                f"  Re-used soquet details: {idxed_soq.soquet}"
             ) from None
         cxn = Connection(idxed_soq.soquet, self._make_qvar(binst, reg, idx).soquet)
         self._cxns.append(cxn)
@@ -1387,7 +1389,12 @@ class BloqBuilder:
                 be unpacked with tuple unpacking. In this final case, the ordering is according
                 to `bloq.signature` and irrespective of the order of `**in_soqs`.
         """
-        outs = self.add_t(bloq, **in_soqs)
+        try:
+            outs = self.add_t(bloq, **in_soqs)
+        except BloqError as be:
+            # Error source shown as `bb.add(...)`
+            raise BloqError(*be.args) from None
+
         if len(outs) == 0:
             return None
         if len(outs) == 1:
@@ -1540,7 +1547,7 @@ class BloqBuilder:
 
     def allocate(
         self, n: Union[int, sympy.Expr] = 1, dtype: Optional[QDType] = None, dirty: bool = False
-    ) -> QVar:
+    ) -> 'QVar':
         from qualtran.bloqs.bookkeeping import Allocate
 
         if dtype is not None:
@@ -1559,7 +1566,7 @@ class BloqBuilder:
 
         self.add(Free(dtype=qdtype, dirty=dirty), reg=soq)
 
-    def split(self, soq: QVarT) -> NDArray[QVar]:  # type: ignore[type-var]
+    def split(self, soq: QVarT) -> NDArray['QVar']:  # type: ignore[type-var]
         """Add a Split bloq to split up a register."""
         from qualtran.bloqs.bookkeeping import Split
 
@@ -1572,7 +1579,7 @@ class BloqBuilder:
 
         return self.add(Split(dtype=qdtype), reg=soq)
 
-    def join(self, soqs: SoquetInT, dtype: Optional[QDType] = None) -> QVar:
+    def join(self, soqs: SoquetInT, dtype: Optional[QDType] = None) -> 'QVar':
         from qualtran.bloqs.bookkeeping import Join
 
         try:
@@ -1591,12 +1598,12 @@ class BloqBuilder:
     def in_register(self, name: str, dtype: QCDType) -> Union[None, QVarT]:
         return self.add_register_from_dtype(name, dtype)
 
-    def alloc_qint(self, k: int, bitsize: int) -> QVar:
+    def alloc_qint(self, k: int, bitsize: int) -> 'QVar':
         from qualtran.bloqs.basic_gates import IntState
 
         return self.add(IntState(val=k, bitsize=bitsize))
 
-    def alloc_qbit(self, k: int) -> QVar:
+    def alloc_qbit(self, k: int) -> 'QVar':
         from qualtran.bloqs.basic_gates import OneState, ZeroState
 
         if k == 0:
@@ -1605,7 +1612,7 @@ class BloqBuilder:
             return self.add(OneState())
         raise ValueError(f"Bad qubit value: {k}")
 
-    def free_qubit(self, q: QVar, k: int) -> None:
+    def free_qubit(self, q: 'QVar', k: int) -> None:
         from qualtran.bloqs.basic_gates import OneEffect, ZeroEffect
 
         if k == 0:
@@ -1613,3 +1620,38 @@ class BloqBuilder:
         elif k == 1:
             return self.add(OneEffect(), q=q)
         raise ValueError(f"Bad qubit value: {k}")
+
+    def X(self, q: 'QVar'):
+        from qualtran.bloqs.basic_gates import XGate
+
+        return XGate.qcall(q=q)
+
+    def Z(self, q: 'QVar'):
+        from qualtran.bloqs.basic_gates import ZGate
+
+        return ZGate.qcall(q=q)
+
+    def H(self, q: 'QVar'):
+        from qualtran.bloqs.basic_gates import Hadamard
+
+        return Hadamard.qcall(q=q)
+
+    def CZ(self, q1: 'QVar', q2: 'QVar'):
+        from qualtran.bloqs.basic_gates import CZ
+
+        return CZ.qcall(q1=q1, q2=q2)
+
+    def CNOT(self, ctrl: 'QVar', target: 'QVar'):
+        from qualtran.bloqs.basic_gates import CNOT
+
+        return CNOT.qcall(ctrl=ctrl, target=target)
+
+    def And(self, ctrl: 'QVarT'):
+        from qualtran.bloqs.mcmt import And
+
+        return And.qcall(ctrl=ctrl)
+
+    def UnAnd(self, ctrl: 'QVarT', target: 'QVar'):
+        from qualtran.bloqs.mcmt import And
+
+        return And.qcall(ctrl=ctrl, target=target, uncompute=True)

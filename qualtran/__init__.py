@@ -78,14 +78,7 @@ from ._infra.registers import Register, Signature, Side
 
 # Internal imports: none
 # External imports: none
-from ._infra.quantum_graph import (
-    BloqInstance,
-    Connection,
-    DanglingT,
-    LeftDangle,
-    RightDangle,
-    _QVar as QVar,
-)
+from ._infra.quantum_graph import BloqInstance, Connection, DanglingT, LeftDangle, RightDangle, QVar
 
 from ._infra.gate_with_registers import GateWithRegisters
 

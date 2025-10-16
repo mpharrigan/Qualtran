@@ -24,7 +24,7 @@ requirements.
 from .cnot import CNOT
 from .discard import Discard, DiscardQ
 from .global_phase import GlobalPhase
-from .hadamard import CHadamard, Hadamard
+from .hadamard import CHadamard, Hadamard, H
 from .identity import Identity
 from .on_each import OnEach
 from .power import Power

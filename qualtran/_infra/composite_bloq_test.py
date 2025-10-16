@@ -231,7 +231,7 @@ def _get_bb():
 def test_wrong_soquet():
     bb, x, y = _get_bb()
 
-    with pytest.raises(BloqError, match=r'.*is not an available Soquet for .*target.*'):
+    with pytest.raises(BloqError):
         bad_target_arg = bb._make_qvar(
             BloqInstance(TestTwoBitOp(), i=12), Register('target', QAny(2))
         )
@@ -241,9 +241,7 @@ def test_wrong_soquet():
 def test_double_use_1():
     bb, x, y = _get_bb()
 
-    with pytest.raises(
-        BloqError, match=r'.*is not an available Soquet for `TestTwoBitOp.*target`.*'
-    ):
+    with pytest.raises(BloqError, match=r'.*quantum variable was re\-used.*'):
         bb.add(TestTwoBitOp(), ctrl=x, target=x)
 
 
@@ -252,7 +250,7 @@ def test_double_use_2():
 
     x2, y2 = bb.add(TestTwoBitOp(), ctrl=x, target=y)
 
-    with pytest.raises(BloqError, match=r'.*is not an available Soquet for `TestTwoBitOp\.ctrl`\.'):
+    with pytest.raises(BloqError, match=r'.*quantum variable was re\-used.*'):
         x3, y3 = bb.add(TestTwoBitOp(), ctrl=x, target=y)
 
 
@@ -276,7 +274,7 @@ def test_finalize_wrong_soquet():
     assert x != x2
     assert y != y2
 
-    with pytest.raises(BloqError, match=r'.*is not an available Soquet for .*y.*'):
+    with pytest.raises(BloqError, match=r'.*quantum variable was re\-used.*'):
         bb.finalize(
             x=x2, y=bb._make_qvar(BloqInstance(TestTwoBitOp(), i=12), Register('target', QAny(2)))
         )
@@ -286,7 +284,7 @@ def test_finalize_double_use_1():
     bb, x, y = _get_bb()
     x2, y2 = bb.add(TestTwoBitOp(), ctrl=x, target=y)
 
-    with pytest.raises(BloqError, match=r'.*is not an available Soquet for .*y.*'):
+    with pytest.raises(BloqError, match=r'.*quantum variable was re\-used.*'):
         bb.finalize(x=x2, y=x2)
 
 
@@ -294,7 +292,7 @@ def test_finalize_double_use_2():
     bb, x, y = _get_bb()
     x2, y2 = bb.add(TestTwoBitOp(), ctrl=x, target=y)
 
-    with pytest.raises(BloqError, match=r'.*is not an available Soquet for `RightDangle\.x`\.'):
+    with pytest.raises(BloqError, match=r'.*quantum variable was re\-used.*'):
         bb.finalize(x=x, y=y2)
 
 
@@ -319,7 +317,7 @@ def test_finalize_bad_args():
     bb, x, y = _get_bb()
     x2, y2 = bb.add(TestTwoBitOp(), ctrl=x, target=y)
 
-    with pytest.raises(BloqError, match=r'.*is not an available Soquet.*RightDangle\.z.*'):
+    with pytest.raises(BloqError):
         bb.finalize(x=x2, y=y2, z=bb._make_qvar(RightDangle, Register('asdf', QBit())))
 
 

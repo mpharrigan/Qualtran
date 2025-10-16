@@ -11,7 +11,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from qualtran._infra.composite_bloq import QVar
 
 
 def c_bitwise_not(ctrl, x):
@@ -33,9 +32,3 @@ def add_k(x, *, k: int):
 
     bb = x.bb
     return bb.add(_AddK(dtype=x.dtype, k=k), x=x)
-
-
-def xgate(q: 'QVar'):
-    from qualtran.bloqs.basic_gates import XGate as _XGate
-
-    return _XGate.qcall(q)

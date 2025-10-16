@@ -29,12 +29,11 @@ import attrs
 
 import qualtran as qlt
 import qualtran.dtype as qdt
-from qualtran._infra.composite_bloq import QVar, QVarT
 from qualtran.l3.tracing import bloq_compile
 from qualtran.l3.tracing_bloqs import add_k, bitwise_not
 
 if TYPE_CHECKING:
-    from qualtran import BloqBuilder
+    from qualtran import BloqBuilder, QVar
 
 
 @bloq_compile
@@ -55,7 +54,7 @@ class Negate(qlt.Bloq):
 
     @property
     def signature(self) -> 'qlt.Signature':
-        return qlt.Signature([qlt.Register('x', qdt.QInt(self.n))])
+        return qlt.Signature.build(x=qdt.QInt(self.n))
 
     def decompose_bloq(self) -> 'qlt.CompositeBloq':
         return negate.make(self.signature)

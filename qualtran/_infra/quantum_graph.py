@@ -14,7 +14,7 @@
 
 """Plumbing for bloq-to-bloq `Connection`s."""
 from functools import cached_property
-from typing import List, Optional, Tuple, TYPE_CHECKING, Union
+from typing import List, Optional, Tuple, TYPE_CHECKING, Union, Protocol, Any
 
 import attrs
 import numpy as np
@@ -130,6 +130,23 @@ class _Soquet:
         return f'{self.binst}.{self.pretty()}'
 
 
+class QVar(Protocol):
+    @property
+    def bb(self) -> 'BloqBuilder': ...
+
+    @property
+    def dtype(self) -> 'QCDType': ...
+
+    @property
+    def shape(self) -> Tuple[int, ...]: ...
+
+    def item(self, *args) -> '_QVar': ...
+
+    def __getitem__(self, item) -> Any: ...
+
+    def __len__(self) -> int: ...
+
+
 @attrs.mutable
 class _QVar:
     soquet: _Soquet
@@ -137,7 +154,7 @@ class _QVar:
     _split_components: Optional['QVarT'] = field(default=None)
 
     @property
-    def dtype(self):
+    def dtype(self) -> 'QCDType':
         return self.soquet.reg.dtype
 
     @property
@@ -178,7 +195,7 @@ class _QVar:
             raise NotImplementedError()
         return arr
 
-    def __invert__(self) -> '_QVar':
+    def __invert__(self) -> 'QVar':
         import qualtran.dtype as qdt
         from qualtran.bloqs.arithmetic import BitwiseNot
         from qualtran.bloqs.basic_gates import XGate

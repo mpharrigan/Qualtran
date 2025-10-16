@@ -12,6 +12,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from qualtran.dtype import *
+from qualtran.bloqs.basic_gates import Hadamard as _Hadamard, CZ as _CZ
 
-from .tracing import bloq_compile as bloqify
+
+def H(q):
+    return _Hadamard.qcall(q=q)
+
+
+def CZ(q0, q1):
+    return _CZ.qcall(q0=q0, q1=q1)

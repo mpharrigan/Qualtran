@@ -32,8 +32,8 @@ from qualtran import (
     Signature,
     Soquet,
     SoquetT,
+    QVar,
 )
-from qualtran._infra.composite_bloq import QVar
 from qualtran.bloqs.basic_gates import CNOT, OnEach, XGate
 from qualtran.drawing import TextBox, WireSymbol
 from qualtran.resource_counting.generalizers import ignore_split_join
