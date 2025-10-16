@@ -12,13 +12,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from qualtran import BloqBuilder
-from qualtran import dtype as qdt
-from qualtran import Register
-from qualtran.l3.tracing import bloq_compile
+import qualtran as qlt
+import qualtran.dtype as qdt
+from qualtran.l3 import bloqify
 from qualtran.l3.tracing_bloqs import bitwise_not, c_bitwise_not
 
 
-@bloq_compile
+@bloqify
 def ctrl_add_or_subtract(bb: 'BloqBuilder', ctrl, a, b, add_when_ctrl_is_on: bool = True):
     if add_when_ctrl_is_on:
         # flip the control bit
@@ -39,7 +39,7 @@ def ctrl_add_or_subtract(bb: 'BloqBuilder', ctrl, a, b, add_when_ctrl_is_on: boo
     return {'ctrl': ctrl, 'a': a, 'b': b}
 
 
-@bloq_compile
+@bloqify
 def preconfigure_add_or_subtract(bb: 'BloqBuilder', ctrl_val: int, a, b):
     ctrl = bb.alloc_qbit(ctrl_val)
     ctrl, a, b = ctrl_add_or_subtract(bb, ctrl=ctrl, a=a, b=b)
@@ -49,14 +49,14 @@ def preconfigure_add_or_subtract(bb: 'BloqBuilder', ctrl_val: int, a, b):
 
 def test_ctrl_add_or_subtract():
     bloq = preconfigure_add_or_subtract.make(
-        ctrl_val=1, a=Register('a', qdt.QInt(8)), b=Register('b', qdt.QInt(8))
+        qlt.Signature.build(a=qdt.QInt(8), b=qdt.QInt(8)), ctrl_val=1
     )
     a_out, b_out = bloq.call_classically(a=2, b=3)
     assert a_out == 2
     assert b_out == 3 + 2
 
     bloq = preconfigure_add_or_subtract.make(
-        ctrl_val=0, a=Register('a', qdt.QInt(8)), b=Register('b', qdt.QInt(8))
+        qlt.Signature.build(a=qdt.QInt(8), b=qdt.QInt(8)), ctrl_val=0
     )
     a_out, b_out = bloq.call_classically(a=2, b=3)
     assert a_out == 2

@@ -11,6 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import inspect
 from typing import Any, Dict, Protocol, Sequence, Union
 
 from qualtran import Bloq, BloqBuilder, Register, Signature
@@ -19,7 +20,25 @@ from qualtran._infra.quantum_graph import _QVar
 
 
 class _TracingBloqFuncT(Protocol):
-    def __call__(self, bb: 'BloqBuilder', *args: Any, **kwargs: Any) -> Dict[str, Any]: ...
+    def __call__(self, bb: 'BloqBuilder', *args: Any, **kwargs: Any) -> Dict[str, Any]:
+        """the structure of the function.
+
+        During normal operation
+         - a `bb: BloqBuilder` will be passed positionally as the first argument.
+         - all other quantum and classical args and kwargs will be bound according to the Python
+           rules and passed to the function by keyword. There are no additional positional-only
+           arguments allowed (other than optionally `bb`).
+
+        During `make`
+         - a `bb: BloqBuilder` will be passed positionally as the first argument.
+         - positional arguments will the be passed
+         - any provided keyword arguments will be merged with a dictionary of initial quantum
+           variables constructed by this method, and passed by keyword. An error is raised
+           if a keyworkd argument is provided that interferes with this.
+
+         - During normal operation, all quantum and classical arguments will be
+         - Quantum arguments will always be passed by keyword, so you should probably put them last.
+        """
 
 
 class _TracingBloqIntermediate:
@@ -34,46 +53,50 @@ class _TracingBloqIntermediate:
     def pkg(self) -> str:
         return self.func.__module__
 
-    def _prep(self, **kwargs):
+    def _prep_qstackframe(self, *args, **kwargs):
         bb = BloqBuilder(bloq_name=self.name, bloq_pkg_name=self.pkg)
-        soqs = {}
-        classical_kwargs = {}
+        qkwargs = {}
+        ckwargs = {}
 
-        # TODO: inspect.signature.bind
-        for k, v in kwargs.items():
-            # v is either a qvar or a register ... they both have dtype
-            if isinstance(v, Register):
-                # TODO: I don't like this.
-                soqs[k] = bb.in_register(name=k, dtype=v.dtype)
-            elif isinstance(v, _QVar):
-                soqs[k] = bb.in_register(name=k, dtype=v.dtype)
+        for k, v in inspect.signature(self.func).bind_partial(*args, **kwargs).arguments.items():
+            if isinstance(v, _QVar):
+                qkwargs[k] = bb.in_register(name=k, dtype=v.dtype)
             else:
-                classical_kwargs[k] = v
+                ckwargs[k] = v
 
-        soqs = self.func(bb, **classical_kwargs, **soqs)
-        return bb.finalize(**soqs), set(soqs.keys())
+        out_qvars = self.func(bb, **ckwargs, **qkwargs)
+        if not isinstance(out_qvars, dict):
+            raise ValueError(
+                f"{self.name} is expected to return a dictionary mapping "
+                f"output register name to output quantum variable."
+            )
+        cbloq = bb.finalize(**out_qvars)
+        return cbloq, set(qkwargs.keys()), set(out_qvars.keys())
 
-    def make(self, signature: 'Signature', **classical_kwargs):
+    def make(self, signature: 'Signature', *classical_args, **classical_kwargs):
         bb, soqs = BloqBuilder.from_signature(
             signature, bloq_name=self.name, bloq_pkg_name=self.pkg
         )
-        soqs = self.func(bb, **classical_kwargs, **soqs)
+
+        dupes = set(classical_kwargs.keys()) & set(soqs.keys())
+        if dupes:
+            raise ValueError(
+                f"`make` called with keyword arguments that shadow quantum "
+                "register names: {dupes}. Please do not provide quantum variables "
+                "when calling `make`."
+            )
+
+        kwargs = classical_kwargs | soqs
+        soqs = self.func(bb, *classical_args, **kwargs)
         return bb.finalize(**soqs)
 
-    def __call__(self, bb: 'BloqBuilder' = None, /, **kwargs: Any):
-        # Note: no return type annotation (same as bb.add())
+    def __call__(self, bb: 'BloqBuilder', /, *args, **kwargs):
+        bloq, in_soqnames, _ = self._prep_qstackframe(*args, **kwargs)
+        return bb.add(bloq, **{k: v for k, v in kwargs.items() if k in in_soqnames})
 
-        # TODO: optional bb
-
-        bloq, soqnames = self._prep(**kwargs)
-        if bb is None:
-            # TODO: is this a good idea?
-            return bloq
-        return bb.add(bloq, **{k: v for k, v in kwargs.items() if k in soqnames})
-
-    def adjoint(self, bb: 'BloqBuilder', /, **kwargs: Any):
-        bloq, soqnames = self._prep(**kwargs)
-        return bb.add(bloq.adjoint(), **{k: v for k, v in kwargs.items() if k in soqnames})
+    def adjoint(self, bb: 'BloqBuilder', /, *args, **kwargs):
+        bloq, in_soqnames, out_soqnames = self._prep_qstackframe(*args, **kwargs)
+        return bb.add(bloq.adjoint(), **{k: v for k, v in kwargs.items() if k in out_soqnames})
 
 
 def bloq_compile(func: _TracingBloqFuncT) -> _TracingBloqIntermediate:
