@@ -218,11 +218,15 @@ class CompositeBloq(Bloq):
             should correspond to the dangling `Soquets` in the `cxns`.
         bloq_instances: Optionally specify the unique bloq instances. Otherwise, deduce them from
             the connections.
+        name: A name for this subroutine
+        pkg_name: The package name for this subroutine. TODO: should this be an entirely different type?
     """
 
     connections: Tuple[Connection, ...] = attrs.field(converter=_to_tuple)
     signature: Signature
     bloq_instances: FrozenSet[BloqInstance] = attrs.field(converter=_to_set)
+    name: Optional[str] = attrs.field(default=None)
+    pkg_name: Optional[str] = attrs.field(default=None)
 
     @bloq_instances.default
     def _default_bloq_instances(self):
@@ -603,6 +607,8 @@ class CompositeBloq(Bloq):
         return delimited_gens
 
     def __str__(self):
+        if self.name is not None:
+            return self.name
         return f'CompositeBloq([{len(self.bloq_instances)} subbloqs...])'
 
 
@@ -1014,7 +1020,13 @@ class BloqBuilder:
             by the framework or by the `BloqBuilder.from_signature(s)` factory method.
     """
 
-    def __init__(self, add_registers_allowed: bool = True):
+    def __init__(
+        self,
+        add_registers_allowed: bool = True,
+        *,
+        bloq_name: Optional[str] = None,
+        bloq_pkg_name: Optional[str] = None,
+    ):
         # To be appended to:
         self._cxns: List[Connection] = []
         self._regs: List[Register] = []
@@ -1028,6 +1040,9 @@ class BloqBuilder:
 
         # Whether we can call `add_register` and do non-strict `finalize()`.
         self.add_register_allowed = add_registers_allowed
+
+        self._bloq_name = bloq_name
+        self._bloq_pkg_name = bloq_pkg_name
 
     def add_register_from_dtype(
         self, reg: Union[str, Register], dtype: Optional[QCDType] = None
@@ -1124,7 +1139,12 @@ class BloqBuilder:
 
     @classmethod
     def from_signature(
-        cls, signature: Signature, add_registers_allowed: bool = False
+        cls,
+        signature: Signature,
+        add_registers_allowed: bool = False,
+        *,
+        bloq_name: Optional[str] = None,
+        bloq_pkg_name: Optional[str] = None,
     ) -> Tuple['BloqBuilder', Dict[str, QVarT]]:
         """Construct a BloqBuilder with a pre-specified signature.
 
@@ -1132,7 +1152,7 @@ class BloqBuilder:
         to match. This constructor is used by `Bloq.decompose_bloq()`.
         """
         # Initial construction: allow register addition for the following loop.
-        bb = cls(add_registers_allowed=True)
+        bb = cls(add_registers_allowed=True, bloq_name=bloq_name, bloq_pkg_name=bloq_pkg_name)
 
         initial_soqs: Dict[str, QVarT] = {}
         for reg in signature:
@@ -1511,7 +1531,11 @@ class BloqBuilder:
             ) from None
 
         return CompositeBloq(
-            connections=self._cxns, signature=signature, bloq_instances=self._binsts
+            connections=self._cxns,
+            signature=signature,
+            bloq_instances=self._binsts,
+            name=self._bloq_name,
+            pkg_name=self._bloq_pkg_name,
         )
 
     def allocate(
@@ -1555,7 +1579,7 @@ class BloqBuilder:
             soqs = np.asarray(soqs)
             (n,) = soqs.shape
         except (AttributeError, ValueError):
-            raise ValueError("`join` expects a 1-d array of input soquets to join.") from None
+            raise ValueError("`join` expects a 1-d array of input soquets to join.")
 
         if not all(soq.dtype.num_bits == 1 for soq in soqs):
             raise ValueError("`join` can only join equal-bitsized soquets, currently only size 1.")

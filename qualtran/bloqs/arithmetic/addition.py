@@ -40,6 +40,7 @@ from qualtran import (
     Soquet,
     SoquetT,
 )
+from qualtran._infra.composite_bloq import QVar
 from qualtran.bloqs.basic_gates import CNOT
 from qualtran.bloqs.bookkeeping import Always
 from qualtran.bloqs.mcmt.and_bloq import And
@@ -111,6 +112,12 @@ class Add(Bloq):
     @property
     def signature(self):
         return Signature([Register("a", self.a_dtype), Register("b", self.b_dtype)])
+
+    @classmethod
+    def qcall(cls, a: 'QVar', b: 'QVar'):
+        bloq = cls(a_dtype=a.dtype, b_dtype=b.dtype)
+        bb = a.bb
+        return bb.add(bloq, a=a, b=b)
 
     def decompose_bloq(self) -> 'CompositeBloq':
         return decompose_from_cirq_style_method(self)

@@ -124,7 +124,7 @@ def _get_cost_value(
         return cost_key.zero()
 
     # Strategy 1: Use cached value
-    if not isinstance(bloq, CompositeBloq) and bloq in costs_cache:
+    if bloq in costs_cache:
         logger.debug("Using cached %s for %s", cost_key, bloq)
         return costs_cache[bloq]
 
@@ -146,8 +146,9 @@ def _get_cost_value(
     computed_cost = cost_key.compute(bloq, _get_cost_val_internal)
     tdur = time.perf_counter() - tstart
     logger.info("Computed %s for %s in %g s", cost_key, bloq, tdur)
-    if not isinstance(bloq, CompositeBloq):
-        costs_cache[bloq] = computed_cost
+    # TODO: Might be expensive for CompositeBloq
+    # https://github.com/quantumlib/Qualtran/issues/1073
+    costs_cache[bloq] = computed_cost
     return computed_cost
 
 

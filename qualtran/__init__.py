@@ -49,6 +49,7 @@ from ._infra.composite_bloq import (
     Soquet,
     SoquetT,
     ConnectionT,
+    QVarT,
 )
 
 from ._infra.data_types import (
@@ -99,5 +100,7 @@ from ._infra.controlled import (
 )
 
 from ._infra.bloq_example import BloqExample, bloq_example, BloqDocSpec
+
+from .drawing._show_funcs import show_bloq
 
 # --------------------------------------------------------------------------------------------------

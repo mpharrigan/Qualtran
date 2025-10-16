@@ -17,7 +17,7 @@
 import abc
 from enum import Enum
 from functools import cached_property
-from typing import Any, Iterable, List, Optional, Sequence, Union
+from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
 
 import attrs
 import galois
@@ -26,6 +26,14 @@ from fxpmath import Fxp
 from numpy.typing import NDArray
 
 from qualtran.symbolics import bit_length, is_symbolic, SymbolicInt
+
+
+@attrs.frozen
+class ShapedQCDType:
+    qcdtype: 'QCDType'
+    shape: Tuple[int, ...] = attrs.field(
+        default=tuple(), converter=lambda v: (v,) if isinstance(v, int) else tuple(v)
+    )
 
 
 class QCDType(metaclass=abc.ABCMeta):
@@ -114,6 +122,10 @@ class QCDType(metaclass=abc.ABCMeta):
         Returns the iteration_length if the type has it or else zero.
         """
         return getattr(self, 'iteration_length', 0)
+
+    def __getitem__(self, shape):
+        """QInt(8)[20] returns a size-20 array of QInt(8)"""
+        return ShapedQCDType(qcdtype=self, shape=shape)
 
     def __str__(self):
         return f'{self.__class__.__name__}({self.num_qubits})'

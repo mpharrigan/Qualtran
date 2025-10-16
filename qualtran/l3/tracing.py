@@ -23,11 +23,19 @@ class _TracingBloqFuncT(Protocol):
 
 
 class _TracingBloqIntermediate:
-    def __init__(self, func):
-        self.func = func
+    def __init__(self, func: _TracingBloqFuncT):
+        self.func: _TracingBloqFuncT = func
+
+    @property
+    def name(self) -> str:
+        return self.func.__name__
+
+    @property
+    def pkg(self) -> str:
+        return self.func.__module__
 
     def _prep(self, **kwargs):
-        bb = BloqBuilder()
+        bb = BloqBuilder(bloq_name=self.name, bloq_pkg_name=self.pkg)
         soqs = {}
         classical_kwargs = {}
 
@@ -35,6 +43,7 @@ class _TracingBloqIntermediate:
         for k, v in kwargs.items():
             # v is either a qvar or a register ... they both have dtype
             if isinstance(v, Register):
+                # TODO: I don't like this.
                 soqs[k] = bb.in_register(name=k, dtype=v.dtype)
             elif isinstance(v, _QVar):
                 soqs[k] = bb.in_register(name=k, dtype=v.dtype)
@@ -44,19 +53,27 @@ class _TracingBloqIntermediate:
         soqs = self.func(bb, **classical_kwargs, **soqs)
         return bb.finalize(**soqs), set(soqs.keys())
 
-    def make_from_signature(self, signature: 'Signature', **classical_kwargs):
-        bb, soqs = BloqBuilder.from_signature(signature)
+    def make(self, signature: 'Signature', **classical_kwargs):
+        bb, soqs = BloqBuilder.from_signature(
+            signature, bloq_name=self.name, bloq_pkg_name=self.pkg
+        )
         soqs = self.func(bb, **classical_kwargs, **soqs)
         return bb.finalize(**soqs)
 
-    def make(self, **kwargs):
-        bloq, _ = self._prep(**kwargs)
-        return bloq
-
-    def __call__(self, bb: 'BloqBuilder', /, **kwargs: Any):
+    def __call__(self, bb: 'BloqBuilder' = None, /, **kwargs: Any):
         # Note: no return type annotation (same as bb.add())
+
+        # TODO: optional bb
+
         bloq, soqnames = self._prep(**kwargs)
+        if bb is None:
+            # TODO: is this a good idea?
+            return bloq
         return bb.add(bloq, **{k: v for k, v in kwargs.items() if k in soqnames})
+
+    def adjoint(self, bb: 'BloqBuilder', /, **kwargs: Any):
+        bloq, soqnames = self._prep(**kwargs)
+        return bb.add(bloq.adjoint(), **{k: v for k, v in kwargs.items() if k in soqnames})
 
 
 def bloq_compile(func: _TracingBloqFuncT) -> _TracingBloqIntermediate:

@@ -70,7 +70,9 @@ def _adjoint_cbloq(cbloq: 'CompositeBloq') -> 'CompositeBloq':
     bloqnections = reversed(list(cbloq.iter_bloqnections()))
 
     # And add subbloq.adjoint() back in for each subbloq.
-    bb, _ = BloqBuilder.from_signature(new_signature)
+    bb, _ = BloqBuilder.from_signature(
+        new_signature, bloq_name=cbloq.name, bloq_pkg_name=cbloq.pkg_name
+    )
     old_i_soqs = [_reg_to_soq(RightDangle, reg) for reg in old_signature.rights()]
     new_i_soqs = [bb._reg_to_qvar(LeftDangle, reg) for reg in new_signature.lefts()]
     soq_map: List[Tuple[_SoquetT, QVarT]] = list(zip(old_i_soqs, new_i_soqs))

@@ -14,13 +14,14 @@
 
 """Plumbing for bloq-to-bloq `Connection`s."""
 from functools import cached_property
-from typing import Tuple, TYPE_CHECKING, Union
+from typing import List, Optional, Tuple, TYPE_CHECKING, Union
 
 import attrs
+import numpy as np
 from attrs import field, frozen
 
 if TYPE_CHECKING:
-    from qualtran import Bloq, BloqBuilder, QCDType, Register
+    from qualtran import Bloq, BloqBuilder, QCDType, QVarT, Register
 
 
 @frozen
@@ -133,6 +134,7 @@ class _Soquet:
 class _QVar:
     soquet: _Soquet
     bb: 'BloqBuilder' = field(kw_only=True)
+    _split_components: Optional['QVarT'] = field(default=None)
 
     @property
     def dtype(self):
@@ -143,8 +145,8 @@ class _QVar:
         return ()
 
     def item(self, *args):
-        if args:
-            raise ValueError("Tried to index into a single soquet.")
+        if args and args != ((),):
+            raise ValueError(f"Tried to index {args!r} into a single soquet.")
         return self
 
     @property
@@ -154,7 +156,27 @@ class _QVar:
 
     def __hash__(self):
         # TODO: message
-        raise TypeError("Don't access register ")
+        raise TypeError("unhashable")
+
+    def __getitem__(self, item):
+        if self._split_components is None:
+            self._split_components = self.bb.split(self)
+
+        return self._split_components[item]
+
+    def __len__(self):
+        return self.dtype.num_bits
+
+    def __array__(self, dtype=None, copy=None):
+        # This method is super important --
+        # throughout the library, we use np.asarray(soqs)
+        arr = np.empty(shape=(), dtype=object)
+        arr[()] = self
+        if copy is None:
+            return arr
+        if copy:
+            raise NotImplementedError()
+        return arr
 
     def __invert__(self) -> '_QVar':
         import qualtran.dtype as qdt
@@ -171,6 +193,8 @@ class _QVar:
 
         if isinstance(other, _QVar):
             return self.bb.add(Add(a_dtype=self.dtype, b_dtype=other.dtype), a=self, b=other)
+
+        return NotImplemented
 
     def __iadd__(self, other):
         if isinstance(other, int):

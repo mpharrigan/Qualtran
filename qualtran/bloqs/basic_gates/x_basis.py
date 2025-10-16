@@ -278,7 +278,7 @@ class XGate(Bloq):
         from qualtran.drawing import ModPlus
 
         if reg is None:
-            return Text('X')
+            return Text('')
 
         return ModPlus()
 

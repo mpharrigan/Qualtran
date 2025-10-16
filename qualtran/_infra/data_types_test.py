@@ -593,3 +593,13 @@ def test_qgf_with_default_poly_is_compatible():
     qgf_two = QGF(2, 4, irreducible_poly=qgf_one.gf_type.irreducible_poly)
 
     assert qgf_one == qgf_two
+
+
+def test_shaped_qbit():
+    s = QBit()[5]
+    assert s.qcdtype == QBit()
+    assert s.shape == (5,)
+
+    s = QBit()[5, 6]
+    assert s.qcdtype == QBit()
+    assert s.shape == (5, 6)

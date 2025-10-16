@@ -16,3 +16,4 @@ from qualtran.dtype import *
 
 from .sugar import In, Join, MultiControlX, Split, Xor, ZeroState
 from .sugar_process import process_sugar
+from .tracing import bloq_compile as bloqify

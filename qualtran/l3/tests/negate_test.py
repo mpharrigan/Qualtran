@@ -44,6 +44,11 @@ def negate(bb: 'BloqBuilder', x: 'QVar') -> Dict[str, 'QVar']:
     return {'x': x}
 
 
+def test_negate_func():
+    assert negate.name == 'negate'
+    assert negate.pkg == 'negate_test'  # TODO: why not the full name?
+
+
 @attrs.frozen
 class Negate(qlt.Bloq):
     n: int
@@ -53,7 +58,7 @@ class Negate(qlt.Bloq):
         return qlt.Signature([qlt.Register('x', qdt.QInt(self.n))])
 
     def decompose_bloq(self) -> 'qlt.CompositeBloq':
-        return negate.make_from_signature(self.signature)
+        return negate.make(self.signature)
 
 
 def test_negate_bloq():
@@ -71,7 +76,7 @@ def negate_program(bb: 'BloqBuilder', n: int) -> Dict[str, 'QVar']:
 
 
 def test_negate_program():
-    bloq = negate_program.make(n=8)
+    bloq = negate_program.make(qlt.Signature.build(x=(None, qdt.QInt(8))), n=8)
     assert bloq.signature.n_bits() == 8
     (x,) = bloq.call_classically()
     assert x == qdt.QUInt(8).from_bits(qdt.QInt(8).to_bits(-5))  # TODO IntState
