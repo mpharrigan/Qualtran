@@ -155,7 +155,7 @@ class _QVar:
 
     @property
     def dtype(self) -> 'QCDType':
-        return self.soquet.reg.dtype
+        return self.soquet.dtype
 
     @property
     def shape(self) -> Tuple[int, ...]:
