@@ -225,6 +225,7 @@ def _get_bb():
     bb = BloqBuilder()
     x = bb.add_register('x', 1)
     y = bb.add_register('y', 1)
+    bb.add_register_allowed = False
     return bb, x, y
 
 
@@ -257,7 +258,9 @@ def test_double_use_2():
 def test_missing_args():
     bb, x, y = _get_bb()
 
-    with pytest.raises(BloqError, match=r"During a call to TestTwoBitOp, we expected a value for 'ctrl'\."):
+    with pytest.raises(
+        BloqError, match=r"During a call to TestTwoBitOp, we expected a value for 'ctrl'\."
+    ):
         bb.add(TestTwoBitOp(), target=y)
 
 

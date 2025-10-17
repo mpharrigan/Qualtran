@@ -146,7 +146,7 @@ class Xor(Bloq):
         return Signature.build_from_dtypes(x=self.dtype, y=self.dtype)
 
     @classmethod
-    def from_soqs(cls, x: Soquet, y: Soquet) -> 'Xor':
+    def qcall(cls, x: 'QVar', y: 'QVar'):
         xdtype = x.reg.dtype
         ydtype = y.reg.dtype
         if not xdtype == ydtype:
@@ -154,7 +154,7 @@ class Xor(Bloq):
                 f"Cannot determine the dtype for Xor from soquets of type {xdtype} and {ydtype}"
             )
         assert isinstance(xdtype, QDType), xdtype
-        return cls(dtype=xdtype)
+        return x.bb.add(cls(dtype=xdtype), x=x, y=y)
 
     def build_composite_bloq(self, bb: BloqBuilder, x: Soquet, y: Soquet) -> dict[str, SoquetT]:
         if not isinstance(self.dtype.num_qubits, int):

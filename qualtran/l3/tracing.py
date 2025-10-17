@@ -16,7 +16,7 @@ from typing import Any, Dict, Protocol, Sequence, Union, Set, Optional
 
 import attrs
 
-from qualtran import Bloq, BloqBuilder, Register, Signature, CompositeBloq
+from qualtran import Bloq, BloqBuilder, Register, Signature, CompositeBloq, BloqError
 from qualtran._infra.composite_bloq import QVarT
 from qualtran._infra.quantum_graph import _QVar
 
@@ -84,12 +84,12 @@ class _TracingBloqIntermediate:
             _BB_PLACEHOLDER, *args, **kwargs
         ).arguments.items()
 
-    def _prep_qstackframe(self, *args, **kwargs):
+    def _prep_qstackframe(self, kv_iter):
         bb = BloqBuilder(bloq_name=self.name, bloq_pkg_name=self.pkg, add_registers_allowed=True)
         qkwargs = {}
         ckwargs = {}
 
-        for k, v in self._bound_kvs(*args, **kwargs):
+        for k, v in kv_iter:
             # TODO: handle shaped
             if v is _BB_PLACEHOLDER:
                 continue
@@ -127,20 +127,29 @@ class _TracingBloqIntermediate:
         return bb.finalize(**soqs)
 
     def __call__(self, bb: 'BloqBuilder', /, *args, **kwargs):
-        f = self._prep_qstackframe(*args, **kwargs)
+        try:
+            f = self._prep_qstackframe(self._bound_kvs(*args, **kwargs))
+        except BloqError as be:
+            raise BloqError(*be.args) from None
+
         return bb.add(
             f.cbloq, **{k: v for k, v in self._bound_kvs(*args, **kwargs) if k in f.in_qargnames}
         )
 
     def adjoint(self, bb: 'BloqBuilder', /, *args, **kwargs):
-        f = self._prep_qstackframe(*args, **kwargs)
         if args:
             raise ValueError(
                 "`.adjoint` must be called with keyword arguments: the outputs are now inputs, and we can't inspect outputs."
             )
+        # TODO: fundamentally broken
+        f = self._prep_qstackframe(kwargs.items())
         return bb.add(
             f.cbloq.adjoint(), **{k: v for k, v in kwargs.items() if k in f.out_qargnames}
         )
+
+    def inline(self, bb: 'BloqBuilder', /, *args, **kwargs):
+        ret_dict = self.func(bb, *args, **kwargs)
+        return tuple(ret_dict.values())
 
 
 def bloq_compile(func: _TracingBloqFuncT) -> _TracingBloqIntermediate:

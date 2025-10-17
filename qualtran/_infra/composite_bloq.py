@@ -1418,7 +1418,10 @@ class BloqBuilder:
             return self._add_cxn(binst, idxed_soq, reg, idx)
 
         _process_soquets(
-            registers=bloq.signature.lefts(), in_soqs=in_soqs, debug_str=f'a call to {bloq}', func=_add
+            registers=bloq.signature.lefts(),
+            in_soqs=in_soqs,
+            debug_str=f'a call to {bloq}',
+            func=_add,
         )
         yield from (
             (reg.name, self._reg_to_qvar(binst, reg, track=True)) for reg in bloq.signature.rights()
@@ -1476,6 +1479,38 @@ class BloqBuilder:
         fsoqs = _map_soqs(cbloq.final_soqs(), soq_map)
         return tuple(fsoqs[reg.name] for reg in cbloq.signature.rights())
 
+    def _change_THRU_to_LEFT(self, reg_name: str):
+        """Used during loose `finalize` to force LEFT registers."""
+        for reg_i, reg in enumerate(self._regs):
+            if reg.name == reg_name:
+                break
+        else:
+            raise AssertionError(f"{reg_name} doesn't exist in the registers.")
+
+        if reg.side != Side.THRU:
+            raise ValueError(f"{reg} is supposed to be a THRU register.")
+
+        new_reg = attrs.evolve(reg, side=Side.LEFT)
+
+        # Replace in `self._available`
+        soqs_to_replace = []
+        for soq in self._available:
+            if soq.binst is LeftDangle and soq.reg == reg:
+                soqs_to_replace.append(soq)
+        for soq in soqs_to_replace:
+            self._available.remove(soq)
+            self._available.add(attrs.evolve(soq, reg=new_reg))
+
+        # Replace in `self._cxns`
+        for j in range(len(self._cxns)):
+            cxn = self._cxns[j]
+            if cxn.left.reg == reg:
+                new_cxn = attrs.evolve(cxn, left=attrs.evolve(cxn.left, reg=new_reg))
+                self._cxns[j] = new_cxn
+
+        # Replace in `self._regs`
+        self._regs[reg_i] = new_reg
+
     def finalize(self, **final_soqs: SoquetInT) -> CompositeBloq:
         """Finish building a CompositeBloq and return the immutable CompositeBloq.
 
@@ -1483,10 +1518,13 @@ class BloqBuilder:
         it configures the final "dangling" soquets that serve as the outputs for
         the composite bloq as a whole.
 
-        If `self.add_registers_allowed` is set to `True`, additional register
-        names passed to this function will be added as RIGHT registers. Otherwise,
-        this method validates the provided `final_soqs` against our list of RIGHT
-        (and THRU) registers.
+        If `self.add_registers_allowed` is set to `False`, the kwqargs to this method must
+        exactly match the signature configured for this bloq builder.
+        Otherwise:
+         - surplus arguments (with register names not in our signature) will be interpreted as
+           output quantum variables and we'll add a corresponding RIGHT register.
+         - missing arguments (i.e. a register name exists in our signature as a THRU register; but
+           no quantum variable was provided to finalize it), we will retroactively do funny business TODO.
 
         Args:
             **final_soqs: Keyword arguments mapping the composite bloq's register names to
@@ -1498,21 +1536,29 @@ class BloqBuilder:
         # If items from `final_soqs` don't already exist in `_regs`, add RIGHT registers
         # for them. Then call `_finalize_strict` where the actual dangling connections are added.
 
-        def _infer_reg(name: str, soq: SoquetT) -> Register:
-            """Go from Soquet -> register, but use a specific name for the register."""
+        def _infer_shaped_dtype(soq: SoquetT) -> Tuple['QCDType', Tuple[int, ...]]:
+            """Extract (dtype, shape) from SoquetT"""
             if BloqBuilder.is_single(soq):
-                return Register(name=name, dtype=soq.item().dtype, side=Side.RIGHT)
-            assert BloqBuilder.is_ndarray(soq)
+                return soq.item().dtype, ()
 
             # Get info from 0th soquet in an ndarray.
-            return Register(
-                name=name, dtype=soq.reshape(-1).item(0).dtype, shape=soq.shape, side=Side.RIGHT
-            )
+            assert BloqBuilder.is_ndarray(soq)
+            dtype = soq.reshape(-1).item(0).dtype
+            return dtype, soq.shape
 
-        right_reg_names = [reg.name for reg in self._regs if reg.side & Side.RIGHT]
+        existing_right_reg_names = [reg.name for reg in self._regs if reg.side & Side.RIGHT]
         for name, soq in final_soqs.items():
-            if name not in right_reg_names:
-                self._regs.append(_infer_reg(name, np.asarray(soq)))
+            if name not in existing_right_reg_names:
+                dtype, shape = _infer_shaped_dtype(np.asarray(soq))
+                self._regs.append(Register(name=name, dtype=dtype, shape=shape, side=Side.RIGHT))
+
+        ## --------------------------------
+        ## $$ Get rid of missingggg
+        ## --------------------------------
+        deletable_right_reg_names = [reg.name for reg in self._regs if reg.side == Side.THRU]
+        for name in deletable_right_reg_names:
+            if name not in final_soqs:
+                self._change_THRU_to_LEFT(reg_name=name)
 
         return self._finalize_strict(**final_soqs)
 
@@ -1607,7 +1653,7 @@ class BloqBuilder:
 
         return self.add(IntState(val=k, bitsize=bitsize))
 
-    def alloc_qbit(self, k: int=0) -> 'QVar':
+    def alloc_qbit(self, k: int = 0) -> 'QVar':
         from qualtran.bloqs.basic_gates import OneState, ZeroState
 
         if k == 0:

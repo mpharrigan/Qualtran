@@ -126,10 +126,6 @@ class Hadamard(Bloq):
         return 'H'
 
 
-def H(q):
-    return Hadamard.qcall(q=q)
-
-
 @bloq_example
 def _hadamard() -> Hadamard:
     hadamard = Hadamard()
