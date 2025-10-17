@@ -1065,7 +1065,7 @@ class BloqBuilder:
         from qualtran.symbolics import is_symbolic
 
         if not self.add_register_allowed:
-            raise ValueError(
+            raise BloqError(
                 "This BloqBuilder was constructed from pre-specified registers. "
                 "Ad hoc addition of more registers is not allowed."
             )
