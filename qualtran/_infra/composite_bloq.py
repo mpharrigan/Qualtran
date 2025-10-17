@@ -1603,7 +1603,7 @@ class BloqBuilder:
 
         return self.add(IntState(val=k, bitsize=bitsize))
 
-    def alloc_qbit(self, k: int) -> 'QVar':
+    def alloc_qbit(self, k: int=0) -> 'QVar':
         from qualtran.bloqs.basic_gates import OneState, ZeroState
 
         if k == 0:
@@ -1612,7 +1612,7 @@ class BloqBuilder:
             return self.add(OneState())
         raise ValueError(f"Bad qubit value: {k}")
 
-    def free_qubit(self, q: 'QVar', k: int) -> None:
+    def free_qbit(self, q: 'QVar', k: int) -> None:
         from qualtran.bloqs.basic_gates import OneEffect, ZeroEffect
 
         if k == 0:
