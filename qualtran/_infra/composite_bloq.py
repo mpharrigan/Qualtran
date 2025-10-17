@@ -892,7 +892,7 @@ def _process_soquets(
             # this also supports length-zero indexing natively, which is good too.
             in_soq = np.asarray(in_soqs[reg.name])
         except KeyError:
-            raise BloqError(f"{debug_str} requires a Soquet named `{reg.name}`.") from None
+            raise BloqError(f"During {debug_str}, we expected a value for '{reg.name}'.") from None
 
         unchecked_names.remove(reg.name)  # so we can check for surplus arguments.
 
@@ -1418,7 +1418,7 @@ class BloqBuilder:
             return self._add_cxn(binst, idxed_soq, reg, idx)
 
         _process_soquets(
-            registers=bloq.signature.lefts(), in_soqs=in_soqs, debug_str=str(bloq), func=_add
+            registers=bloq.signature.lefts(), in_soqs=in_soqs, debug_str=f'a call to {bloq}', func=_add
         )
         yield from (
             (reg.name, self._reg_to_qvar(binst, reg, track=True)) for reg in bloq.signature.rights()
@@ -1529,8 +1529,12 @@ class BloqBuilder:
             # close over `RightDangle`
             return self._add_cxn(RightDangle, idxed_soq, reg, idx)
 
+        if self._bloq_name:
+            debug_str = f'finalization of {self._bloq_name}'
+        else:
+            debug_str = 'finalization'
         _process_soquets(
-            registers=signature.rights(), debug_str='Finalizing', in_soqs=final_soqs, func=_fin
+            registers=signature.rights(), debug_str=debug_str, in_soqs=final_soqs, func=_fin
         )
         if self._available:
             raise BloqError(

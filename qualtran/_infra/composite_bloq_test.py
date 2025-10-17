@@ -257,7 +257,7 @@ def test_double_use_2():
 def test_missing_args():
     bb, x, y = _get_bb()
 
-    with pytest.raises(BloqError, match=r'.*requires a Soquet named `ctrl`.'):
+    with pytest.raises(BloqError, match=r"During a call to TestTwoBitOp, we expected a value for 'ctrl'\."):
         bb.add(TestTwoBitOp(), target=y)
 
 
@@ -300,7 +300,7 @@ def test_finalize_missing_args():
     bb, x, y = _get_bb()
     x2, y2 = bb.add(TestTwoBitOp(), ctrl=x, target=y)
 
-    with pytest.raises(BloqError, match=r'Finalizing requires a Soquet named `x`.'):
+    with pytest.raises(BloqError, match=r"During finalization, we expected a value for 'x'\."):
         bb.finalize(y=y2)
 
 
@@ -309,7 +309,7 @@ def test_finalize_strict_too_many_args():
     x2, y2 = bb.add(TestTwoBitOp(), ctrl=x, target=y)
 
     bb.add_register_allowed = False
-    with pytest.raises(BloqError, match=r'Finalizing does not accept Soquets.*z.*'):
+    with pytest.raises(BloqError, match=r'finalization does not accept Soquets.*z.*'):
         bb.finalize(x=x2, y=y2, z=_Soquet(RightDangle, Register('asdf', QBit())))
 
 
