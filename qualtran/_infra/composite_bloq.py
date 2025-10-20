@@ -152,6 +152,8 @@ class QVarT(Protocol):
 
     def item(self, *args) -> _QVar: ...
 
+    def __getitem__(self, item) -> 'QVarT': ...
+
 
 # This is used everywhere in block building land.
 SoquetT: TypeAlias = QVarT
@@ -1691,17 +1693,17 @@ class BloqBuilder:
 
         return CZ.qcall(q1=q1, q2=q2)
 
-    def CNOT(self, ctrl: 'QVar', target: 'QVar'):
+    def CNOT(self, ctrl: 'SoquetInT', target: 'SoquetInT'):
         from qualtran.bloqs.basic_gates import CNOT
 
         return CNOT.qcall(ctrl=ctrl, target=target)
 
-    def And(self, ctrl: 'QVarT'):
+    def And(self, ctrl: 'SoquetInT'):
         from qualtran.bloqs.mcmt import And
 
         return And.qcall(ctrl=ctrl)
 
-    def UnAnd(self, ctrl: 'QVarT', target: 'QVar'):
+    def UnAnd(self, ctrl: 'SoquetInT', target: 'QVar'):
         from qualtran.bloqs.mcmt import And
 
         return And.qcall(ctrl=ctrl, target=target, uncompute=True)

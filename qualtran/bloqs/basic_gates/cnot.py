@@ -34,6 +34,7 @@ from qualtran import (
     SoquetT,
     QVar,
 )
+from qualtran._infra.composite_bloq import SoquetInT
 from qualtran.drawing import Circle, ModPlus, Text, WireSymbol
 
 if TYPE_CHECKING:
@@ -67,7 +68,7 @@ class CNOT(Bloq):
         return Signature.build(ctrl=1, target=1)
 
     @classmethod
-    def qcall(cls, ctrl: 'QVar', target: 'QVar'):
+    def qcall(cls, ctrl: 'SoquetInT', target: 'SoquetInT'):
         return ctrl.bb.add(cls(), ctrl=ctrl, target=target)
 
     def decompose_bloq(self) -> 'CompositeBloq':
