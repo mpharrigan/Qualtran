@@ -14,9 +14,13 @@
 import math
 import random
 from typing import Any, Iterable, List, Sequence, Union
-
 import attrs
-import galois
+
+try:
+    import galois
+except ImportError:
+    from qualtran._infra.optional_dependency import OptionalDependency
+    galois = OptionalDependency('galois')
 import numpy as np
 import pytest
 import sympy
@@ -209,13 +213,17 @@ def test_domain_and_validation(qdtype: QDType):
         QInt(4),
         QUInt(4),
         BQUInt(3, 5),
-        QGF(2, 8),
-        QGFPoly(4, QGF(characteristic=2, degree=2)),
     ],
 )
 def test_domain_and_validation_arr(qdtype: QDType):
     arr = np.array(list(qdtype.get_classical_domain()))
     qdtype.assert_valid_classical_val_array(arr)
+
+def test_domain_and_validation_arr_qgf():
+    for qdtype in [QGF(2, 8),
+        QGFPoly(4, QGF(characteristic=2, degree=2))]:
+        arr = np.array(list(qdtype.get_classical_domain()))
+        qdtype.assert_valid_classical_val_array(arr)
 
 
 def test_validation_errs():

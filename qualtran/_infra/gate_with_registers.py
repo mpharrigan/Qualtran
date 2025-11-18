@@ -27,7 +27,11 @@ from typing import (
     Union,
 )
 
-import cirq
+try:
+    import cirq
+except ImportError:
+    from qualtran._infra.optional_dependency import CirqOptionalDependency
+    cirq = CirqOptionalDependency()
 import numpy as np
 from numpy.typing import NDArray
 

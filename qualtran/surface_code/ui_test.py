@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 import pytest
-from dash.exceptions import PreventUpdate
+pytest.importorskip('plotly')
 
 from qualtran.surface_code import ui
 
@@ -95,6 +95,7 @@ def test_update(estimation_model: str, desired):
 
 
 def test_update_bad_input():
+    from dash.exceptions import PreventUpdate
     with pytest.raises(PreventUpdate):
         _ = ui.update(
             physical_error_rate=None,

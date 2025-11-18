@@ -19,7 +19,11 @@ import cirq
 import numpy as np
 import sympy
 from cirq._compat import cached_method
-from fxpmath import Fxp
+try:
+    import fxpmath
+except ImportError:
+    from qualtran._infra.optional_dependency import OptionalDependency
+    fxpmath = OptionalDependency("fxpmath")
 from numpy.typing import NDArray
 
 from qualtran import (
@@ -354,7 +358,7 @@ def _add_into_phase_grad() -> AddIntoPhaseGrad:
 _ADD_INTO_PHASE_GRAD_DOC = BloqDocSpec(bloq_cls=AddIntoPhaseGrad, examples=(_add_into_phase_grad,))
 
 
-def _fxp(x: float, n: 'SymbolicInt') -> Fxp:
+def _fxp(x: float, n: 'SymbolicInt') -> 'fxpmath.Fxp':
     """When 0 <= x < 1, constructs an n-bit fixed point representation with nice properties.
 
     Specifically,
@@ -366,7 +370,7 @@ def _fxp(x: float, n: 'SymbolicInt') -> Fxp:
         digits are simply discarded.
     """
     assert 0 <= x < 1
-    return Fxp(
+    return fxpmath.Fxp(
         x,
         dtype=f'fxp-u{n}/{n}',
         op_sizing='same',
@@ -376,7 +380,7 @@ def _fxp(x: float, n: 'SymbolicInt') -> Fxp:
     )
 
 
-def _mul_via_repeated_add(x_fxp: Fxp, gamma_fxp: Fxp, out: int) -> Fxp:
+def _mul_via_repeated_add(x_fxp: 'fxpmath.Fxp', gamma_fxp: 'fxpmath.Fxp', out: int) -> 'fxpmath.Fxp':
     """Multiplication via repeated additions algorithm described in Appendix D5"""
 
     res = _fxp(0, out)
@@ -449,8 +453,8 @@ class AddScaledValIntoPhaseReg(GateWithRegisters, cirq.ArithmeticGate):  # type:
         return QFxp(self.phase_bitsize, self.phase_bitsize, signed=False)
 
     @cached_property
-    def gamma_fxp(self) -> Fxp:
-        return Fxp(abs(self.gamma), dtype=self.gamma_dtype.fxp_dtype_template().dtype)
+    def gamma_fxp(self) -> 'fxpmath.Fxp':
+        return fxpmath.Fxp(abs(self.gamma), dtype=self.gamma_dtype.fxp_dtype_template().dtype)
 
     @cached_method
     def scaled_val(self, x: int) -> int:
@@ -464,7 +468,7 @@ class AddScaledValIntoPhaseReg(GateWithRegisters, cirq.ArithmeticGate):  # type:
         # However, `x` should be interpreted as per the fixed point specification given in self.x_dtype.
         # If `self.x_dtype` uses `n_frac` bits to represent the fractional part, `x` should be divided by
         # 2**n_frac (in other words, right shifted by n_frac)
-        x_fxp = Fxp(x / 2**self.x_dtype.num_frac, dtype=self.x_dtype.fxp_dtype_template().dtype)
+        x_fxp = fxpmath.Fxp(x / 2**self.x_dtype.num_frac, dtype=self.x_dtype.fxp_dtype_template().dtype)
         # Similarly, `self.gamma` should be represented as a fixed point number using appropriate number
         # of bits for integer and fractional part. This is done in self.gamma_fxp
         # Compute the result = x_fxp * gamma_fxp

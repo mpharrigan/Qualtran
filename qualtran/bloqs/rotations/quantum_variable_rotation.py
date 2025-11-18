@@ -61,7 +61,12 @@ from typing import cast, Dict, Sequence, TYPE_CHECKING
 import attrs
 import numpy as np
 import sympy
-from fxpmath import Fxp
+
+try:
+    import fxpmath
+except ImportError:
+    from qualtran._infra.optional_dependency import OptionalDependency
+    fxpmath = OptionalDependency("fxpmath")
 
 from qualtran import (
     bloq_example,
@@ -213,7 +218,7 @@ def _qvr_zpow() -> QvrZPow:
 _QVR_ZPOW = BloqDocSpec(bloq_cls=QvrZPow, examples=(_qvr_zpow,))
 
 
-def find_optimal_phase_grad_size(gamma_fxp: Fxp, cost_dtype: QFxp, eps: float) -> int:
+def find_optimal_phase_grad_size(gamma_fxp: 'fxpmath.Fxp', cost_dtype: QFxp, eps: float) -> int:
     """Finds the minimal size of the phase gradient register for a scaled addition by `gamma_fxp`
 
     Finds the minimal size of the phase gradient register s.t. a scaled addition of the cost
@@ -229,7 +234,7 @@ def find_optimal_phase_grad_size(gamma_fxp: Fxp, cost_dtype: QFxp, eps: float) -
     from qualtran.bloqs.rotations.phase_gradient import _mul_via_repeated_add
 
     cost_val = (2**cost_dtype.bitsize - 1) / (2**cost_dtype.num_frac)
-    cost_fxp = Fxp(cost_val, dtype=cost_dtype.fxp_dtype_template().dtype)
+    cost_fxp = fxpmath.Fxp(cost_val, dtype=cost_dtype.fxp_dtype_template().dtype)
     expected_val = (gamma_fxp.get_val() * cost_val) % 1
 
     def is_good_phase_grad_size(phase_bitsize: int):
@@ -454,8 +459,8 @@ class QvrPhaseGradient(QvrInterface):
         return num_additions
 
     @cached_property
-    def gamma_fxp(self) -> Fxp:
-        return Fxp(abs(self.gamma), dtype=self.gamma_dtype.fxp_dtype_template().dtype)
+    def gamma_fxp(self) -> 'fxpmath.Fxp':
+        return fxpmath.Fxp(abs(self.gamma), dtype=self.gamma_dtype.fxp_dtype_template().dtype)
 
     @cached_property
     def gamma_dtype(self) -> QFxp:
