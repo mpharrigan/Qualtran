@@ -27,10 +27,10 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Tuple,
     TYPE_CHECKING,
     TypeVar,
     Union,
-    Tuple
 )
 
 import attrs
@@ -45,12 +45,6 @@ if TYPE_CHECKING:
 
 T = TypeVar('T')
 
-@attrs.frozen
-class ShapedQCDType:
-    qcdtype: 'QCDType'
-    shape: Tuple[int, ...] = attrs.field(
-        default=tuple(), converter=lambda v: (v,) if isinstance(v, int) else tuple(v)
-    )
 
 class BitEncoding(Generic[T], metaclass=abc.ABCMeta):
     @property
@@ -138,9 +132,6 @@ class _BitEncodingShim(BitEncoding[T]):
     def bitsize(self) -> SymbolicInt:
         return self.qdtype.num_qubits
 
-
-
-class QCDType(metaclass=abc.ABCMeta):
     def get_domain(self) -> Iterable[T]:
         yield from self.qdtype.get_classical_domain()
 
@@ -164,6 +155,14 @@ class QCDType(metaclass=abc.ABCMeta):
     def assert_valid_val_array(self, val_array: NDArray, debug_str: str = 'val') -> None:
         for val in val_array.reshape(-1):
             self.qdtype.assert_valid_classical_val(val)
+
+
+@attrs.frozen
+class ShapedQCDType:
+    qcdtype: 'QCDType'
+    shape: Tuple[int, ...] = attrs.field(
+        default=tuple(), converter=lambda v: (v,) if isinstance(v, int) else tuple(v)
+    )
 
 
 class QCDType(Generic[T], metaclass=abc.ABCMeta):

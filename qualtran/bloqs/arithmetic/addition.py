@@ -34,12 +34,12 @@ from qualtran import (
     QInt,
     QMontgomeryUInt,
     QUInt,
+    QVar,
     Register,
     Side,
     Signature,
     Soquet,
     SoquetT,
-    QVar,
 )
 from qualtran.bloqs.basic_gates import CNOT
 from qualtran.bloqs.bookkeeping import Always

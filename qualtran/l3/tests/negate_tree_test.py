@@ -16,10 +16,10 @@ from typing import Dict, TYPE_CHECKING
 import qualtran as qlt
 import qualtran.dtype as qdt
 from qualtran import BloqBuilder, QVar
-from qualtran.l3.tracing import bloq_compile
+from qualtran.l3 import bloqify
 
 
-@bloq_compile
+@bloqify
 def bitwise_not(bb: 'BloqBuilder', x: 'QVar'):
 
     outs = []
@@ -30,7 +30,7 @@ def bitwise_not(bb: 'BloqBuilder', x: 'QVar'):
     return {'x': bb.join(outs)}
 
 
-@bloq_compile
+@bloqify
 def xor_k(bb: 'BloqBuilder', x: 'QVar', k: int):
     xs = x[:]
     for i, bit in enumerate(x.dtype.to_bits(k)):
@@ -40,7 +40,7 @@ def xor_k(bb: 'BloqBuilder', x: 'QVar', k: int):
     return {'x': bb.join(xs, dtype=x.dtype)}
 
 
-@bloq_compile
+@bloqify
 def add_k(bb: 'BloqBuilder', x: 'QVar', k: int):
     from qualtran.bloqs.arithmetic import Add
 
@@ -58,7 +58,7 @@ def add_k(bb: 'BloqBuilder', x: 'QVar', k: int):
     return {'x': x}
 
 
-@bloq_compile
+@bloqify
 def negate(bb: 'BloqBuilder', x: 'QVar') -> Dict[str, 'QVar']:
     x = bitwise_not(bb, x=x)
     x = add_k(bb, x=x, k=1)

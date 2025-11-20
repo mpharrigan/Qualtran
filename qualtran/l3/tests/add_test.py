@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING
 
 import qualtran as qlt
 import qualtran.dtype as qdt
-
 from qualtran.l3 import bloqify
 
 if TYPE_CHECKING:
@@ -51,8 +50,8 @@ def test_do_carry_logic():
 
 def test_do_carry_truth_table():
     from qualtran.simulation.classical_sim import (
-        get_classical_truth_table,
         format_classical_truth_table,
+        get_classical_truth_table,
     )
 
     bloq = do_carry.make(qlt.Signature.build(ck=1, ik=1, tk=1))

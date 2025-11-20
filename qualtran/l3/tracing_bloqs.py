@@ -12,6 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+# TODO: These should go via Bloq.qcall and any convenience functions should live in the bloqs
+#       library
+
 
 def c_bitwise_not(ctrl, x):
     from qualtran.bloqs.arithmetic import BitwiseNot as _BitwiseNot

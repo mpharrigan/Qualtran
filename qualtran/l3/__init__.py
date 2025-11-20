@@ -12,6 +12,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from qualtran.dtype import *
 
-from .tracing import bloq_compile as bloqify
+from ._infra import bloqify

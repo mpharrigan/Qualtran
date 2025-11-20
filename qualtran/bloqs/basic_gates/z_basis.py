@@ -48,12 +48,12 @@ from qualtran import (
     QDType,
     QInt,
     QUInt,
+    QVar,
     Register,
     Side,
     Signature,
     Soquet,
     SoquetT,
-    QVar,
 )
 from qualtran.bloqs.bookkeeping import ArbitraryClifford
 from qualtran.drawing import Circle, directional_text_box, Text, TextBox, WireSymbol

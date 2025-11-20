@@ -12,11 +12,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import inspect
-from typing import Any, Dict, Protocol, Sequence, Union, Set, Optional
+from typing import Any, Dict, Optional, Protocol, Sequence, Set, Union
 
 import attrs
 
-from qualtran import Bloq, BloqBuilder, Register, Signature, CompositeBloq, BloqError
+from qualtran import Bloq, BloqBuilder, BloqError, CompositeBloq, Register, Signature
 from qualtran._infra.composite_bloq import QVarT
 from qualtran._infra.quantum_graph import _QVar
 
@@ -152,5 +152,5 @@ class _TracingBloqIntermediate:
         return tuple(ret_dict.values())
 
 
-def bloq_compile(func: _TracingBloqFuncT) -> _TracingBloqIntermediate:
+def bloqify(func: _TracingBloqFuncT) -> _TracingBloqIntermediate:
     return _TracingBloqIntermediate(func)

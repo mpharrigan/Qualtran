@@ -29,14 +29,14 @@ import attrs
 
 import qualtran as qlt
 import qualtran.dtype as qdt
-from qualtran.l3.tracing import bloq_compile
+from qualtran.l3 import bloqify
 from qualtran.l3.tracing_bloqs import add_k, bitwise_not
 
 if TYPE_CHECKING:
     from qualtran import BloqBuilder, QVar
 
 
-@bloq_compile
+@bloqify
 def negate(bb: 'BloqBuilder', x: 'QVar') -> Dict[str, 'QVar']:
     x = ~x
     x += 1
@@ -67,7 +67,7 @@ def test_negate_bloq():
     assert x == 6
 
 
-@bloq_compile
+@bloqify
 def negate_program(bb: 'BloqBuilder', n: int) -> Dict[str, 'QVar']:
     x = bb.alloc_qint(k=5, bitsize=n)
     x = negate(bb, x=x)

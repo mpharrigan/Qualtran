@@ -28,11 +28,11 @@ from qualtran import (
     ConnectionT,
     CtrlSpec,
     QBit,
+    QVar,
     Register,
     Side,
     Signature,
     SoquetT,
-    QVar,
 )
 from qualtran.drawing import directional_text_box, Text, WireSymbol
 from qualtran.simulation.classical_sim import (

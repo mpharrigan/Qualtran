@@ -28,11 +28,11 @@ from qualtran import (
     QDType,
     QMontgomeryUInt,
     QUInt,
+    QVar,
     Register,
     Signature,
     Soquet,
     SoquetT,
-    QVar,
 )
 from qualtran.bloqs.basic_gates import CNOT, OnEach, XGate
 from qualtran.drawing import TextBox, WireSymbol

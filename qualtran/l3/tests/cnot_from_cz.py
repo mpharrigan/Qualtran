@@ -13,13 +13,11 @@
 #  limitations under the License.
 from typing import TYPE_CHECKING
 
-import qualtran as qlt
-import qualtran.dtype as qdt
-
-from qualtran.l3 import bloqify
-
 import numpy as np
 
+import qualtran as qlt
+import qualtran.dtype as qdt
+from qualtran.l3 import bloqify
 
 if TYPE_CHECKING:
     from qualtran import BloqBuilder, QVar

@@ -14,7 +14,7 @@
 
 """Plumbing for bloq-to-bloq `Connection`s."""
 from functools import cached_property
-from typing import List, Optional, Tuple, TYPE_CHECKING, Union, Protocol, Any
+from typing import Any, List, Optional, Protocol, Tuple, TYPE_CHECKING, Union
 
 import attrs
 import numpy as np

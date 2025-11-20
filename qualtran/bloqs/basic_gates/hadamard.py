@@ -28,10 +28,10 @@ from qualtran import (
     ConnectionT,
     CtrlSpec,
     DecomposeTypeError,
+    QVar,
     Register,
     Signature,
     SoquetT,
-    QVar,
 )
 from qualtran.drawing import Circle, Text, TextBox, WireSymbol
 

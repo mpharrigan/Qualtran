@@ -29,10 +29,10 @@ from qualtran import (
     ConnectionT,
     CtrlSpec,
     DecomposeTypeError,
+    QVar,
     Register,
     Signature,
     SoquetT,
-    QVar,
 )
 from qualtran._infra.composite_bloq import SoquetInT
 from qualtran.drawing import Circle, ModPlus, Text, WireSymbol

@@ -225,7 +225,6 @@ def _get_bb():
     bb = BloqBuilder()
     x = bb.add_register('x', 1)
     y = bb.add_register('y', 1)
-    bb.add_register_allowed = False
     return bb, x, y
 
 
@@ -303,6 +302,7 @@ def test_finalize_missing_args():
     bb, x, y = _get_bb()
     x2, y2 = bb.add(TestTwoBitOp(), ctrl=x, target=y)
 
+    bb.add_register_allowed = False
     with pytest.raises(BloqError, match=r"During finalization, we expected a value for 'x'\."):
         bb.finalize(y=y2)
 

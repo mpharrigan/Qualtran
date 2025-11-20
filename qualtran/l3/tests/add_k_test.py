@@ -19,11 +19,11 @@ import qualtran as qlt
 import qualtran.dtype as qdt
 from qualtran import BloqBuilder, QVar
 from qualtran.bloqs.arithmetic import Add
-from qualtran.l3.tracing import bloq_compile
+from qualtran.l3 import bloqify
 from qualtran.symbolics import is_symbolic
 
 
-@bloq_compile
+@bloqify
 def add_k_complex(bb: 'BloqBuilder', x: 'QVar', k: int):
     dtype = x.dtype
     if not is_symbolic(k) and k < 0 and isinstance(dtype, (qdt.QUInt, qdt.QMontgomeryUInt)):

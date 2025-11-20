@@ -62,12 +62,12 @@ from .registers import Register, Side, Signature
 if TYPE_CHECKING:
     import cirq
 
+    from qualtran import QVar
     from qualtran.bloqs.bookkeeping.auto_partition import Unused
     from qualtran.cirq_interop._cirq_to_bloq import CirqQuregInT, CirqQuregT
     from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
     from qualtran.simulation.classical_sim import ClassicalValT
     from qualtran.symbolics import SymbolicInt
-    from qualtran import QVar
 
 
 class _NoSoquetIsInstanceMeta(_ProtocolMeta):

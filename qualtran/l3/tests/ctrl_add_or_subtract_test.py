@@ -11,9 +11,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from qualtran import BloqBuilder
 import qualtran as qlt
 import qualtran.dtype as qdt
+from qualtran import BloqBuilder
 from qualtran.l3 import bloqify
 from qualtran.l3.tracing_bloqs import bitwise_not, c_bitwise_not
 
@@ -43,7 +43,7 @@ def ctrl_add_or_subtract(bb: 'BloqBuilder', ctrl, a, b, add_when_ctrl_is_on: boo
 def preconfigure_add_or_subtract(bb: 'BloqBuilder', ctrl_val: int, a, b):
     ctrl = bb.alloc_qbit(ctrl_val)
     ctrl, a, b = ctrl_add_or_subtract(bb, ctrl, a, b)
-    bb.free_qubit(ctrl, ctrl_val)
+    bb.free_qbit(ctrl, ctrl_val)
     return {'a': a, 'b': b}
 
 

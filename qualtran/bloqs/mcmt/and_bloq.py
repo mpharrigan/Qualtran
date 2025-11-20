@@ -41,11 +41,11 @@ from qualtran import (
     DecomposeTypeError,
     GateWithRegisters,
     QBit,
+    QVar,
+    QVarT,
     Register,
     Side,
     Signature,
-    QVar,
-    QVarT,
 )
 from qualtran.bloqs.basic_gates import XGate
 from qualtran.cirq_interop import decompose_from_cirq_style_method
