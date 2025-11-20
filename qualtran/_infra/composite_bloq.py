@@ -959,6 +959,43 @@ def _map_soqs(
     return {name: _map_soqs(soqs) for name, soqs in soqs.items()}
 
 
+def _map_flat_soqs(
+    soqs: Dict[str, SoquetT], flat_soq_map: Dict[Soquet, Soquet]
+) -> Dict[str, SoquetT]:
+
+    # use vectorize to use the flat mapping.
+    def _map_soq(soq: Soquet) -> Soquet:
+        # Helper function to map an individual soquet.
+        return flat_soq_map.get(soq, soq)
+
+    # Use `vectorize` to call `_map_soq` on each element of the array.
+    vmap = np.vectorize(_map_soq, otypes=[object])
+
+    def _map_soqs(soqs: SoquetT) -> SoquetT:
+        if isinstance(soqs, Soquet):
+            return _map_soq(soqs)
+        return vmap(soqs)
+
+    return {name: _map_soqs(soqs) for name, soqs in soqs.items()}
+
+
+def _update_flat_soq_map(
+    soq_map: Iterable[Tuple[SoquetT, SoquetT]], flat_soq_map: Dict[Soquet, Soquet]
+):
+    """Flatten SoquetT into a flat_soq_map. This function mutates `flat_soq_map`."""
+    for old_soqs, new_soqs in soq_map:
+        if isinstance(old_soqs, Soquet):
+            assert isinstance(new_soqs, Soquet), new_soqs
+            flat_soq_map[old_soqs] = new_soqs
+            continue
+
+        assert isinstance(old_soqs, np.ndarray), old_soqs
+        assert isinstance(new_soqs, np.ndarray), new_soqs
+        assert old_soqs.shape == new_soqs.shape, (old_soqs.shape, new_soqs.shape)
+        for o, n in zip(old_soqs.reshape(-1), new_soqs.reshape(-1)):
+            flat_soq_map[o] = n
+
+
 class BloqBuilder:
     """A builder class for composing bloqs.
 
