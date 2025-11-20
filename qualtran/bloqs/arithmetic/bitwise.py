@@ -147,8 +147,8 @@ class Xor(Bloq):
 
     @classmethod
     def qcall(cls, x: 'QVar', y: 'QVar'):
-        xdtype = x.reg.dtype
-        ydtype = y.reg.dtype
+        xdtype = x.dtype
+        ydtype = y.dtype
         if not xdtype == ydtype:
             raise ValueError(
                 f"Cannot determine the dtype for Xor from soquets of type {xdtype} and {ydtype}"
