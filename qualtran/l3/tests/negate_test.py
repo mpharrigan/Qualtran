@@ -30,7 +30,6 @@ import attrs
 import qualtran as qlt
 import qualtran.dtype as qdt
 from qualtran.l3 import bloqify
-from qualtran.l3.tracing_bloqs import add_k, bitwise_not
 
 if TYPE_CHECKING:
     from qualtran import BloqBuilder, QVar

@@ -155,6 +155,7 @@ class _QVar:
     soquet: _Soquet
     bb: 'BloqBuilder' = field(kw_only=True)
     _split_components: Optional['QVarT'] = field(default=None)
+    ssa_name: Optional[str] = field(default=None, kw_only=True)
 
     @property
     def dtype(self) -> 'QCDType':

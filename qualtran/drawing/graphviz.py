@@ -434,3 +434,38 @@ class TypedGraphDrawer(PrettyGraphDrawer):
             arrowhead='dot',
             arrowsize=0.25,
         )
+
+
+class EdgeLabeledGraphDrawer(PrettyGraphDrawer):
+    """A graph drawer that labels each edge with a classical value.
+
+    The (composite) bloq must be composed entirely of classically-simulable bloqs.
+
+    Args:
+        bloq: The (composite) bloq to draw.
+        vals: Input classical values to propogate through the composite bloq.
+    """
+
+    def __init__(self, bloq: Bloq, soq_assign):
+        super().__init__(bloq=bloq)
+        self._soq_assign = soq_assign
+
+    def cxn_label(self, cxn: Connection) -> str:
+        """Label the connection with its classical value."""
+        # Thru registers share the same soquet
+        # key in `soq_assign` for a bloq's left and right ports.
+        # The value in `soq_assign` will be for the right, output
+        # value. So we need `cxn.left` as the correct connection label.
+        return str(self._soq_assign[cxn.left])
+
+    def cxn_edge(self, left_id: str, right_id: str, cxn: Connection) -> pydot.Edge:
+        return pydot.Edge(
+            left_id,
+            right_id,
+            label=self.cxn_label(cxn),
+            labelfloat=True,
+            fontsize=10,
+            fontcolor='darkblue',
+            arrowhead='dot',
+            arrowsize=0.25,
+        )

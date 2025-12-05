@@ -96,6 +96,7 @@ def add_bits(bb: 'BloqBuilder', i: 'QVarT', t: 'QVarT'):
 
     # First bit: no input carry
     [i[0], t[0]], c0 = bb.And([i[0], t[0]])
+    c0.ssa_name = 'c0'
     c = [c0]
 
     # Ripple-carry
@@ -141,7 +142,7 @@ def test_add():
 
 
 def test_add_logic():
-    n = 3
+    n = 5
     bloq = add.make(qlt.Signature.build(a=qdt.QUInt(n), b=qdt.QUInt(n)))
 
     print()

@@ -228,6 +228,7 @@ class CompositeBloq(Bloq):
     bloq_instances: FrozenSet[BloqInstance] = attrs.field(converter=_to_set)
     name: Optional[str] = attrs.field(default=None)
     pkg_name: Optional[str] = attrs.field(default=None)
+    ssa_names: Sequence[Tuple[_Soquet, str]] = attrs.field(default=tuple, converter=tuple)
 
     @bloq_instances.default
     def _default_bloq_instances(self):
@@ -1069,6 +1070,7 @@ class BloqBuilder:
         self._cxns: List[Connection] = []
         self._regs: List[Register] = []
         self._binsts: Set[BloqInstance] = set()
+        self._ssa_names: Dict[_Soquet, str] = {}
 
         # Initialize our BloqInstance counter
         self._i = 0
@@ -1324,6 +1326,8 @@ class BloqBuilder:
                 f"  Register name: {reg.name}\n"
                 f"  Re-used soquet details: {idxed_soq.soquet}"
             ) from None
+        if idxed_soq.ssa_name:
+            self._ssa_names[idxed_soq.soquet] = idxed_soq.ssa_name
         cxn = Connection(idxed_soq.soquet, self._make_qvar(binst, reg, idx).soquet)
         self._cxns.append(cxn)
 
@@ -1632,6 +1636,7 @@ class BloqBuilder:
             bloq_instances=self._binsts,
             name=self._bloq_name,
             pkg_name=self._bloq_pkg_name,
+            ssa_names=tuple((soq, ssa_name) for soq, ssa_name in self._ssa_names.items()),
         )
 
     def allocate(

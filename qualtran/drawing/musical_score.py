@@ -21,8 +21,22 @@ represents a qubit or register of qubits.
 import abc
 import heapq
 import json
+from collections import defaultdict
 from enum import Enum
-from typing import Any, Callable, cast, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Self,
+    Sequence,
+    Set,
+    Tuple,
+    TypeAlias,
+    Union,
+)
 
 import attrs
 import networkx as nx
@@ -35,7 +49,7 @@ from qualtran import (
     Bloq,
     BloqInstance,
     CDType,
-    Connection,
+    CompositeBloq,
     DanglingT,
     LeftDangle,
     QCDType,
@@ -44,10 +58,12 @@ from qualtran import (
     RightDangle,
     Side,
     Signature,
-    Soquet,
 )
+from qualtran._infra.binst_graph_iterators import greedy_topological_sort
 from qualtran._infra.composite_bloq import _binst_to_cxns
 from qualtran._infra.quantum_graph import _Soquet
+
+HLineID: TypeAlias = str
 
 
 @frozen
@@ -221,8 +237,8 @@ class LineManager:
 
 
 def _get_in_vals(
-    binst: Union[DanglingT, BloqInstance], reg: Register, soq_assign: Dict[_Soquet, RegPosition]
-) -> Union[RegPosition, NDArray[RegPosition]]:
+    binst: Union[DanglingT, BloqInstance], reg: Register, soq_assign: Dict[_Soquet, Any]
+) -> Any:
     """Pluck out the correct values from `soq_assign` for `reg` on `binst`."""
     if not reg.shape:
         return soq_assign[_Soquet(binst, reg)]
@@ -235,149 +251,382 @@ def _get_in_vals(
     return arg
 
 
-def _update_assign_from_vals(
-    regs: Iterable[Register],
-    binst: Union[DanglingT, BloqInstance],
-    vals: Dict[str, RegPosition],
-    soq_assign: Dict[_Soquet, RegPosition],
-    seq_x: int,
-    topo_gen: int,
-    manager: LineManager,
-):
-    """Update `soq_assign` using `vals`.
+class _MusicalScoreLayoutBuilder:
+    """For a given CompositeBloq compute graph, assign abstract geometric properties.
 
-    If a given register is not in the `vals` dictionary, we will allocate a new position for it.
-    This helper function does some shape-compatibility checking.
+    If you are not interested in customizing the layout, consider using the free-function
+    `get_musical_score_data()` which is a wrapper around the `do_layout` method of this class.
+
+    Otherwise, you can follow the layout steps shown in `do_layout`.
+
+     0. Construct a layout builder with the `MusicalScoreLayoutBuilder.from_cbloq(cbloq)` factory
+        class method.
+     1. Call the `.do_horizontal_layout()` method to walk the compute graph and assign extents and
+        identifiers to each horizontal line; and assign soquets to horizontal lines.
+     2. Either: call the `.do_vertical_layout()` method or provide your own vertical layout
+        to order the horizontal lines.
+     3. Call `.finalize_aboslute_layout()` with the ordered horizontal line identifiers from
+        the previous step.
+
+    This process will get you a MusicalScoreData object, which can be plotted with
+    `draw_musical_score`.
+
+    The vertical layout step has the most impact on the visual display of the circuit diagram.
+    The automated method takes an optional `LineManager`, which can be subclassed to provide
+    custom vertical layout behavior. In practice, it is often difficult to get the desired
+    result with the LineManager API. An alternative is to manually order the horizontal line
+    identifiers generated during `.do_horizontal_layout()`.
+     - The `print_hline_extents()` method will print the identifiers and their start and end
+       coordinates. You can try to use this information to manually order the identifiers.
+     - From a Jupyter notebook, the `draw_hline_labels` method will use Graphviz to layout
+       a fluid graphlike view of the circuit where each edge is labeled with its horizontal
+       line identifier from this class. This can give you a visual idea of which hline_id
+       is which part of your circuit.
     """
-    for reg in regs:
-        try:
-            arr: Union[RegPosition, NDArray[RegPosition]] = vals[reg.name]
-        except KeyError:
-            arr = manager.new(
-                binst=cast(BloqInstance, binst), reg=reg, seq_x=seq_x, topo_gen=topo_gen
-            )
 
+    def __init__(
+        self, ssa_names: Dict[_Soquet, str], signature: Signature, binst_graph: nx.DiGraph
+    ):
+
+        # The compute graph
+        self._ssa_names = ssa_names
+        self._signature = signature
+        self._binst_graph = binst_graph
+        self._binst_iter = greedy_topological_sort(self._binst_graph)
+
+        # Goal 1: map each soquet to an abstract horizontal line (by string identifier)
+        self._hline_ids: Set[HLineID] = set()
+        self.hline_id_map: Dict[_Soquet, HLineID] = {}
+        self.x_coord_map: Dict[_Soquet, int] = {}
+
+        # Goal 2: keep track of where horizontal lines begin and end.
+        self.hline_start_coords: Dict[HLineID, int] = {}
+        self.hline_end_coords: Dict[HLineID, int] = {}
+        self.hline_flavors: Dict[HLineID, HLineFlavor] = {}
+        # And for backwards compatibility with LineManager...
+        self.hline_start_soqs: Dict[HLineID, _Soquet] = {}
+        self.hline_end_soqs: Dict[HLineID, _Soquet] = {}
+
+        # State of the iteration through the compute graph
+        self._binst: BloqInstance = LeftDangle
+        self._previous_binst: Optional[BloqInstance] = None
+        self._x_coord: int = -1
+
+        # Initialize mappings
+        self._update(LeftDangle, signature.lefts(), {})
+        self._x_coord: int = 0
+
+    @classmethod
+    def from_cbloq(cls, cbloq: 'CompositeBloq') -> '_MusicalScoreLayoutBuilder':
+        """Initiate a musical score layout builder from a CompositeBloq.
+
+        Args:
+            cbloq: The composite bloq
+
+        Returns:
+            A new layout builder.
+        """
+        return cls(
+            ssa_names=dict(cbloq.ssa_names),
+            signature=cbloq.signature,
+            binst_graph=cbloq._binst_graph,
+        )
+
+    def _assign_soq_attributes(self, soq: _Soquet, *, hline_id: HLineID, x_coord: int) -> None:
+        self.hline_id_map[soq] = hline_id
+        self.x_coord_map[soq] = x_coord
+
+    def _get_unique_hline_id(self, prefix: str) -> str:
+        i = 0
+        attempt = prefix
+        while True:
+            if attempt not in self._hline_ids:
+                self._hline_ids.add(attempt)
+                return attempt
+            i += 1
+            attempt = f'{prefix}{i}'
+
+    def _alloc(self, binst: BloqInstance, reg: Register) -> Union[HLineID, NDArray[HLineID]]:
+        """Helper for recording the start of a new horizontal line from a given register."""
+        flavor = HLineFlavor.from_qcdtype(reg.dtype)
         if reg.shape:
-            arr = np.asarray(arr)
-            if arr.shape != reg.shape:
-                raise ValueError(
-                    f"Incorrect shape {arr.shape} received for {binst}.{reg.name}. "
-                    f"Want {reg.shape}."
+            arr = np.zeros(reg.shape, dtype=object)
+            for idx in reg.all_idxs():
+                soq = _Soquet(binst, reg, idx)
+                if soq in self._ssa_names:
+                    prefix = self._ssa_names[soq]
+                else:
+                    prefix = reg.name
+                hline_id = self._get_unique_hline_id(prefix=prefix)
+                arr[idx] = hline_id
+                self.hline_start_coords[hline_id] = self._x_coord
+                self.hline_flavors[hline_id] = flavor
+                self.hline_start_soqs[hline_id] = soq
+            return arr
+
+        soq = _Soquet(binst, reg)
+        if soq in self._ssa_names:
+            prefix = self._ssa_names[soq]
+        else:
+            prefix = reg.name
+        hline_id = self._get_unique_hline_id(prefix=prefix)
+        self.hline_start_coords[hline_id] = self._x_coord
+        self.hline_flavors[hline_id] = flavor
+        self.hline_start_soqs[hline_id] = _Soquet(binst, reg)
+        return hline_id
+
+    def _free(
+        self, binst: BloqInstance, reg: Register, arr: Union[HLineID, NDArray[HLineID]]
+    ) -> None:
+        """Helper for recording the end of a horizontal line."""
+        if reg.shape:
+            for idx in reg.all_idxs():
+                hline_id = arr[idx]
+                self.hline_end_coords[hline_id] = self._x_coord
+                self.hline_end_soqs[hline_id] = _Soquet(binst, reg, idx)
+            return
+
+        hline_id = arr
+        self.hline_end_coords[hline_id] = self._x_coord
+        self.hline_end_soqs[hline_id] = _Soquet(binst, reg)
+
+    def _update(
+        self,
+        binst: Union[BloqInstance, DanglingT],
+        regs: Iterable[Register],
+        vals: Dict[str, HLineID],
+    ):
+        """Update our mappings using `vals`.
+
+        If a given register is not in the `vals` dictionary, we will allocate a new hline for it.
+        This helper function does some shape-compatibility checking.
+        """
+        for reg in regs:
+            debug_str = f'{binst}.{reg.name}'
+            try:
+                arr: Union[HLineID, NDArray[HLineID]] = vals[reg.name]
+            except KeyError:
+                arr = self._alloc(binst, reg)
+
+            if reg.shape:
+                arr = np.asarray(arr)
+                if arr.shape != reg.shape:
+                    raise ValueError(
+                        f"Incorrect shape {arr.shape} received for {debug_str}. "
+                        f"Want {reg.shape}."
+                    )
+
+                for idx in reg.all_idxs():
+                    self._assign_soq_attributes(
+                        _Soquet(binst, reg, idx=idx), hline_id=arr[idx], x_coord=self._x_coord
+                    )
+            else:
+                self._assign_soq_attributes(
+                    _Soquet(binst, reg), hline_id=arr, x_coord=self._x_coord
                 )
 
-            for idx in reg.all_idxs():
-                soq = _Soquet(binst, reg, idx=idx)
-                soq_assign[soq] = attrs.evolve(arr[idx], seq_x=seq_x, topo_gen=topo_gen)
-        else:
-            soq = _Soquet(binst, reg)
-            assert isinstance(arr, RegPosition)
-            soq_assign[soq] = attrs.evolve(arr, seq_x=seq_x, topo_gen=topo_gen)
+    def step(self) -> Self:
+        """Assign positions for the next binst.
 
+        This advances our internal iteration by one step. Consider using `do_horizontal_layout()`
+        to do all steps.
+        """
+        self._previous_binst = self._binst
+        self._binst = next(self._binst_iter)
+        if isinstance(self._binst, DanglingT):
+            return self
 
-def _binst_assign_line(
-    binst: BloqInstance,
-    pred_cxns: Iterable[Connection],
-    soq_assign: Dict[_Soquet, RegPosition],
-    seq_x: int,
-    topo_gen: int,
-    manager: LineManager,
-):
-    """Assign positions for a binst.
+        pred_cxns, succ_cxns = _binst_to_cxns(self._binst, binst_graph=self._binst_graph)
 
-    Args:
-        binst: The bloq instance whose bloq we will call `on_classical_vals`.
-        pred_cxns: Predecessor connections for the bloq instance.
-        soq_assign: Current assignment of soquets to classical values.
-        seq_x: The sequential x index of the binst.
-        topo_gen: The topological generation of the binst.
-        manager: The LineManager.
-    """
-
-    # Track inter-Bloq name changes
-    for cxn in pred_cxns:
-        soq_assign[cxn.right] = attrs.evolve(soq_assign[cxn.left], seq_x=seq_x, topo_gen=topo_gen)
-
-    def _in_vals(reg: Register):
-        # close over binst and `soq_assign`
-        return _get_in_vals(binst, reg, soq_assign=soq_assign)
-
-    bloq = binst.bloq
-    in_vals = {reg.name: _in_vals(reg) for reg in bloq.signature.lefts()}
-    partial_out_vals = {
-        reg.name: in_vals[reg.name] for reg in bloq.signature if reg.side is Side.THRU
-    }
-
-    # The following will use `partial_out_vals` to re-use existing THRU lines; otherwise
-    # the following will allocate new lines.
-    _update_assign_from_vals(
-        bloq.signature.rights(),
-        binst,
-        partial_out_vals,
-        soq_assign,
-        seq_x=seq_x,
-        topo_gen=topo_gen,
-        manager=manager,
-    )
-
-    # Free any purely-left registers.
-    for reg in bloq.signature:
-        if reg.side is Side.LEFT:
-            manager.free(binst, reg, in_vals[reg.name])
-
-
-def _cbloq_musical_score(
-    signature: Signature, binst_graph: nx.DiGraph, manager: Optional[LineManager] = None
-) -> Tuple[Dict[str, RegPosition], Dict[_Soquet, RegPosition], LineManager]:
-    """Assign musical score positions through a composite bloq's contents.
-
-    Args:
-        signature: The cbloq's signature.
-        binst_graph: The cbloq's binst graph.
-
-    Returns:
-        final_vals: A mapping from register name to output positions
-        soq_assign: An assignment from each soquet to its position
-        manager: The line manager (now containing the final `hlines` collection).
-    """
-    if manager is None:
-        manager = LineManager()
-
-    # Keep track of each soquet's position. Initialize by implicitly allocating new positions.
-    # We introduce the convention that `LeftDangle`s are a seq_x=-1 and topo_gen=0
-    soq_assign: Dict[_Soquet, RegPosition] = {}
-    topo_gen = 0
-    _update_assign_from_vals(
-        signature.lefts(), LeftDangle, {}, soq_assign, seq_x=-1, topo_gen=topo_gen, manager=manager
-    )
-
-    # Bloq-by-bloq application
-    seq_x = 0
-    for topo_gen, binsts in enumerate(nx.topological_generations(binst_graph)):
-        for binst in binsts:
-            if isinstance(binst, DanglingT):
-                continue
-            pred_cxns, succ_cxns = _binst_to_cxns(binst, binst_graph=binst_graph)
-            _binst_assign_line(
-                binst, pred_cxns, soq_assign, seq_x=seq_x, topo_gen=topo_gen, manager=manager
-            )
-            seq_x += 1
-
-    # Track bloq-to-dangle name changes
-    if len(list(signature.rights())) > 0:
-        final_preds, _ = _binst_to_cxns(RightDangle, binst_graph=binst_graph)
-        for cxn in final_preds:
-            soq_assign[cxn.right] = attrs.evolve(
-                soq_assign[cxn.left], seq_x=seq_x, topo_gen=topo_gen
+        # Track inter-Bloq name changes
+        for cxn in pred_cxns:
+            self._assign_soq_attributes(
+                cxn.right, hline_id=self.hline_id_map[cxn.left], x_coord=self._x_coord
             )
 
-    # Formulate output with expected API
-    def _f_vals(reg: Register):
-        return _get_in_vals(RightDangle, reg, soq_assign)
+        def _in_vals(reg: Register):
+            # close over binst and `soq_assign`
+            return _get_in_vals(self._binst, reg, soq_assign=self.hline_id_map)
 
-    final_vals = {reg.name: _f_vals(reg) for reg in signature.rights()}
-    for reg in signature.rights():
-        manager.free(RightDangle, reg, final_vals[reg.name])
-    return final_vals, soq_assign, manager
+        bloq = self._binst.bloq
+        in_vals = {reg.name: _in_vals(reg) for reg in bloq.signature.lefts()}
+        partial_out_vals = {
+            reg.name: in_vals[reg.name] for reg in bloq.signature if reg.side is Side.THRU
+        }
+
+        # The following will use `partial_out_vals` to re-use existing THRU lines; otherwise
+        # the following will allocate new lines.
+        self._update(self._binst, bloq.signature.rights(), partial_out_vals)
+
+        # Free any purely-left registers.
+        for reg in bloq.signature:
+            if reg.side is Side.LEFT:
+                self._free(self._binst, reg, in_vals[reg.name])
+
+        self._x_coord += 1
+        return self
+
+    def finalize(self) -> Self:
+        """Assign positions for RightDangle after stepping through all binsts.
+
+        This should be called after `.step()` has been exhausted.
+        """
+        # Track bloq-to-dangle name changes
+        if len(list(self._signature.rights())) > 0:
+            final_preds, _ = _binst_to_cxns(RightDangle, binst_graph=self._binst_graph)
+            for cxn in final_preds:
+                self._assign_soq_attributes(
+                    cxn.right, hline_id=self.hline_id_map[cxn.left], x_coord=self._x_coord
+                )
+
+        # Final mappings
+        def _f_vals(reg: Register):
+            return _get_in_vals(RightDangle, reg, soq_assign=self.hline_id_map)
+
+        final_vals = {reg.name: _f_vals(reg) for reg in self._signature.rights()}
+        for reg in self._signature.rights():
+            self._free(RightDangle, reg, final_vals[reg.name])
+
+        return self
+
+    def do_horizontal_layout(self) -> Self:
+        """Do the horizontal layout of the circuit. This is the first step.
+
+        This method
+         - Assigns each soquet to an abstract horizontal line by string identifier
+         - Positions each soquet along the x-axis.
+
+        This is the first step in the overall `.do_layout()` method. The next step is to
+        lay out the horizontal lines vertically (i.e. in a definite order).
+        """
+        try:
+            while True:
+                self.step()
+        except StopIteration:
+            return self.finalize()
+
+    def print_hline_extents(self) -> None:
+        for hline_id in self.hline_start_coords.keys():
+            if hline_id in self.hline_end_coords:
+                print(
+                    f'{hline_id:10s} {self.hline_start_coords[hline_id]:4d} -> {self.hline_end_coords[hline_id]:4d}'
+                )
+            else:
+                print(f'{hline_id:10s} {self.hline_start_coords[hline_id]:4d} -> ????')
+
+    def draw_hline_labels(self, bloq):
+        from qualtran.drawing.graphviz import EdgeLabeledGraphDrawer
+
+        return EdgeLabeledGraphDrawer(bloq, self.hline_id_map).get_svg()
+
+    def do_vertical_layout(
+        self, manager: Optional[LineManager] = None
+    ) -> List[Tuple[HLineID, ...]]:
+        """Do the vertical layout of the circuit. This is the second step.
+
+        This method greedily orders the horizontal lines. When a new horizontal line starts,
+        it is added next. After a horizontal line ends, its y-coordinate is available for
+        any following lines to take.
+
+        You can manually order the hlines and skip this method.
+
+        This returns a list of tuples of horizontal line identifiers. The list index is the
+        y-coordinate and the tuple enumerates each of the horizontal lines at that y-coordinate.
+        The return value should be passed into the next step, `finalize_absolute_layout()`.
+        """
+        y_mapping: Dict[HLineID, int] = {}
+        if manager is None:
+            manager = LineManager()
+
+        for x in sorted(set(self.x_coord_map.values())):
+            for hline_id, start_x in self.hline_start_coords.items():
+                if start_x != x:
+                    continue
+
+                # line is starting now, use `manager`.
+                soq = self.hline_start_soqs[hline_id]
+                y = manager.new_y(soq.binst, soq.reg, soq.idx)
+                y_mapping[hline_id] = y
+                manager.maybe_reserve(soq.binst, soq.reg, soq.idx)
+
+            for hline_id, end_x in self.hline_end_coords.items():
+                if end_x != x:
+                    continue
+
+                # line is ending now, use `manager`.
+                soq = self.hline_end_soqs[hline_id]
+                heapq.heappush(manager.available, y_mapping[hline_id])
+                manager.maybe_reserve(soq.binst, soq.reg, soq.idx)
+
+        grouped_hline_ids = defaultdict(list)
+        for hline_id, y in y_mapping.items():
+            grouped_hline_ids[y].append(hline_id)
+        ordered_hline_ids = [
+            tuple(grouped_hline_ids.get(i, ())) for i in range(0, max(grouped_hline_ids.keys()) + 1)
+        ]
+        return ordered_hline_ids
+
+    def finalize_aboslute_layout(
+        self, ordered_hline_ids: Sequence[Union[HLineID, Tuple[HLineID, ...]]]
+    ) -> 'MusicalScoreData':
+        """Finalize the layout. This is the final step.
+
+        Args:
+             ordered_hline_ids: The horizontal line identifiers in the order they will
+                appear vertically. This can be automatically generated with the
+                `do_vertical_layout()` method or provided manually. Each entry in the list
+                specifies the hline or hlines that are positioned at that y-coordinate.
+
+        Returns:
+            msd: The final `MusicalScoreData` object that can be drawn with various backends,
+                including `draw_musical_score(msd)`.
+
+        """
+        hline_id_to_y: Dict[HLineID, int] = {}
+        for i, hlids in enumerate(ordered_hline_ids):
+            if isinstance(hlids, str):
+                hlid = hlids
+                hline_id_to_y[hlid] = i
+            elif isinstance(hlids, tuple):
+                for hlid in hlids:
+                    hline_id_to_y[hlid] = i
+            else:
+                raise ValueError(
+                    f"Unknown hline_id {hlids}. Must be a string id or a tuple of string ids."
+                )
+
+        hlines = [
+            HLine(
+                y=hline_id_to_y[hline_id],
+                seq_x_start=self.hline_start_coords[hline_id],
+                seq_x_end=self.hline_end_coords[hline_id],
+                flavor=self.hline_flavors[hline_id],
+            )
+            for hline_id in self.hline_start_coords
+        ]
+
+        soq_assign = {
+            soq: RegPosition(
+                y=hline_id_to_y[self.hline_id_map[soq]], seq_x=self.x_coord_map[soq], topo_gen=None
+            )
+            for soq in self.hline_id_map.keys()
+        }
+
+        msd = _finalize_line_extents(self._binst_graph, soq_assign, hlines)
+        return msd
+
+    def do_layout(self, manager: Optional[LineManager] = None) -> 'MusicalScoreData':
+        """Build a full layout for a circuit.
+
+        This does each of the three steps. If you want to provide your own hline ordering,
+        please call the methods for each of the steps yourself.
+
+        Consider using the `get_musical_score_data` top-level function if you don't need
+        layout customization.
+        """
+        self.do_horizontal_layout()
+        ordered_hline_ids = self.do_vertical_layout(manager=manager)
+        return self.finalize_aboslute_layout(ordered_hline_ids=ordered_hline_ids)
 
 
 @frozen
@@ -593,37 +842,30 @@ def _make_ident(binst: BloqInstance, me: _Soquet):
     return f'{binst.i},{soqi}'
 
 
-def get_musical_score_data(bloq: Bloq, manager: Optional[LineManager] = None) -> MusicalScoreData:
-    """Get the musical score data for a (composite) bloq.
+def _finalize_line_extents(
+    binst_graph: nx.DiGraph, soq_assign: Dict[_Soquet, RegPosition], hlines: Sequence[HLine]
+) -> MusicalScoreData:
+    """Given a layout of soquets and hlines, determine the geometric details
 
-    This will first walk through the compute graph to assign each soquet
-    to a register position. Then we iterate again to finalize drawing-relevant
-    properties like symbols and the various horizontal and vertical lines.
+     - Get the correct symbol for each soquet; de-duplicate THRU soquets.
+     - Find the y-extents of the vertical lines connecting all a binst's soquets.
 
-    Args:
-        bloq: The bloq or composite bloq to get drawing data for
-        manager: Optionally provide an override of `LineManager` if you want
-            to control the allocation of horizontal (register) lines.
+    This returns the complete `MusicalScoreData` object.
     """
-    cbloq = bloq.as_composite_bloq()
-
-    _, soq_assign, manager = _cbloq_musical_score(
-        cbloq.signature, binst_graph=cbloq._binst_graph, manager=manager
-    )
     msd = MusicalScoreData(
         max_x=max(v.seq_x for v in soq_assign.values()),
         max_y=max(v.y for v in soq_assign.values()),
         soqs=[],
         vlines=[],
-        hlines=sorted(manager.hlines),
+        hlines=sorted(hlines),
     )
 
-    for hline in manager.hlines:
+    for hline in hlines:
         if hline.seq_x_end is None:
             raise ValueError(f"A horizontal line has no end: {hline}")
 
-    for binst in nx.topological_sort(cbloq._binst_graph):
-        preds, succs = _binst_to_cxns(binst, binst_graph=cbloq._binst_graph)
+    for binst in nx.topological_sort(binst_graph):
+        preds, succs = _binst_to_cxns(binst, binst_graph=binst_graph)
 
         # Keep track of the extent of our vlines
         binst_top_y = 0
@@ -684,6 +926,22 @@ def get_musical_score_data(bloq: Bloq, manager: Optional[LineManager] = None) ->
             )
 
     return msd
+
+
+def get_musical_score_data(bloq: Bloq, manager: Optional[LineManager] = None) -> MusicalScoreData:
+    """Get the musical score data for a (composite) bloq.
+
+    This will first walk through the compute graph to assign each soquet
+    to a register position. Then we iterate again to finalize drawing-relevant
+    properties like symbols and the various horizontal and vertical lines.
+
+    Args:
+        bloq: The bloq or composite bloq to get drawing data for
+        manager: Optionally provide an override of `LineManager` if you want
+            to control the allocation of horizontal (register) lines.
+    """
+    cbloq = bloq.as_composite_bloq()
+    return _MusicalScoreLayoutBuilder.from_cbloq(cbloq).do_layout(manager=manager)
 
 
 def draw_musical_score(

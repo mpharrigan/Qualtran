@@ -15,7 +15,13 @@ import qualtran as qlt
 import qualtran.dtype as qdt
 from qualtran import BloqBuilder
 from qualtran.l3 import bloqify
-from qualtran.l3.tracing_bloqs import bitwise_not, c_bitwise_not
+
+
+def c_bitwise_not(ctrl, x):
+    from qualtran.bloqs.arithmetic import BitwiseNot as _BitwiseNot
+
+    bb = x.bb
+    return bb.add(_BitwiseNot(dtype=x.dtype).controlled(), ctrl=ctrl, x=x)
 
 
 @bloqify
