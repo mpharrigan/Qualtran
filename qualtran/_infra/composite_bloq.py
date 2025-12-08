@@ -1689,8 +1689,8 @@ class BloqBuilder:
 
         return self.add(Join(dtype=dtype), reg=soqs)
 
-    def in_register(self, name: str, dtype: QCDType) -> Union[None, QVarT]:
-        return self.add_register_from_dtype(name, dtype)
+    def in_register(self, name: str, dtype: QCDType, shape=()) -> Union[None, QVarT]:
+        return self.add_register_from_dtype(Register(name=name, dtype=dtype, shape=shape))
 
     def alloc_qint(self, k: int, bitsize: int) -> 'QVar':
         from qualtran.bloqs.basic_gates import IntState
@@ -1740,12 +1740,12 @@ class BloqBuilder:
 
         return CNOT.qcall(ctrl=ctrl, target=target)
 
-    def And(self, ctrl: 'SoquetInT'):
+    def And(self, ctrl: 'SoquetInT', *, cv1:int=1, cv2:int=1):
         from qualtran.bloqs.mcmt import And
 
-        return And.qcall(ctrl=ctrl)
+        return And.qcall(ctrl=ctrl, cv1=cv1, cv2=cv2)
 
-    def UnAnd(self, ctrl: 'SoquetInT', target: 'QVar'):
+    def UnAnd(self, ctrl: 'SoquetInT', target: 'QVar', *, cv1: int=1, cv2:int=1):
         from qualtran.bloqs.mcmt import And
 
-        return And.qcall(ctrl=ctrl, target=target, uncompute=True)
+        return And.qcall(ctrl=ctrl, target=target, cv1=cv1, cv2=cv2, uncompute=True)
