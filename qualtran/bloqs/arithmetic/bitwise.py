@@ -35,7 +35,7 @@ from qualtran import (
     SoquetT,
 )
 from qualtran.bloqs.basic_gates import CNOT, OnEach, XGate
-from qualtran.drawing import TextBox, WireSymbol
+from qualtran.drawing import TextBox, WireSymbol, Text
 from qualtran.resource_counting.generalizers import ignore_split_join
 from qualtran.symbolics import is_symbolic, SymbolicInt
 
@@ -108,7 +108,7 @@ class XorK(Bloq):
         self, reg: Optional['Register'], idx: tuple[int, ...] = tuple()
     ) -> 'WireSymbol':
         if reg is None:
-            return TextBox("")
+            return Text("")
 
         return TextBox(f"⊕{self.k}")
 

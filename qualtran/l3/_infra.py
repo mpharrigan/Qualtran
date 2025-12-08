@@ -15,6 +15,7 @@ import inspect
 from typing import Any, Dict, Optional, Protocol, Sequence, Set, Union
 
 import attrs
+import numpy as np
 
 from qualtran import Bloq, BloqBuilder, BloqError, CompositeBloq, Register, Signature
 from qualtran._infra.composite_bloq import QVarT
@@ -69,6 +70,8 @@ _BB_PLACEHOLDER = object()
 
 class _TracingBloqIntermediate:
     def __init__(self, func: _TracingBloqFuncT):
+        # TODO: better error when func doesn't take bb: BloqBuilder as first argument.
+        # TODO: TypeError: cselect1() got multiple values for argument 'ctrl'
         self.func: _TracingBloqFuncT = func
 
     @property
@@ -84,6 +87,17 @@ class _TracingBloqIntermediate:
             _BB_PLACEHOLDER, *args, **kwargs
         ).arguments.items()
 
+    def _is_qvar_array(self, v):
+        if not isinstance(v, (Sequence, np.ndarray)):
+            return False
+
+        try:
+            x = np.asarray(v).reshape(-1).item(0)
+            return isinstance(x, _QVar)
+        except (ValueError, IndexError):
+            return False
+
+
     def _prep_qstackframe(self, kv_iter):
         bb = BloqBuilder(bloq_name=self.name, bloq_pkg_name=self.pkg, add_registers_allowed=True)
         qkwargs = {}
@@ -95,6 +109,9 @@ class _TracingBloqIntermediate:
                 continue
             elif isinstance(v, _QVar):
                 qkwargs[k] = bb.in_register(name=k, dtype=v.dtype)
+            elif self._is_qvar_array(v):
+                v = np.asarray(v)
+                qkwargs[k] = bb.in_register(name=k, dtype=v.reshape(-1).item(0).dtype, shape=v.shape)
             else:
                 ckwargs[k] = v
 
@@ -126,11 +143,35 @@ class _TracingBloqIntermediate:
         soqs = self.func(bb, *classical_args, **kwargs)
         return bb.finalize(**soqs)
 
+    def make_bloq_class(self, signature, **fields):
+        cls_name = self.name
+        ## TODO: infer fields from self.func
+
+        def _signature(s2):
+            return signature
+
+        def _decompose_bloq(s2):
+            return self.make(signature, **{k: getattr(s2, k) for k in fields})
+
+        class_body = {
+            'signature': property(_signature),
+            'decompose_bloq': _decompose_bloq,
+            '__doc__': f"A bloqified bloq class '{self.name}'."
+        }
+
+        return attrs.make_class(
+            name=cls_name,
+            attrs=fields,
+            bases=(Bloq,),
+            class_body=class_body,
+            frozen=True,
+        )
+
     def __call__(self, bb: 'BloqBuilder', /, *args, **kwargs):
-        try:
-            f = self._prep_qstackframe(self._bound_kvs(*args, **kwargs))
-        except BloqError as be:
-            raise BloqError(*be.args) from None
+        # try:
+        f = self._prep_qstackframe(self._bound_kvs(*args, **kwargs))
+        # except BloqError as be:
+        #     raise BloqError(*be.args) from None
 
         return bb.add(
             f.cbloq, **{k: v for k, v in self._bound_kvs(*args, **kwargs) if k in f.in_qargnames}
