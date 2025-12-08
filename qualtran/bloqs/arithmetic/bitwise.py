@@ -35,7 +35,7 @@ from qualtran import (
     SoquetT,
 )
 from qualtran.bloqs.basic_gates import CNOT, OnEach, XGate
-from qualtran.drawing import TextBox, WireSymbol, Text
+from qualtran.drawing import Text, TextBox, WireSymbol
 from qualtran.resource_counting.generalizers import ignore_split_join
 from qualtran.symbolics import is_symbolic, SymbolicInt
 

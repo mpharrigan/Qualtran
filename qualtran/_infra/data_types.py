@@ -353,7 +353,7 @@ class QBit(QDType[int]):
         return False
 
     def __str__(self) -> str:
-        return 'QBit()'
+        return 'QBit'
 
 
 @attrs.frozen
@@ -368,7 +368,7 @@ class CBit(CDType[int]):
         return False
 
     def __str__(self) -> str:
-        return 'CBit()'
+        return 'CBit'
 
 
 @attrs.frozen

@@ -19,6 +19,7 @@ represents a qubit or register of qubits.
 """
 
 import abc
+import functools
 import heapq
 import json
 from collections import defaultdict
@@ -39,6 +40,9 @@ from typing import (
 )
 
 import attrs
+import matplotlib.patches
+import matplotlib.path as mplpath
+import matplotlib.transforms
 import networkx as nx
 import numpy as np
 from attrs import frozen, mutable
@@ -653,6 +657,65 @@ def _text_adjoint(text: str) -> str:
     return text.strip('†') if text.endswith('†') else text + '†'
 
 
+# Define a custom BoxStyle class
+class PentagonBoxStyle:
+    def __init__(self, *, pad=0.3, lr='l', **kwargs):
+        self.pad = pad
+        self.lr = lr
+        if kwargs:
+            print(f"Pentagon box style called with {kwargs}")
+        pass
+
+    def __call__(self, x0, y0, width, height, mutation_size):
+        # Calculate padding
+        pad = mutation_size * self.pad
+
+        # Define vertices for a "house" pentagon
+        # (x0, y0) is the bottom-left of the text bounding box
+        left = x0 - pad
+        right = x0 + width + pad
+        bottom = y0 - pad
+        top = y0 + height + pad
+
+        # Calculate the "peak" of the pentagon
+        mid_x = (left + right) / 2
+        mid_y = (top + bottom) / 2
+
+        if self.lr not in ['l', 'r']:
+            raise ValueError(f"Unknown lr {self.lr}")
+
+        # Define the path codes
+        path_data = [(mplpath.Path.MOVETO, (left, bottom)), (mplpath.Path.LINETO, (right, bottom))]
+        if self.lr == 'l':
+            path_data += [(mplpath.Path.LINETO, (right, top))]
+        else:
+            peak_x = right + (height / 4)
+            path_data += [
+                (mplpath.Path.LINETO, (peak_x, mid_y)),
+                (mplpath.Path.LINETO, (right, top)),
+            ]
+
+        path_data += [(mplpath.Path.LINETO, (left, top))]
+
+        if self.lr == 'l':
+            peak_x = left - (height / 4)
+            path_data += [
+                (mplpath.Path.LINETO, (peak_x, mid_y)),
+                (mplpath.Path.CLOSEPOLY, (left, bottom)),
+            ]
+        else:
+            path_data += [(mplpath.Path.CLOSEPOLY, (left, bottom))]
+
+        # transform = matplotlib.transforms.Affine2D().rotate_deg_around(mid_x, mid_y, 90)
+
+        codes, verts = zip(*path_data)
+        return matplotlib.path.Path(verts, codes)
+
+
+matplotlib.patches.BoxStyle._style_list["lpentagon"] = functools.partial(PentagonBoxStyle, lr='l')
+matplotlib.patches.BoxStyle._style_list["rpentagon"] = functools.partial(PentagonBoxStyle, lr='r')
+
+
 @frozen
 class TextBox(WireSymbol):
     text: str
@@ -707,7 +770,7 @@ class RarrowTextBox(WireSymbol):
             fontsize=10,
             ha='center',
             va='center',
-            bbox={'boxstyle': 'rarrow', 'fc': 'white'},
+            bbox={'boxstyle': 'rpentagon', 'fc': 'white'},
         )
 
     def adjoint(self):
@@ -727,7 +790,7 @@ class LarrowTextBox(WireSymbol):
             fontsize=10,
             ha='center',
             va='center',
-            bbox={'boxstyle': 'larrow', 'fc': 'white'},
+            bbox={'boxstyle': 'lpentagon', 'fc': 'white'},
         )
 
     def adjoint(self) -> 'WireSymbol':
@@ -747,16 +810,23 @@ class Circle(WireSymbol):
 @frozen
 class ModPlus(WireSymbol):
     def draw(self, ax, x, y):
-        ax.text(
-            x,
-            -y,
-            "⊕",
-            transform=ax.transData,
-            fontsize=18,
-            ha='center',
-            va='center',
-            bbox={'fc': 'none', 'lw': 0},
+        lw = matplotlib.rcParams.get('lines.linewidth', 1.0)
+        radius_px = 8
+
+        offset = matplotlib.transforms.ScaledTranslation(x, -y, ax.transData)
+        xform = matplotlib.transforms.IdentityTransform() + offset
+
+        # Note: We define them at (0, 0) because the transform handles the position
+        circle = matplotlib.patches.Circle(
+            (0, 0), radius_px, fill=False, edgecolor='k', lw=lw, transform=xform
         )
+
+        line1 = plt.Line2D([-radius_px, radius_px], [0, 0], color='k', lw=lw, transform=xform)
+        line2 = plt.Line2D([0, 0], [-radius_px, radius_px], color='k', lw=lw, transform=xform)
+
+        ax.add_patch(circle)
+        ax.add_artist(line1)
+        ax.add_artist(line2)
 
 
 def directional_text_box(text: str, side: Side) -> WireSymbol:

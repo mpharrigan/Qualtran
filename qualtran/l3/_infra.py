@@ -97,7 +97,6 @@ class _TracingBloqIntermediate:
         except (ValueError, IndexError):
             return False
 
-
     def _prep_qstackframe(self, kv_iter):
         bb = BloqBuilder(bloq_name=self.name, bloq_pkg_name=self.pkg, add_registers_allowed=True)
         qkwargs = {}
@@ -111,7 +110,9 @@ class _TracingBloqIntermediate:
                 qkwargs[k] = bb.in_register(name=k, dtype=v.dtype)
             elif self._is_qvar_array(v):
                 v = np.asarray(v)
-                qkwargs[k] = bb.in_register(name=k, dtype=v.reshape(-1).item(0).dtype, shape=v.shape)
+                qkwargs[k] = bb.in_register(
+                    name=k, dtype=v.reshape(-1).item(0).dtype, shape=v.shape
+                )
             else:
                 ckwargs[k] = v
 
@@ -156,15 +157,11 @@ class _TracingBloqIntermediate:
         class_body = {
             'signature': property(_signature),
             'decompose_bloq': _decompose_bloq,
-            '__doc__': f"A bloqified bloq class '{self.name}'."
+            '__doc__': f"A bloqified bloq class '{self.name}'.",
         }
 
         return attrs.make_class(
-            name=cls_name,
-            attrs=fields,
-            bases=(Bloq,),
-            class_body=class_body,
-            frozen=True,
+            name=cls_name, attrs=fields, bases=(Bloq,), class_body=class_body, frozen=True
         )
 
     def __call__(self, bb: 'BloqBuilder', /, *args, **kwargs):

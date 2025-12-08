@@ -1740,12 +1740,12 @@ class BloqBuilder:
 
         return CNOT.qcall(ctrl=ctrl, target=target)
 
-    def And(self, ctrl: 'SoquetInT', *, cv1:int=1, cv2:int=1):
+    def And(self, ctrl: 'SoquetInT', *, cv1: int = 1, cv2: int = 1):
         from qualtran.bloqs.mcmt import And
 
         return And.qcall(ctrl=ctrl, cv1=cv1, cv2=cv2)
 
-    def UnAnd(self, ctrl: 'SoquetInT', target: 'QVar', *, cv1: int=1, cv2:int=1):
+    def UnAnd(self, ctrl: 'SoquetInT', target: 'QVar', *, cv1: int = 1, cv2: int = 1):
         from qualtran.bloqs.mcmt import And
 
         return And.qcall(ctrl=ctrl, target=target, cv1=cv1, cv2=cv2, uncompute=True)

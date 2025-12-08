@@ -14,23 +14,22 @@
 
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 import qualtran as qlt
 import qualtran.dtype as qdt
 from qualtran.bloqs.arithmetic import XorK
-
 from qualtran.l3 import bloqify
-
-import numpy as np
 
 if TYPE_CHECKING:
     from qualtran import BloqBuilder, QVar, QVarT
 
 
-
 def cxor_k_bloq(k, bitsize=8):
     return XorK(qdt.QUInt(bitsize), k=k).controlled()
 
-OPS = np.array([cxor_k_bloq(k=100 + i) for i in range(2 ** 3)]).reshape((2,) * 3)
+
+OPS = np.array([cxor_k_bloq(k=100 + i) for i in range(2**3)]).reshape((2,) * 3)
 
 
 @bloqify
@@ -44,9 +43,7 @@ def cselect(bb, ctrl: 'QVar', selects: 'QVarT', system: 'QVarT', address=()):
 
     if len(subselects) > 0:
         active, subselects, system = cselect(
-            bb,
-            ctrl=active, selects=subselects, system=system,
-            address=address + (0,)
+            bb, ctrl=active, selects=subselects, system=system, address=address + (0,)
         )
     else:
         # base case address + (0,)
@@ -58,9 +55,7 @@ def cselect(bb, ctrl: 'QVar', selects: 'QVarT', system: 'QVarT', address=()):
 
     if len(subselects) > 0:
         active, subselects, system = cselect(
-            bb,
-            ctrl=active, selects=subselects, system=system,
-            address=address + (1,)
+            bb, ctrl=active, selects=subselects, system=system, address=address + (1,)
         )
     else:
         # base case address + (1,)
