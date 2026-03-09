@@ -12,10 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import Dict, Tuple, TYPE_CHECKING
 
-import numpy as np
 import attrs
+import numpy as np
 import sympy
 
 import qualtran as qlt
@@ -33,7 +33,7 @@ def cxor_k_bloq(k, bitsize=8):
     return XorK(qdt.QUInt(bitsize), k=k).controlled()
 
 
-OPS = np.array([cxor_k_bloq(k=100 + i) for i in range(2 ** 3)]).reshape((2,) * 3)
+OPS = np.array([cxor_k_bloq(k=100 + i) for i in range(2**3)]).reshape((2,) * 3)
 
 
 @bloqify
@@ -89,8 +89,9 @@ class SymbolicSelect(qlt.Bloq):
     def build_composite_bloq(self, bb: 'qlt.BloqBuilder', ctrl, selects, system):
         if self.m == 0:
             k = sympy.IndexedBase('k')
-            ctrl, system = bb.add(XorK(dtype=qdt.QUInt(self.n), k=k[self.address]).controlled(),
-                                  ctrl=ctrl, x=system)
+            ctrl, system = bb.add(
+                XorK(dtype=qdt.QUInt(self.n), k=k[self.address]).controlled(), ctrl=ctrl, x=system
+            )
             return {'ctrl': ctrl, 'selects': selects, 'system': system}
 
         # Set-up
@@ -102,14 +103,19 @@ class SymbolicSelect(qlt.Bloq):
 
         active, subselects, system = bb.add(
             SymbolicSelect(self.n, self.m - 1, address=self.address + (0,)),
-            ctrl=active, selects=subselects, system=system)
+            ctrl=active,
+            selects=subselects,
+            system=system,
+        )
 
         # Flip `active`
         ctrl, active = bb.CNOT(ctrl, active)
 
         active, subselects, system = bb.add(
             SymbolicSelect(self.n, self.m - 1, address=self.address + (1,)),
-            ctrl=active, selects=subselects, system=system
+            ctrl=active,
+            selects=subselects,
+            system=system,
         )
 
         [ctrl, select] = bb.UnAnd([ctrl, select], active, cv1=1, cv2=1)

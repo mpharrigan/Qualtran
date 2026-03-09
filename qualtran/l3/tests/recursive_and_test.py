@@ -1,13 +1,12 @@
-from typing import List, TYPE_CHECKING, Dict
+from typing import Dict, List, TYPE_CHECKING
 
 import attrs
 import numpy as np
 
 import qualtran as qlt
 import qualtran.dtype as qdt
+from qualtran.bloqs.bookkeeping import Join2, Split2
 from qualtran.l3 import bloqify
-
-from qualtran.bloqs.bookkeeping import Split2, Join2
 from qualtran.symbolics import SymbolicInt
 
 if TYPE_CHECKING:
@@ -37,11 +36,7 @@ def AndR(bb: 'BloqBuilder', ctrl: 'QVar', x: 'QVar'):
     [ctrl, x0] = bb.UnAnd([ctrl, x0], c1)
     x = bb.add(put1, y1=x0, y2=xrest)
 
-    return {
-        'ctrl': ctrl,
-        'x': x,
-        'out': out
-    }
+    return {'ctrl': ctrl, 'x': x, 'out': out}
 
 
 @attrs.frozen
@@ -73,8 +68,4 @@ class SymbolicMultiAnd(qlt.Bloq):
         [ctrl, x0] = bb.UnAnd([ctrl, x0], c1)
         x = bb.add(put1, y1=x0, y2=xrest)
 
-        return {
-            'ctrl': ctrl,
-            'x': x,
-            'out': out
-        }
+        return {'ctrl': ctrl, 'x': x, 'out': out}

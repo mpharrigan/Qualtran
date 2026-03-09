@@ -46,13 +46,13 @@ def test_bit():
     assert qbit.num_qubits == 1
     assert qbit.num_cbits == 0
     assert qbit.num_bits == 1
-    assert str(qbit) == 'QBit()'
+    assert str(qbit) == 'QBit'
 
     cbit = CBit()
     assert cbit.num_cbits == 1
     assert cbit.num_qubits == 0
     assert cbit.num_bits == 1
-    assert str(CBit()) == 'CBit()'
+    assert str(CBit()) == 'CBit'
 
 
 def test_qint():
@@ -305,7 +305,7 @@ def test_type_errors_matrix(qdtype_a, qdtype_b):
 
 
 def test_single_qubit_consistency():
-    assert str(QBit()) == 'QBit()'
+    assert str(QBit()) == 'QBit'
     assert check_dtypes_consistent(QBit(), QBit())
     assert check_dtypes_consistent(QBit(), QInt(1))
     assert check_dtypes_consistent(QInt(1), QBit())
