@@ -217,7 +217,7 @@ class LineManager:
         self,
         binst: Union[DanglingT, BloqInstance],
         reg: Register,
-        arr: Union[RegPosition, NDArray[RegPosition]],
+        arr: Union[RegPosition, NDArray[RegPosition]],  # type: ignore[type-var]
     ):
         """De-allocate a position or positions for `reg`.
 

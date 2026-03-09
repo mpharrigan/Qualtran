@@ -184,6 +184,10 @@ class Adjoint(GateWithRegisters):
         """Delegate to subbloq's `__str__` method."""
         return f'{str(self.subbloq)}†'
 
+    @classmethod
+    def _pkg_(cls) -> str:
+        return 'qualtran'
+
     def wire_symbol(
         self, reg: Optional['Register'], idx: Tuple[int, ...] = tuple()
     ) -> 'WireSymbol':

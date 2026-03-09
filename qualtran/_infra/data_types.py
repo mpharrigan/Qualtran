@@ -13,7 +13,6 @@
 #  limitations under the License.
 """Quantum data type definitions."""
 
-
 import abc
 import itertools
 import warnings
@@ -258,6 +257,10 @@ class QCDType(Generic[T], metaclass=abc.ABCMeta):
     def __getitem__(self, shape):
         """QInt(8)[20] returns a size-20 array of QInt(8)"""
         return ShapedQCDType(qcdtype=self, shape=shape)
+
+    @classmethod
+    def _pkg_(cls):
+        return 'qualtran'
 
     def __str__(self):
         return f'{self.__class__.__name__}({self.num_bits})'
@@ -825,7 +828,7 @@ class BCUInt(CDType[int]):
             if self.bound > 2**self.bitsize:
                 raise ValueError(
                     f"{self} bound is too large for given bitsize. "
-                    f"{self.bound} vs {2 ** self.bitsize}"
+                    f"{self.bound} vs {2**self.bitsize}"
                 )
 
     @bound.default

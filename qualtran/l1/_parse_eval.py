@@ -1,4 +1,4 @@
-#  Copyright 2023 Google LLC
+#  Copyright 2026 Google LLC
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -12,15 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-FROM python:3.10
+from ._eval import eval_cvalue_node
+from ._parse import parse_objectstring
 
-WORKDIR /pip-compile
 
-# Step 0: install pip-tools
-COPY envs/pip-tools.env.txt ./
-RUN pip install -r pip-tools.env.txt
-
-# Step 1: compile a complete & consistent environment with all dependencies
-COPY deps/ ./deps/
-COPY re-pip-compile.sh ./
-RUN bash re-pip-compile.sh
+def load_objectstring(objectstring: str, *, safe=True) -> object:
+    cobject_node = parse_objectstring(objectstring)
+    return eval_cvalue_node(cobject_node, safe=safe)
