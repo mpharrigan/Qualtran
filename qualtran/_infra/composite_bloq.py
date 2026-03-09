@@ -139,12 +139,12 @@ class QVarT(Protocol):
     `BloqBuilder.is_ndarray(qvars)`.
 
     Example:
-        >>> soq_or_soqs: SoquetT
-        ... if BloqBuilder.is_ndarray(soq_or_soqs):
-        ...     first_soq = soq_or_soqs.reshape(-1).item(0)
+        >>> qvar_or_qvars: QVarT
+        ... if BloqBuilder.is_ndarray(qvar_or_qvars):
+        ...     first_soq = qvar_or_qvars.reshape(-1).item(0)
         ... else:
         ...     # Note: `.item()` raises if not a single item.
-        ...     first_soq = soq_or_soqs.item()
+        ...     first_soq = qvar_or_qvars.item()
 
     """
 
@@ -225,16 +225,11 @@ class CompositeBloq(Bloq):
             reporting, but is never used for deriving any properties.
         bloq_key: An optional string key for this bloq. This can be used for debugging and
             error reporting, but is never used for deriving any properties.
-        name: A name for this subroutine
-        pkg_name: The package name for this subroutine. TODO: should this be an entirely different type?
     """
 
     connections: Tuple[Connection, ...] = attrs.field(converter=_to_tuple)
     signature: Signature
     bloq_instances: FrozenSet[BloqInstance] = attrs.field(converter=_to_set)
-    name: Optional[str] = attrs.field(default=None)
-    pkg_name: Optional[str] = attrs.field(default=None)
-    ssa_names: Sequence[Tuple[_Soquet, str]] = attrs.field(default=tuple, converter=tuple)
 
     decomposed_from: Optional[Bloq] = attrs.field(default=None, kw_only=True)
     bloq_key: Optional[str] = attrs.field(default=None, kw_only=True)
@@ -999,7 +994,7 @@ def _map_flat_soqs(
     vmap = np.vectorize(_map_soq, otypes=[object])
 
     def _map_soqs(soqs: SoquetT) -> SoquetT:
-        if isinstance(soqs, Soquet):
+        if isinstance(soqs, _Soquet):
             return _map_soq(soqs)
         return vmap(soqs)
 
@@ -1011,8 +1006,8 @@ def _update_flat_soq_map(
 ):
     """Flatten SoquetT into a flat_soq_map. This function mutates `flat_soq_map`."""
     for old_soqs, new_soqs in soq_map:
-        if isinstance(old_soqs, Soquet):
-            assert isinstance(new_soqs, Soquet), new_soqs
+        if isinstance(old_soqs, _Soquet):
+            assert isinstance(new_soqs, _Soquet), new_soqs
             flat_soq_map[old_soqs] = new_soqs
             continue
 
@@ -1085,18 +1080,11 @@ class BloqBuilder:
             by the framework or by the `BloqBuilder.from_signature(s)` factory method.
     """
 
-    def __init__(
-        self,
-        add_registers_allowed: bool = True,
-        *,
-        bloq_name: Optional[str] = None,
-        bloq_pkg_name: Optional[str] = None,
-    ):
+    def __init__(self, add_registers_allowed: bool = True, *, bloq_key: Optional[str] = None):
         # To be appended to:
         self._cxns: List[Connection] = []
         self._regs: List[Register] = []
         self._binsts: Set[BloqInstance] = set()
-        self._ssa_names: Dict[_Soquet, str] = {}
 
         # Initialize our BloqInstance counter
         self._i = 0
@@ -1107,8 +1095,7 @@ class BloqBuilder:
         # Whether we can call `add_register` and do non-strict `finalize()`.
         self.add_register_allowed = add_registers_allowed
 
-        self._bloq_name = bloq_name
-        self._bloq_pkg_name = bloq_pkg_name
+        self._bloq_key = bloq_key
 
     def add_register_from_dtype(
         self, reg: Union[str, Register], dtype: Optional[QCDType] = None
@@ -1209,8 +1196,7 @@ class BloqBuilder:
         signature: Signature,
         add_registers_allowed: bool = False,
         *,
-        bloq_name: Optional[str] = None,
-        bloq_pkg_name: Optional[str] = None,
+        bloq_key: Optional[str] = None,
     ) -> Tuple['BloqBuilder', Dict[str, QVarT]]:
         """Construct a BloqBuilder with a pre-specified signature.
 
@@ -1218,7 +1204,7 @@ class BloqBuilder:
         to match. This constructor is used by `Bloq.decompose_bloq()`.
         """
         # Initial construction: allow register addition for the following loop.
-        bb = cls(add_registers_allowed=True, bloq_name=bloq_name, bloq_pkg_name=bloq_pkg_name)
+        bb = cls(add_registers_allowed=True, bloq_key=bloq_key)
 
         initial_soqs: Dict[str, QVarT] = {}
         for reg in signature:
@@ -1347,7 +1333,7 @@ class BloqBuilder:
         except KeyError:
             bloq = binst if isinstance(binst, DanglingT) else binst.bloq
             raise BloqError(
-                f"During construction of {self._bloq_name}, a quantum variable was re-used.\n"
+                f"During construction of {self._bloq_key}, a quantum variable was re-used.\n"
                 f"  When calling: {bloq}\n"
                 f"  Register name: {reg.name}\n"
                 f"  Re-used soquet details: {idxed_soq.soquet}"
@@ -1622,7 +1608,7 @@ class BloqBuilder:
                 self._regs.append(Register(name=name, dtype=dtype, shape=shape, side=Side.RIGHT))
 
         ## --------------------------------
-        ## $$ Get rid of missingggg
+        ## Get rid of missing
         ## --------------------------------
         deletable_right_reg_names = [reg.name for reg in self._regs if reg.side == Side.THRU]
         for name in deletable_right_reg_names:
@@ -1644,8 +1630,8 @@ class BloqBuilder:
             # close over `RightDangle`
             return self._add_cxn(RightDangle, idxed_soq, reg, idx)
 
-        if self._bloq_name:
-            debug_str = f'finalization of {self._bloq_name}'
+        if self._bloq_key:
+            debug_str = f'finalization of {self._bloq_key}'
         else:
             debug_str = 'finalization'
         _process_soquets(
@@ -1660,9 +1646,7 @@ class BloqBuilder:
             connections=self._cxns,
             signature=signature,
             bloq_instances=self._binsts,
-            name=self._bloq_name,
-            pkg_name=self._bloq_pkg_name,
-            ssa_names=tuple((soq, ssa_name) for soq, ssa_name in self._ssa_names.items()),
+            bloq_key=self._bloq_key,
         )
 
     def allocate(

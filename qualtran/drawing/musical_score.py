@@ -288,12 +288,9 @@ class _MusicalScoreLayoutBuilder:
        is which part of your circuit.
     """
 
-    def __init__(
-        self, ssa_names: Dict[_Soquet, str], signature: Signature, binst_graph: nx.DiGraph
-    ):
+    def __init__(self, signature: Signature, binst_graph: nx.DiGraph):
 
         # The compute graph
-        self._ssa_names = ssa_names
         self._signature = signature
         self._binst_graph = binst_graph
         self._binst_iter = greedy_topological_sort(self._binst_graph)
@@ -330,11 +327,7 @@ class _MusicalScoreLayoutBuilder:
         Returns:
             A new layout builder.
         """
-        return cls(
-            ssa_names=dict(cbloq.ssa_names),
-            signature=cbloq.signature,
-            binst_graph=cbloq._binst_graph,
-        )
+        return cls(signature=cbloq.signature, binst_graph=cbloq._binst_graph)
 
     def _assign_soq_attributes(self, soq: _Soquet, *, hline_id: HLineID, x_coord: int) -> None:
         self.hline_id_map[soq] = hline_id
@@ -357,10 +350,7 @@ class _MusicalScoreLayoutBuilder:
             arr = np.zeros(reg.shape, dtype=object)
             for idx in reg.all_idxs():
                 soq = _Soquet(binst, reg, idx)
-                if soq in self._ssa_names:
-                    prefix = self._ssa_names[soq]
-                else:
-                    prefix = reg.name
+                prefix = reg.name
                 hline_id = self._get_unique_hline_id(prefix=prefix)
                 arr[idx] = hline_id
                 self.hline_start_coords[hline_id] = self._x_coord
@@ -369,10 +359,7 @@ class _MusicalScoreLayoutBuilder:
             return arr
 
         soq = _Soquet(binst, reg)
-        if soq in self._ssa_names:
-            prefix = self._ssa_names[soq]
-        else:
-            prefix = reg.name
+        prefix = reg.name
         hline_id = self._get_unique_hline_id(prefix=prefix)
         self.hline_start_coords[hline_id] = self._x_coord
         self.hline_flavors[hline_id] = flavor
