@@ -62,7 +62,6 @@ from .registers import Register, Side, Signature
 if TYPE_CHECKING:
     import cirq
 
-    from qualtran import QVar
     from qualtran.bloqs.bookkeeping.auto_partition import Unused
     from qualtran.cirq_interop._cirq_to_bloq import CirqQuregInT, CirqQuregT
     from qualtran.drawing import WireSymbol
@@ -130,6 +129,8 @@ class Soquet(Protocol, metaclass=_NoSoquetIsInstanceMeta):
     @property
     def reg(self) -> 'Register': ...
 
+    def __getitem__(self, item) -> 'QVarT': ...
+
 
 class _SoquetT(Protocol):
     """Either an actual _Soquet or an array thereof."""
@@ -164,8 +165,9 @@ class QVarT(Protocol):
     def __getitem__(self, item) -> 'QVarT': ...
 
 
-# This is used everywhere in bloq building land.
+# Compatibilities aliases
 SoquetT: TypeAlias = QVarT
+QVar: TypeAlias = Soquet
 
 
 SoquetInT = Union[QVarT, Sequence[QVarT]]
@@ -984,7 +986,7 @@ def _map_soqs(
             "Using a fallback that will disable all QVar features. "
             "See the docstring for `CompositeBloq.copy` for an example of how to structure your code."
         )
-        return _QVar(soq, bb=None)
+        return _QVar(soq, bb=None)  # type: ignore[arg-type]
 
     # Use `vectorize` to call `_map_soq` on each element of the array.
     vmap = np.vectorize(_map_soq, otypes=[object])
@@ -1349,7 +1351,7 @@ class BloqBuilder:
         except KeyError:
             bloq = binst if isinstance(binst, DanglingT) else binst.bloq
             raise BloqError(
-                f"During construction of {self._bloq_key}, a quantum variable was re-used.\n"
+                f"During construction of the bloq, a quantum variable was re-used.\n"
                 f"  When calling: {bloq}\n"
                 f"  Register name: {reg.name}\n"
                 f"  Re-used soquet details: {idxed_soq.soquet}"
@@ -1509,7 +1511,7 @@ class BloqBuilder:
         ]
         return soq_map
 
-    def add_from(self, bloq: Bloq, **in_soqs: SoquetInT):
+    def add_from(self, bloq: Bloq, **in_soqs: SoquetInT) -> Tuple['QVarT', ...]:
         """Add all the sub-bloqs from `bloq` to the compute graph.
 
         This is useful for adding multiple bloq instances at once in a "flat" or "unrolled" way.
@@ -1524,7 +1526,7 @@ class BloqBuilder:
                 `Soquet`s or an array thereof.
 
         Returns:
-            out_soqs: A `SoquetT` for each right (output) register ordered
+            out_soqs: A `QVarT` for each right (output) register ordered
                 according to `bloq.signature`. The ordering is according
                 to `bloq.signature` and irrespective of the order of `**in_soqs`.
         """
@@ -1699,14 +1701,14 @@ class BloqBuilder:
 
         return self.add(Split(dtype=qdtype), reg=soq)
 
-    def join(self, soqs: SoquetInT, dtype: Optional[QDType] = None) -> 'QVar':
+    def join(self, soqs: SoquetInT, dtype: Optional[QDType] = None) -> 'Soquet':
         from qualtran.bloqs.bookkeeping import Join
 
         try:
             soqs = np.asarray(soqs)
             (n,) = soqs.shape
-        except (AttributeError, ValueError):
-            raise ValueError("`join` expects a 1-d array of input soquets to join.")
+        except (AttributeError, ValueError) as e:
+            raise ValueError("`join` expects a 1-d array of input soquets to join.") from e
 
         if not all(soq.dtype.num_bits == 1 for soq in soqs):
             raise ValueError("`join` can only join equal-bitsized soquets, currently only size 1.")

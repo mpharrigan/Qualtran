@@ -13,7 +13,6 @@
 #  limitations under the License.
 
 from qualtran import BloqBuilder, QAny, Soquet
-from qualtran._infra.quantum_graph import _QVar
 from qualtran.bloqs.bookkeeping import Allocate, Free, Join, Split
 from qualtran.bloqs.bookkeeping.free import _free
 
@@ -25,11 +24,11 @@ def test_free(bloq_autotester):
 def test_util_bloqs():
     bb = BloqBuilder()
     qs1 = bb.add(Allocate(QAny(10)))
-    assert isinstance(qs1, _QVar)
+    assert isinstance(qs1, Soquet)  # type: ignore[misc]
     qs2 = bb.add(Split(QAny(10)), reg=qs1)
     assert qs2.shape == (10,)
     qs3 = bb.add(Join(QAny(10)), reg=qs2)
-    assert isinstance(qs3, _QVar)
+    assert isinstance(qs3, Soquet)  # type: ignore[misc]
     no_return = bb.add(Free(QAny(10)), reg=qs3)
     assert no_return is None
     assert bb.finalize().tensor_contract() == 1.0

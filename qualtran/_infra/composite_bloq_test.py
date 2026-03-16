@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from functools import cached_property
-from typing import cast, Dict, List, Tuple
+from typing import Any, cast, Dict
 
 import attrs
 import networkx as nx
@@ -44,7 +44,6 @@ from qualtran._infra.composite_bloq import (
     _create_binst_graph,
     _get_dangling_soquets,
     _get_soquet,
-    _reg_to_soq,
     _SoquetT,
 )
 from qualtran._infra.data_types import BQUInt, QAny, QBit, QFxp, QUInt
@@ -205,8 +204,18 @@ def test_bloq_builder():
     signature = Signature.build(x=1, y=1)
     x_reg, y_reg = signature
     bb, initial_soqs = BloqBuilder.from_signature(signature)
-    # FIXME
-    # assert initial_soqs == {'x': Soquet(LeftDangle, x_reg), 'y': Soquet(LeftDangle, y_reg)}
+
+    # Using deprecated Soquet constructor (to be removed)
+    assert initial_soqs == {
+        'x': _QVar(Soquet(LeftDangle, x_reg), bb=bb),  # type: ignore
+        'y': _QVar(Soquet(LeftDangle, y_reg), bb=bb),  # type: ignore
+    }
+
+    # Using private constructor
+    assert initial_soqs == {
+        'x': _QVar(_Soquet(LeftDangle, x_reg), bb=bb),
+        'y': _QVar(_Soquet(LeftDangle, y_reg), bb=bb),
+    }
 
     x = initial_soqs['x']
     y = initial_soqs['y']
@@ -303,7 +312,7 @@ def test_finalize_missing_args():
     x2, y2 = bb.add(TestTwoBitOp(), ctrl=x, target=y)
 
     bb.add_register_allowed = False
-    with pytest.raises(BloqError, match=r"During finalization, we expected a value for 'x'\."):
+    with pytest.raises(BloqError, match=r"During Finalizing, we expected a value for 'x'\."):
         bb.finalize(y=y2)
 
 
@@ -312,7 +321,7 @@ def test_finalize_strict_too_many_args():
     x2, y2 = bb.add(TestTwoBitOp(), ctrl=x, target=y)
 
     bb.add_register_allowed = False
-    with pytest.raises(BloqError, match=r'finalization does not accept Soquets.*z.*'):
+    with pytest.raises(BloqError, match=r'Finalizing does not accept Soquets.*z.*'):
         bb.finalize(x=x2, y=y2, z=_Soquet(RightDangle, Register('asdf', QBit())))
 
 
@@ -460,7 +469,7 @@ def _copy_bad_init(cbloq):
     from qualtran._infra.composite_bloq import _map_soqs
 
     bb, _ = BloqBuilder.from_signature(cbloq.signature)
-    soq_map = []  # !!!
+    soq_map: Any = []  # !!!
 
     for binst, in_soqs, old_out_soqs in cbloq.iter_bloqsoqs():
         mapped_in_soqs = _map_soqs(in_soqs, soq_map)

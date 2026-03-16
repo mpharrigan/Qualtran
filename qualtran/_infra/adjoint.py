@@ -28,13 +28,13 @@ from .composite_bloq import (
     QVarT,
 )
 from .gate_with_registers import GateWithRegisters
-from .quantum_graph import _QVar, LeftDangle, RightDangle
+from .quantum_graph import LeftDangle, RightDangle
 from .registers import Signature
 
 if TYPE_CHECKING:
     import cirq
 
-    from qualtran import Bloq, CompositeBloq, Register, Signature, SoquetT
+    from qualtran import Bloq, CompositeBloq, Register, Signature
     from qualtran.drawing import WireSymbol
     from qualtran.resource_counting import BloqCountDictT, SympySymbolAllocator
 
@@ -70,7 +70,7 @@ def _adjoint_cbloq(cbloq: 'CompositeBloq') -> 'CompositeBloq':
     bloqnections = reversed(list(cbloq.iter_bloqnections()))
 
     # And add subbloq.adjoint() back in for each subbloq.
-    bb, _ = BloqBuilder.from_signature(new_signature, bloq_key=cbloq.bloq_key)
+    bb, _ = BloqBuilder.from_signature(new_signature)
     old_i_soqs = [_reg_to_soq(RightDangle, reg) for reg in old_signature.rights()]
     new_i_soqs = [bb._reg_to_qvar(LeftDangle, reg) for reg in new_signature.lefts()]
     soq_map: List[Tuple[_SoquetT, QVarT]] = list(zip(old_i_soqs, new_i_soqs))
