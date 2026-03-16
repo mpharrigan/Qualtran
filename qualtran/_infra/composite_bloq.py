@@ -84,8 +84,7 @@ class _NoSoquetIsInstanceMeta(_ProtocolMeta):
 
 
 class Soquet(Protocol, metaclass=_NoSoquetIsInstanceMeta):
-    """
-    this is a liar: if somethings returning QVars but asserting that it's returning Soquets (which we do to not break userspace) you don't get reg or hash.
+    """A typing protocol for a soquet or qvar.
 
     In Qualtran v0.7 and earlier, the immutable `Soquet` object represented both the "quantum
     variables" being passed around during bloq building as well as the nodes of the compute graph.
