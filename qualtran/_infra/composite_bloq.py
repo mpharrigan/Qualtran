@@ -73,24 +73,33 @@ if TYPE_CHECKING:
 
 class _NoSoquetIsInstanceMeta(_ProtocolMeta):
     def __instancecheck__(cls, instance):
-        warnings.warn("isinstance(..., Soquet) is deprecated.")
+        warnings.warn("isinstance(..., Soquet) is deprecated.", DeprecationWarning)
         return isinstance(instance, (_Soquet, _QVar))
-        raise TypeError(
-            "Do not rely on isinstance(..., Soquet). "
-            "To distinguish a single soquet quantum variable "
-            "from an n-dimensional array of them, use "
-            "`SoquetT.is_single(soq)` and/or `SoquetT.is_ndarray(soq)`."
-        )
-        return isinstance(instance, _Soquet)
+        # raise TypeError(
+        #     "Do not rely on isinstance(..., Soquet). "
+        #     "To distinguish a single soquet quantum variable "
+        #     "from an n-dimensional array of them, use "
+        #     "`SoquetT.is_single(soq)` and/or `SoquetT.is_ndarray(soq)`."
+        # )
 
 
 class Soquet(Protocol, metaclass=_NoSoquetIsInstanceMeta):
-    """this is a liar: if somethings returning QVars but asserting that it's returning Soquets (which we do to not break userspace) you don't get reg or hash.
+    """
+    this is a liar: if somethings returning QVars but asserting that it's returning Soquets (which we do to not break userspace) you don't get reg or hash.
 
-    The responsibilities affored to Soquet has been split into two new classes: _Soquet and QVar.
-    The `Soquet`  object is now just a `typing.Protocol` to provide backwards compatibility to
-    Python type checking. `isinstance(..., Soquet)` checks will emit a deprecation warning
-    and return True for *either* _Soquet or QVar.
+    In Qualtran v0.7 and earlier, the immutable `Soquet` object represented both the "quantum
+    variables" being passed around during bloq building as well as the nodes of the compute graph.
+    In Qualtran v0.8+, these concerns are separated. The compute graph nodes are frozen dataclasses
+    of type `_Soquet`, and the quantum variables are *mutable* objects of type `_QVar`. We put
+    additional helper attributes and methods onto `_QVar` to assist in bloq building.
+
+    For backwards compatibility, the `Soquet` name is now assigned to this class: a
+    `typing.Protocol` that encapsulates the duck-typing behavior of `_Soquet` and `_QVar`.
+    Bloqs in the wild should not have to update the type annotations in `build_composite_bloq`
+    with this backwards compatibilty typing shim.
+
+    `isinstance(..., Soquet)` checks will emit a deprecation warning
+    and return True for *either* `_Soquet` or `_QVar`.
 
     If you're using isinstance(soq, Soquet) to determine whether an item is a single object
     or an ndarray of those objects, use `BloqBuilder.is_single(x)` or
@@ -156,7 +165,7 @@ class QVarT(Protocol):
     def __getitem__(self, item) -> 'QVarT': ...
 
 
-# This is used everywhere in block building land.
+# This is used everywhere in bloq building land.
 SoquetT: TypeAlias = QVarT
 
 
@@ -968,7 +977,15 @@ def _map_soqs(
     # Then use vectorize to use the flat mapping.
     def _map_soq(soq: _Soquet) -> _QVar:
         # Helper function to map an individual soquet.
-        return flat_soq_map[soq]
+        if soq in flat_soq_map:
+            return flat_soq_map[soq]
+
+        warnings.warn(
+            "You must initialize your `soq_map` with `bb.initial_soq_map`. "
+            "Using a fallback that will disable all QVar features. "
+            "See the docstring for `CompositeBloq.copy` for an example of how to structure your code."
+        )
+        return _QVar(soq, bb=None)
 
     # Use `vectorize` to call `_map_soq` on each element of the array.
     vmap = np.vectorize(_map_soq, otypes=[object])

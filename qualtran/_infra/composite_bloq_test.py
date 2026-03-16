@@ -455,6 +455,28 @@ def test_copy(cls):
     assert cbloq.debug_text() == cbloq2.debug_text()
 
 
+def _copy_bad_init(cbloq):
+    # Test backwards-compatibility shim where we don't use `bb.initial_soq_map`.
+    from qualtran._infra.composite_bloq import _map_soqs
+
+    bb, _ = BloqBuilder.from_signature(cbloq.signature)
+    soq_map = []  # !!!
+
+    for binst, in_soqs, old_out_soqs in cbloq.iter_bloqsoqs():
+        mapped_in_soqs = _map_soqs(in_soqs, soq_map)
+        new_out_soqs = bb.add_t(binst.bloq, **mapped_in_soqs)
+        soq_map.extend(zip(old_out_soqs, new_out_soqs))
+
+    fsoqs = _map_soqs(cbloq.final_soqs(), soq_map)
+    return bb.finalize(**fsoqs)
+
+
+def test_old_copy():
+    cbloq = TestParallelCombo().decompose_bloq()
+    new_cbloq = _copy_bad_init(cbloq)
+    assert new_cbloq.debug_text() == cbloq.debug_text()
+
+
 @pytest.mark.parametrize('call_decompose', [False, True])
 def test_add_from(call_decompose):
     bb = BloqBuilder()
@@ -695,7 +717,7 @@ def test_can_tell_individual_from_ndsoquet():
     single_soq2_unwrap = single_soq2.item()
     assert hash(single_soq2_unwrap) == hash(s1)
     assert single_soq2_unwrap == s1
-    with pytest.warns(UserWarning, match=r'deprecated'):
+    with pytest.warns(DeprecationWarning, match=r'deprecated'):
         assert isinstance(single_soq2_unwrap, Soquet)  # type: ignore[misc]
     assert isinstance(single_soq2_unwrap, _Soquet)
 

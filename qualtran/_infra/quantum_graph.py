@@ -13,9 +13,9 @@
 #  limitations under the License.
 
 """Plumbing for bloq-to-bloq `Connection`s."""
-
+import warnings
 from functools import cached_property
-from typing import Any, List, Optional, Protocol, Tuple, TYPE_CHECKING, Union
+from typing import Any, Optional, Protocol, Tuple, TYPE_CHECKING, Union
 
 import attrs
 import numpy as np
@@ -81,7 +81,7 @@ def _to_tuple(x: Union[int, Tuple[int, ...]]) -> Tuple[int, ...]:
 class _Soquet:
     """One half of a connection.
 
-    Users should not construct these directly. They should be marshalled
+    Users should not construct these directly. They should be marshaled
     by a `BloqBuilder`.
 
     A `Soquet` acts as the node type in our quantum compute graph. It is a particular
@@ -135,6 +135,8 @@ class _Soquet:
 
 
 class QVar(Protocol):
+    """The duck-typing protocol for a quantum variable."""
+
     @property
     def bb(self) -> 'BloqBuilder': ...
 
@@ -153,6 +155,12 @@ class QVar(Protocol):
 
 @attrs.mutable
 class _QVar:
+    """A handle to a quantum variable used during bloq building.
+
+    Do not construct these objects directly. Please use the `QVar` `typing.Protocol` for
+    type annotations.
+    """
+
     soquet: _Soquet
     bb: 'BloqBuilder' = field(kw_only=True)
     _split_components: Optional['QVarT'] = field(default=None)
@@ -174,11 +182,14 @@ class _QVar:
     @property
     def reg(self) -> 'Register':
         # TODO: deprecation warning
-        raise TypeError("Don't access register ")
+        warnings.warn(
+            "Accessing the register property of a quantum variable is highly discouraged and will be dis-allowed in the future.",
+            DeprecationWarning,
+        )
+        return self.soquet.reg
 
     def __hash__(self):
-        # TODO: message
-        raise TypeError("unhashable")
+        raise TypeError("QVar objects during bloq building are *not* hashable.")
 
     def __getitem__(self, item):
         if self._split_components is None:
