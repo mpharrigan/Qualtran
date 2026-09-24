@@ -547,7 +547,6 @@ def eval_qdef_impl_node(
 
 
 def eval_module(m: QltModule, *, safe: bool = True) -> Dict[BloqKey, 'qualtran.Bloq']:
-    """Evaluate a parsed QltModule."""
     """Evaluate a parsed QltModule.
 
     This will call `eval_qdef_impl_node` or `eval_qdef_extern_node` on each qdef in the
